@@ -1,0 +1,47 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+
+class AuthService
+{
+    /**
+     * Register a new user
+     */
+    public function register(array $data): User
+    {
+        return User::create([
+            'name' => $data['name'],
+            'username' => $data['username'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'email_verified_at' => null,
+            'is_active' => true,
+        ]);
+    }
+
+    /**
+     * Login user - API version (stateless, no sessions)
+     */
+    public function login(string $field, string $value, string $password, bool $remember = false): ?User
+    {
+        $user = User::where($field, $value)->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'login' => ['User not found.']
+            ]);
+        }
+
+        if (!Hash::check($password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['Incorrect password.']
+            ]);
+        }
+
+        return $user;
+    }
+}

@@ -3,19 +3,21 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
-
+    use HasApiTokens, HasFactory, Notifiable;
     protected $fillable = [
+        'name',
         'username',
         'email',
         'password',
+        'is_active',
+        'email_verified_at'
     ];
 
     protected $hidden = [
@@ -23,12 +25,24 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'is_active' => 'boolean',
+        'password' => 'hashed',
+    ];
+
+    public function hasVerifiedEmail(): bool
     {
-        return [
-            'password' => 'hashed',
-        ];
+        return !is_null($this->email_verified_at);
     }
+
+    public function markEmailAsVerified(): void
+    {
+        $this->update(['email_verified_at' => now()]);
+    }
+
+
+
 
     public function profile()
     {
