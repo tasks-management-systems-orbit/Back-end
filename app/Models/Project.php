@@ -2,26 +2,165 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Project extends Model
 {
-    public function users()
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'projects';
+
+    protected $fillable = [
+        'name',
+        'description',
+        'created_by',
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    protected $appends = [
+        'members_count',
+        'completed_tasks_count',
+    ];
+
+    // ============== Relationships ==============
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'project_users')
             ->withPivot('role')
             ->withTimestamps();
     }
-    public function tasks()
+
+    public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
     }
-    public function statuses()
+
+    public function taskStatuses(): HasMany
     {
         return $this->hasMany(TaskStatus::class);
     }
-    public function requests()
+
+    public function joinRequests(): HasMany
     {
         return $this->hasMany(Request::class);
+    }
+
+    public function comments(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Comment::class,
+            Task::class,
+            'project_id',
+            'task_id',
+            'id',
+            'id'
+        );
+    }
+
+    // ============== Helper Methods ==============
+
+    public function isOwner(int $userId): bool
+    {
+        return $this->created_by === $userId;
+    }
+
+    public function hasMember(int $userId): bool
+    {
+        return $this->users()->where('user_id', $userId)->exists();
+    }
+
+    public function getMemberRole(int $userId): ?string
+    {
+        $user = $this->users()->where('user_id', $userId)->first();
+        return $user?->pivot->role;
+    }
+
+    public function isManager(int $userId): bool
+    {
+        $role = $this->getMemberRole($userId);
+        return $role === 'owner' || $role === 'manager';
+    }
+
+    public function getMembersCountAttribute(): int
+    {
+        return $this->users_count ?? $this->users()->count();
+    }
+
+    public function getCompletedTasksCountAttribute(): int
+    {
+        return $this->tasks()->whereHas('status', function ($query) {
+            $query->where('name', 'completed');
+        })->count();
+    }
+
+    // ============== Management Methods ==============
+
+    public function addMember(int $userId, string $role = 'member'): bool
+    {
+        if ($this->hasMember($userId)) {
+            return false;
+        }
+
+        $this->users()->attach($userId, ['role' => $role]);
+        return true;
+    }
+
+    public function removeMember(int $userId): bool
+    {
+        if (!$this->hasMember($userId)) {
+            return false;
+        }
+
+        $this->users()->detach($userId);
+        return true;
+    }
+
+    public function updateMemberRole(int $userId, string $role): bool
+    {
+        if (!$this->hasMember($userId)) {
+            return false;
+        }
+
+        $this->users()->updateExistingPivot($userId, ['role' => $role]);
+        return true;
+    }
+
+    public function getManagers(): \Illuminate\Support\Collection
+    {
+        return $this->users()
+            ->wherePivotIn('role', ['owner', 'manager'])
+            ->get();
+    }
+
+    // ============== Query Scopes ==============
+
+    public function scopeActive($query)
+    {
+        return $query->whereNull('deleted_at');
+    }
+
+    public function scopeForUser($query, int $userId)
+    {
+        return $query->where('created_by', $userId)
+            ->orWhereHas('users', function ($q) use ($userId) {
+                $q->where('user_id', $userId);
+            });
     }
 }

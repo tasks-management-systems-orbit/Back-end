@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\EmailVerificationController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\ProfileController;
+use App\Http\Controllers\Api\ProjectController;
+
 
 
 
@@ -29,3 +31,12 @@ Route::put('profiles/{profile}/stats', [ProfileController::class, 'updateStats']
 Route::get('profiles/search/{keyword}', [ProfileController::class, 'search']);
 Route::post('/profiles/{profile}/skills', [ProfileController::class, 'addSkill']);
 Route::delete('/profiles/{profile}/skills/{skill}', [ProfileController::class, 'removeSkill']);
+
+// Project Routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Project Routes
+    Route::get('/my-projects', [ProjectController::class, 'myProjects']);
+    Route::get('/my-projects/stats', [ProjectController::class, 'myProjectsStats']);
+    Route::apiResource('projects', ProjectController::class);
+    Route::post('projects/{project}/restore', [ProjectController::class, 'restore']);
+});

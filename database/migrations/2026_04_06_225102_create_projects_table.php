@@ -16,9 +16,12 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->cascadeOnDelete();
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index('created_by');
+            $table->index('deleted_at');
         });
     }
 
