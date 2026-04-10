@@ -110,7 +110,7 @@ class ProjectController extends Controller
         $userId = $request->user()->id;
 
         $hasAccess = $project->created_by === $userId ||
-                     $project->users()->where('user_id', $userId)->exists();
+            $project->users()->where('user_id', $userId)->exists();
 
         if (!$hasAccess) {
             return response()->json([

@@ -40,3 +40,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('projects', ProjectController::class);
     Route::post('projects/{project}/restore', [ProjectController::class, 'restore']);
 });
+
+
+// ProjectUsres Routes
+
+use App\Http\Controllers\Api\ProjectUserController;
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Project User Management Routes
+    Route::prefix('projects/{project}/Users')->group(function () {
+        Route::get('/', [ProjectUserController::class, 'index']);
+        Route::post('/', [ProjectUserController::class, 'addUser']);
+        Route::put('/{userId}/role', [ProjectUserController::class, 'updateRole']);
+        Route::delete('/{userId}', [ProjectUserController::class, 'removeUser']);
+        Route::post('/leave', [ProjectUserController::class, 'leaveProject']);
+        Route::post('/transfer-ownership/{userId}', [ProjectUserController::class, 'transferOwnership']);
+    });
+});

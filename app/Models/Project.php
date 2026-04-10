@@ -29,7 +29,7 @@ class Project extends Model
     ];
 
     protected $appends = [
-        'members_count',
+        'users_count',
         'completed_tasks_count',
     ];
 
@@ -81,12 +81,12 @@ class Project extends Model
         return $this->created_by === $userId;
     }
 
-    public function hasMember(int $userId): bool
+    public function hasUser(int $userId): bool
     {
         return $this->users()->where('user_id', $userId)->exists();
     }
 
-    public function getMemberRole(int $userId): ?string
+    public function getUserRole(int $userId): ?string
     {
         $user = $this->users()->where('user_id', $userId)->first();
         return $user?->pivot->role;
@@ -94,11 +94,11 @@ class Project extends Model
 
     public function isManager(int $userId): bool
     {
-        $role = $this->getMemberRole($userId);
+        $role = $this->getUserRole($userId);
         return $role === 'owner' || $role === 'manager';
     }
 
-    public function getMembersCountAttribute(): int
+    public function getUsersCountAttribute(): int
     {
         return $this->users_count ?? $this->users()->count();
     }
@@ -112,9 +112,9 @@ class Project extends Model
 
     // ============== Management Methods ==============
 
-    public function addMember(int $userId, string $role = 'member'): bool
+    public function addUser(int $userId, string $role = 'user'): bool
     {
-        if ($this->hasMember($userId)) {
+        if ($this->hasUser($userId)) {
             return false;
         }
 
@@ -122,9 +122,9 @@ class Project extends Model
         return true;
     }
 
-    public function removeMember(int $userId): bool
+    public function removeUser(int $userId): bool
     {
-        if (!$this->hasMember($userId)) {
+        if (!$this->hasUser($userId)) {
             return false;
         }
 
@@ -132,9 +132,9 @@ class Project extends Model
         return true;
     }
 
-    public function updateMemberRole(int $userId, string $role): bool
+    public function updateUserRole(int $userId, string $role): bool
     {
-        if (!$this->hasMember($userId)) {
+        if (!$this->hasUser($userId)) {
             return false;
         }
 
