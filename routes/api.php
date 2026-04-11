@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectUserController;
 use App\Http\Controllers\Api\TaskStatusController;
+use App\Http\Controllers\Api\CommentController;
+
 
 // Public routes
 Route::post('/register', [RegisterController::class, 'register']);
@@ -63,5 +65,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{taskStatus}', [TaskStatusController::class, 'show']);
         Route::put('/{taskStatus}', [TaskStatusController::class, 'update']);
         Route::delete('/{taskStatus}', [TaskStatusController::class, 'destroy']);
+    });
+});
+
+// Comments Routes 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('tasks/{task}/comments')->group(function () {
+        Route::get('/', [CommentController::class, 'index']);
+        Route::post('/', [CommentController::class, 'store']);
+        Route::get('/{comment}', [CommentController::class, 'show']);
+        Route::put('/{comment}', [CommentController::class, 'update']);
+        Route::delete('/{comment}', [CommentController::class, 'destroy']);
     });
 });
