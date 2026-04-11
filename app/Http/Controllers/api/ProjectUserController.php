@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Api/ProjectUserController.php
 
 namespace App\Http\Controllers\Api;
 
@@ -31,13 +30,15 @@ class ProjectUserController extends Controller
         $observers = [];
 
         foreach ($users as $user) {
-            if ($user->pivot->role === 'owner') {
+            $role = $user->pivot->role;
+
+            if ($role === 'owner') {
                 $owner = $user;
-            } elseif ($user->pivot->role === 'manager') {
+            } elseif ($role === 'manager') {
                 $managers[] = $user;
-            } elseif ($user->pivot->role === 'user') {
+            } elseif ($role === 'user') {
                 $usersList[] = $user;
-            } elseif ($user->pivot->role === 'observer') {
+            } elseif ($role === 'observer') {
                 $observers[] = $user;
             }
         }

@@ -15,7 +15,7 @@ class AddUserRequest extends FormRequest
     {
         return [
             'user_id' => 'required|exists:users,id',
-            'role' => 'required|in:manager,member,observer',
+            'role' => 'required|in:manager,user,observer',
         ];
     }
 

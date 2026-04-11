@@ -16,7 +16,7 @@ return new class extends Migration {
 
             $table->foreignId('project_id')->constrained()->restrictOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->enum('role', ['owner', 'manager', 'member', 'observer'])->default('member');
+            $table->enum('role', ['owner', 'manager', 'user', 'observer'])->default('user');
             $table->timestamps();
             $table->unique(['project_id', 'user_id']);
         });
