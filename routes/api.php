@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectUserController;
-// use App\Http\Controllers\Api\TaskStatusController;
+use App\Http\Controllers\Api\TaskStatusController;
 
 // Public routes
 Route::post('/register', [RegisterController::class, 'register']);
@@ -53,15 +53,15 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// // Task Statuses Routes (Protected)
-// Route::middleware('auth:sanctum')->group(function () {
-//     Route::prefix('projects/{project}/statuses')->group(function () {
-//         Route::get('/', [TaskStatusController::class, 'index']);
-//         Route::post('/', [TaskStatusController::class, 'store']);
-//         Route::post('/default', [TaskStatusController::class, 'defaultStatuses']);
-//         Route::post('/reorder', [TaskStatusController::class, 'reorder']);
-//         Route::get('/{taskStatus}', [TaskStatusController::class, 'show']);
-//         Route::put('/{taskStatus}', [TaskStatusController::class, 'update']);
-//         Route::delete('/{taskStatus}', [TaskStatusController::class, 'destroy']);
-//     });
-// });
+// Task Statuses Routes (Protected)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('projects/{project}/statuses')->group(function () {
+        Route::get('/', [TaskStatusController::class, 'index']);
+        Route::post('/', [TaskStatusController::class, 'store']);
+        Route::post('/default', [TaskStatusController::class, 'defaultStatuses']);
+        Route::post('/reorder', [TaskStatusController::class, 'reorder']);
+        Route::get('/{taskStatus}', [TaskStatusController::class, 'show']);
+        Route::put('/{taskStatus}', [TaskStatusController::class, 'update']);
+        Route::delete('/{taskStatus}', [TaskStatusController::class, 'destroy']);
+    });
+});
