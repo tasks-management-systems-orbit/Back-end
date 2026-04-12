@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectUserController;
 use App\Http\Controllers\Api\TaskStatusController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\TaskController;
 
 
 // Public routes
@@ -68,7 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// Comments Routes 
+// Comments Routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('tasks/{task}/comments')->group(function () {
         Route::get('/', [CommentController::class, 'index']);
@@ -77,4 +78,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{comment}', [CommentController::class, 'update']);
         Route::delete('/{comment}', [CommentController::class, 'destroy']);
     });
+});
+
+
+// Task Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('projects/{project}/tasks')->group(function () {
+        Route::get('/', [TaskController::class, 'index']);
+        Route::post('/', [TaskController::class, 'store']);
+        Route::post('/reorder', [TaskController::class, 'reorder']);
+        Route::get('/{task}', [TaskController::class, 'show']);
+        Route::put('/{task}', [TaskController::class, 'update']);
+        Route::put('/{task}/status', [TaskController::class, 'updateStatus']);
+        Route::delete('/{task}', [TaskController::class, 'destroy']);
+    });
+    Route::get('/my-tasks', [TaskController::class, 'myTasks']);
 });
