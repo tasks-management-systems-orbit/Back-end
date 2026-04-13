@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\TaskStatusController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TaskAssignmentController;
+use App\Http\Controllers\Api\TaskDependencyController;
+
 
 
 
@@ -107,4 +109,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{userId}', [TaskAssignmentController::class, 'unassign']);
     });
     Route::get('/my-assigned-tasks', [TaskAssignmentController::class, 'myAssignedTasks']);
+});
+
+
+
+// Task Dependencies Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('projects/{project}/tasks/{task}/dependencies')->group(function () {
+        Route::get('/', [TaskDependencyController::class, 'index']);
+        Route::post('/', [TaskDependencyController::class, 'addDependency']);
+        Route::delete('/{dependsOnTaskId}', [TaskDependencyController::class, 'removeDependency']);
+        Route::put('/{dependsOnTaskId}/type', [TaskDependencyController::class, 'updateDependencyType']);
+    });
 });

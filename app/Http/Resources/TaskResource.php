@@ -65,6 +65,12 @@ class TaskResource extends JsonResource
             'comments_count' => $this->whenCounted('comments', $this->comments_count ?? 0),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
+
+
+            'started_at' => $this->started_at?->toISOString(),
+            'started_at_formatted' => $this->started_at_formatted,
+            'is_started' => $this->is_started,
+            'can_be_started' => $this->can_be_started,
         ];
     }
-}   
+}

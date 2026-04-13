@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Carbon\Carbon;
 
 class Task extends Model
 {
@@ -25,10 +26,12 @@ class Task extends Model
         'created_by',
         'assigned_to',
         'completed_at',
+        'started_at',
     ];
 
     protected $casts = [
         'due_date' => 'datetime',
+        'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -93,6 +96,11 @@ class Task extends Model
             ->withTimestamps();
     }
 
+    public function isStarted(): bool
+    {
+        return !is_null($this->started_at);
+    }
+
     public function isCompleted(): bool
     {
         return !is_null($this->completed_at);
@@ -106,31 +114,104 @@ class Task extends Model
         return $this->due_date->isPast();
     }
 
+    public function start(): void
+    {
+        if (!$this->isStarted()) {
+            $this->update(['started_at' => now()]);
+        }
+    }
+
+    public function complete(): void
+    {
+        if (!$this->isCompleted() && $this->canBeCompleted()) {
+            $this->update(['completed_at' => now()]);
+        }
+    }
+
     public function isBlocked(): bool
     {
         foreach ($this->dependencies as $dependency) {
-            if (!$dependency->isCompleted()) {
+            $type = $dependency->pivot->type;
+            
+            if ($type === 'FS' && !$dependency->isCompleted()) {
+                return true;
+            }
+            
+            if ($type === 'SS' && !$dependency->isStarted()) {
+                return true;
+            }
+            
+            if ($type === 'FF' && !$dependency->isCompleted()) {
+                return true;
+            }
+            
+            if ($type === 'SF' && !$dependency->isStarted()) {
                 return true;
             }
         }
         return false;
     }
 
-    public function canBeCompleted(): bool
+    public function canBeStarted(): bool
     {
         foreach ($this->dependencies as $dependency) {
-            if (!$dependency->isCompleted()) {
+            $type = $dependency->pivot->type;
+            
+            if ($type === 'FS' && !$dependency->isCompleted()) {
+                return false;
+            }
+            
+            if ($type === 'SS' && !$dependency->isStarted()) {
                 return false;
             }
         }
         return true;
     }
 
-    public function complete(): void
+    public function canBeCompleted(): bool
     {
-        $this->update([
-            'completed_at' => now(),
-        ]);
+        foreach ($this->dependencies as $dependency) {
+            $type = $dependency->pivot->type;
+            
+            if ($type === 'FS' && !$dependency->isCompleted()) {
+                return false;
+            }
+            
+            if ($type === 'SS' && !$dependency->isStarted()) {
+                return false;
+            }
+            
+            if ($type === 'FF' && !$dependency->isCompleted()) {
+                return false;
+            }
+            
+            if ($type === 'SF' && !$dependency->isStarted()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function getTypeLabel(string $type): string
+    {
+        return match ($type) {
+            'FS' => 'Finish to Start',
+            'SS' => 'Start to Start',
+            'FF' => 'Finish to Finish',
+            'SF' => 'Start to Finish',
+            default => 'Unknown',
+        };
+    }
+
+    public function getTypeDescription(string $type): string
+    {
+        return match ($type) {
+            'FS' => 'This task cannot be started until the dependency is completed',
+            'SS' => 'This task cannot be started until the dependency is started',
+            'FF' => 'This task cannot be completed until the dependency is completed',
+            'SF' => 'This task cannot be completed until the dependency is started',
+            default => '',
+        };
     }
 
     public function getPriorityLabelAttribute(): string
@@ -153,6 +234,56 @@ class Task extends Model
             'low' => '#10B981',
             default => '#6B7280',
         };
+    }
+
+    public function getDueDateFormattedAttribute(): ?string
+    {
+        return $this->due_date?->format('Y-m-d');
+    }
+
+    public function getStartedAtFormattedAttribute(): ?string
+    {
+        return $this->started_at?->format('Y-m-d H:i:s');
+    }
+
+    public function getIsOverdueAttribute(): bool
+    {
+        return $this->isOverdue();
+    }
+
+    public function getIsStartedAttribute(): bool
+    {
+        return $this->isStarted();
+    }
+
+    public function getIsBlockedAttribute(): bool
+    {
+        return $this->isBlocked();
+    }
+
+    public function getCanBeStartedAttribute(): bool
+    {
+        return $this->canBeStarted();
+    }
+
+    public function getCanBeCompletedAttribute(): bool
+    {
+        return $this->canBeCompleted();
+    }
+
+    public function getAssignmentsCountAttribute(): int
+    {
+        return $this->assignments()->count();
+    }
+
+    public function getDependenciesCountAttribute(): int
+    {
+        return $this->dependencies()->count();
+    }
+
+    public function getDependentsCountAttribute(): int
+    {
+        return $this->dependents()->count();
     }
 
     public function scopeByProject($query, int $projectId)
@@ -195,6 +326,16 @@ class Task extends Model
         return $query->whereNotNull('completed_at');
     }
 
+    public function scopeNotStarted($query)
+    {
+        return $query->whereNull('started_at');
+    }
+
+    public function scopeInProgress($query)
+    {
+        return $query->whereNotNull('started_at')->whereNull('completed_at');
+    }
+
     public function scopeDueToday($query)
     {
         return $query->whereDate('due_date', today());
@@ -203,40 +344,5 @@ class Task extends Model
     public function scopeDueThisWeek($query)
     {
         return $query->whereBetween('due_date', [now()->startOfWeek(), now()->endOfWeek()]);
-    }
-
-    public function getDueDateFormattedAttribute(): ?string
-    {
-        return $this->due_date?->format('Y-m-d');
-    }
-
-    public function getIsOverdueAttribute(): bool
-    {
-        return $this->isOverdue();
-    }
-
-    public function getIsBlockedAttribute(): bool
-    {
-        return $this->isBlocked();
-    }
-
-    public function getCanBeCompletedAttribute(): bool
-    {
-        return $this->canBeCompleted();
-    }
-
-    public function getAssignmentsCountAttribute(): int
-    {
-        return $this->assignments()->count();
-    }
-
-    public function getDependenciesCountAttribute(): int
-    {
-        return $this->dependencies()->count();
-    }
-
-    public function getDependentsCountAttribute(): int
-    {
-        return $this->dependents()->count();
     }
 }
