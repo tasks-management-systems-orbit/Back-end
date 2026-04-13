@@ -347,27 +347,6 @@ class TaskController extends Controller
         }
     }
 
-    public function myTasks(Request $request): JsonResponse
-    {
-        $userId = $request->user()->id;
-
-        $tasks = Task::with(['project', 'status', 'creator', 'assignee'])
-            ->where('assigned_to', $userId)
-            ->orWhereHas('assignments', fn($q) => $q->where('user_id', $userId))
-            ->orderBy('due_date')
-            ->orderBy('priority', 'desc')
-            ->paginate(20);
-
-        return response()->json([
-            'success' => true,
-            'data' => TaskResource::collection($tasks),
-            'meta' => [
-                'total' => $tasks->total(),
-                'per_page' => $tasks->perPage(),
-                'current_page' => $tasks->currentPage(),
-            ],
-        ]);
-    }
 
     private function checkProjectAccess(Project $project): void
     {

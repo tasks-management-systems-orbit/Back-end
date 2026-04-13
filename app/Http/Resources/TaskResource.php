@@ -24,11 +24,13 @@ class TaskResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'priority' => $this->priority,
-            'priority_label' => $this->getPriorityLabel(),
-            'priority_color' => $this->getPriorityColor(),
+            'priority_label' => $this->priority_label,
+            'priority_color' => $this->priority_color,
             'due_date' => $this->due_date?->toISOString(),
-            'due_date_formatted' => $this->due_date?->format('Y-m-d'),
-            'is_overdue' => $this->isOverdue(),
+            'due_date_formatted' => $this->due_date_formatted,
+            'is_overdue' => $this->is_overdue,
+            'is_blocked' => $this->is_blocked,
+            'can_be_completed' => $this->can_be_completed,
             'created_by' => $this->created_by,
             'creator' => $this->whenLoaded('creator', function () {
                 return [
@@ -54,35 +56,15 @@ class TaskResource extends JsonResource
                     ];
                 });
             }),
+            'assignments_count' => $this->assignments_count,
             'position' => $this->position,
             'is_completed' => $this->isCompleted(),
             'completed_at' => $this->completed_at?->toISOString(),
-            'dependencies_count' => $this->whenCounted('dependencies'),
-            'comments_count' => $this->whenCounted('comments'),
+            'dependencies_count' => $this->dependencies_count,
+            'dependents_count' => $this->dependents_count,
+            'comments_count' => $this->whenCounted('comments', $this->comments_count ?? 0),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
-
-    private function getPriorityLabel(): string
-    {
-        return match ($this->priority) {
-            'low' => 'Low',
-            'medium' => 'Medium',
-            'high' => 'High',
-            'urgent' => 'Urgent',
-            default => 'Medium',
-        };
-    }
-
-    private function getPriorityColor(): string
-    {
-        return match ($this->priority) {
-            'low' => '#10B981',     // Green
-            'medium' => '#F59E0B',  // Yellow
-            'high' => '#EF4444',    // Red
-            'urgent' => '#8B5CF6',  // Purple
-            default => '#6B7280',   // Gray
-        };
-    }
-}
+}   

@@ -1,5 +1,4 @@
 <?php
-// app/Models/Task.php
 
 namespace App\Models;
 
@@ -40,8 +39,6 @@ class Task extends Model
         'priority' => 'medium',
         'position' => 0,
     ];
-
-    // ============== Relationships ==============
 
     public function project(): BelongsTo
     {
@@ -96,8 +93,6 @@ class Task extends Model
             ->withTimestamps();
     }
 
-    // ============== Helper Methods ==============
-
     public function isCompleted(): bool
     {
         return !is_null($this->completed_at);
@@ -105,7 +100,7 @@ class Task extends Model
 
     public function isOverdue(): bool
     {
-        if ($this->isCompleted() ||  is_null($this->due_date)) {
+        if ($this->isCompleted() || is_null($this->due_date)) {
             return false;
         }
         return $this->due_date->isPast();
@@ -138,8 +133,6 @@ class Task extends Model
         ]);
     }
 
-    // ============== Accessors ==============
-
     public function getPriorityLabelAttribute(): string
     {
         return match ($this->priority) {
@@ -154,15 +147,13 @@ class Task extends Model
     public function getPriorityColorAttribute(): string
     {
         return match ($this->priority) {
-            'urgent' => '#EF4444',  // Red
-            'high' => '#F97316',    // Orange
-            'medium' => '#F59E0B',  // Yellow
-            'low' => '#10B981',     // Green
-            default => '#6B7280',   // Gray
+            'urgent' => '#EF4444',
+            'high' => '#F97316',
+            'medium' => '#F59E0B',
+            'low' => '#10B981',
+            default => '#6B7280',
         };
     }
-
-    // ============== Query Scopes ==============
 
     public function scopeByProject($query, int $projectId)
     {
@@ -185,6 +176,7 @@ class Task extends Model
     public function scopeOverdue($query)
     {
         return $query->whereNull('completed_at')
+            ->whereNotNull('due_date')
             ->where('due_date', '<', now());
     }
 
@@ -201,5 +193,50 @@ class Task extends Model
     public function scopeCompleted($query)
     {
         return $query->whereNotNull('completed_at');
+    }
+
+    public function scopeDueToday($query)
+    {
+        return $query->whereDate('due_date', today());
+    }
+
+    public function scopeDueThisWeek($query)
+    {
+        return $query->whereBetween('due_date', [now()->startOfWeek(), now()->endOfWeek()]);
+    }
+
+    public function getDueDateFormattedAttribute(): ?string
+    {
+        return $this->due_date?->format('Y-m-d');
+    }
+
+    public function getIsOverdueAttribute(): bool
+    {
+        return $this->isOverdue();
+    }
+
+    public function getIsBlockedAttribute(): bool
+    {
+        return $this->isBlocked();
+    }
+
+    public function getCanBeCompletedAttribute(): bool
+    {
+        return $this->canBeCompleted();
+    }
+
+    public function getAssignmentsCountAttribute(): int
+    {
+        return $this->assignments()->count();
+    }
+
+    public function getDependenciesCountAttribute(): int
+    {
+        return $this->dependencies()->count();
+    }
+
+    public function getDependentsCountAttribute(): int
+    {
+        return $this->dependents()->count();
     }
 }

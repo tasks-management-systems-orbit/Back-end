@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\ProjectUserController;
 use App\Http\Controllers\Api\TaskStatusController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\Api\TaskAssignmentController;
+
 
 
 // Public routes
@@ -92,5 +94,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{task}/status', [TaskController::class, 'updateStatus']);
         Route::delete('/{task}', [TaskController::class, 'destroy']);
     });
-    Route::get('/my-tasks', [TaskController::class, 'myTasks']);
+});
+
+
+
+
+//  Task Assignment Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('projects/{project}/tasks/{task}/assignments')->group(function () {
+        Route::get('/', [TaskAssignmentController::class, 'index']);
+        Route::post('/', [TaskAssignmentController::class, 'assign']);
+        Route::delete('/{userId}', [TaskAssignmentController::class, 'unassign']);
+    });
+    Route::get('/my-assigned-tasks', [TaskAssignmentController::class, 'myAssignedTasks']);
 });
