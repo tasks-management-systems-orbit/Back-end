@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TaskAssignmentController;
 use App\Http\Controllers\Api\TaskDependencyController;
+use App\Http\Controllers\Api\NotificationController;
 
 
 
@@ -121,4 +122,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{dependsOnTaskId}', [TaskDependencyController::class, 'removeDependency']);
         Route::put('/{dependsOnTaskId}/type', [TaskDependencyController::class, 'updateDependencyType']);
     });
+});
+
+
+
+// Routes Notification
+Route::middleware(['auth:sanctum'])->prefix('notifications')->group(function () {
+    Route::post('/test', [NotificationController::class, 'test']); // only for  testing
+    Route::get('/', [NotificationController::class, 'index']);
+    Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::put('/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/{id}', [NotificationController::class, 'destroy']);
 });
