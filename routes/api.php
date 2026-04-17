@@ -1,10 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\EmailVerificationController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectUserController;
@@ -15,24 +15,23 @@ use App\Http\Controllers\Api\TaskAssignmentController;
 use App\Http\Controllers\Api\TaskDependencyController;
 use App\Http\Controllers\Api\NotificationController;
 
-
-
-
-// Public routes
+// PUBLIC ROUTES (No authentication required)
 Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/login', [LoginController::class, 'login']);
-Route::post('/verify-email', [EmailVerificationController::class, 'verify']);
-Route::post('/resend-verification', [EmailVerificationController::class, 'resend']);
+Route::post('/verify-email', [EmailVerificationController::class, 'verify'])
+    ->middleware('throttle.verify');
+Route::post('/resend-verification', [EmailVerificationController::class, 'resend'])
+    ->middleware('throttle.verification');
 
-// Auth Protected Routes
-Route::middleware('auth:sanctum')->group(function () {
+// AUTHENTICATED ROUTES (Only requires valid token)
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [LogoutController::class, 'logout']);
     Route::get('/me', [LoginController::class, 'me']);
     Route::get('/email-status', [EmailVerificationController::class, 'checkStatus']);
 });
 
-// Profiles Routes (Protected)
-Route::middleware('auth:sanctum')->group(function () {
+// PROFILES ROUTES (Requires authentication only)
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/my-profile', [ProfileController::class, 'myProfile']);
     Route::put('/profiles/{profile}/stats', [ProfileController::class, 'updateStats']);
     Route::get('/profiles/search/{keyword}', [ProfileController::class, 'search']);
@@ -41,16 +40,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('profiles', ProfileController::class);
 });
 
-// Project Routes (Protected)
-Route::middleware('auth:sanctum')->group(function () {
+// PROJECTS ROUTES (Requires authentication + active account + verified email)
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::get('/my-projects', [ProjectController::class, 'myProjects']);
     Route::get('/my-projects/stats', [ProjectController::class, 'myProjectsStats']);
     Route::post('/projects/{project}/restore', [ProjectController::class, 'restore']);
     Route::apiResource('projects', ProjectController::class);
 });
 
-// Project Users Routes (Protected)
-Route::middleware('auth:sanctum')->group(function () {
+// PROJECT USERS ROUTES (Requires authentication + active account + verified email)
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/users')->group(function () {
         Route::get('/', [ProjectUserController::class, 'index']);
         Route::post('/', [ProjectUserController::class, 'addUser']);
@@ -61,8 +60,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// Task Statuses Routes (Protected)
-Route::middleware('auth:sanctum')->group(function () {
+// TASK STATUSES ROUTES (Requires authentication + active account + verified email)
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/statuses')->group(function () {
         Route::get('/', [TaskStatusController::class, 'index']);
         Route::post('/', [TaskStatusController::class, 'store']);
@@ -74,20 +73,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// Comments Routes
-Route::middleware('auth:sanctum')->group(function () {
-    Route::prefix('tasks/{task}/comments')->group(function () {
-        Route::get('/', [CommentController::class, 'index']);
-        Route::post('/', [CommentController::class, 'store']);
-        Route::get('/{comment}', [CommentController::class, 'show']);
-        Route::put('/{comment}', [CommentController::class, 'update']);
-        Route::delete('/{comment}', [CommentController::class, 'destroy']);
-    });
-});
-
-
-// Task Routes
-Route::middleware('auth:sanctum')->group(function () {
+// TASKS ROUTES (Requires authentication + active account + verified email)
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/tasks')->group(function () {
         Route::get('/', [TaskController::class, 'index']);
         Route::post('/', [TaskController::class, 'store']);
@@ -99,11 +86,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-
-
-
-//  Task Assignment Routes
-Route::middleware('auth:sanctum')->group(function () {
+// TASK ASSIGNMENTS ROUTES (Requires authentication + active account + verified email)
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/tasks/{task}/assignments')->group(function () {
         Route::get('/', [TaskAssignmentController::class, 'index']);
         Route::post('/', [TaskAssignmentController::class, 'assign']);
@@ -112,10 +96,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-assigned-tasks', [TaskAssignmentController::class, 'myAssignedTasks']);
 });
 
-
-
-// Task Dependencies Routes
-Route::middleware('auth:sanctum')->group(function () {
+// TASK DEPENDENCIES ROUTES (Requires authentication + active account + verified email)
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/tasks/{task}/dependencies')->group(function () {
         Route::get('/', [TaskDependencyController::class, 'index']);
         Route::post('/', [TaskDependencyController::class, 'addDependency']);
@@ -124,13 +106,24 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
+// COMMENTS ROUTES (Requires authentication + active account + verified email)
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::prefix('tasks/{task}/comments')->group(function () {
+        Route::get('/', [CommentController::class, 'index']);
+        Route::post('/', [CommentController::class, 'store']);
+        Route::get('/{comment}', [CommentController::class, 'show']);
+        Route::put('/{comment}', [CommentController::class, 'update']);
+        Route::delete('/{comment}', [CommentController::class, 'destroy']);
+    });
+});
 
-
-// Routes Notification
-Route::middleware(['auth:sanctum'])->prefix('notifications')->group(function () {
-    Route::post('/test', [NotificationController::class, 'test']); // only for  testing
-    Route::get('/', [NotificationController::class, 'index']);
-    Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
-    Route::put('/read-all', [NotificationController::class, 'markAllAsRead']);
-    Route::delete('/{id}', [NotificationController::class, 'destroy']);
+// NOTIFICATIONS ROUTES (Requires authentication + active account + verified email)
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::prefix('notifications')->group(function () {
+        Route::post('/test', [NotificationController::class, 'test']);
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::put('/read-all', [NotificationController::class, 'markAllAsRead']);
+        Route::delete('/{id}', [NotificationController::class, 'destroy']);
+    });
 });
