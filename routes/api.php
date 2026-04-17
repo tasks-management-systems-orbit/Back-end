@@ -14,6 +14,9 @@ use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TaskAssignmentController;
 use App\Http\Controllers\Api\TaskDependencyController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\Auth\PasswordResetController;
+
+
 
 // PUBLIC ROUTES (No authentication required)
 Route::post('/register', [RegisterController::class, 'register']);
@@ -22,6 +25,8 @@ Route::post('/verify-email', [EmailVerificationController::class, 'verify'])
     ->middleware('throttle.verify');
 Route::post('/resend-verification', [EmailVerificationController::class, 'resend'])
     ->middleware('throttle.verification');
+Route::post('/forgot-password', [PasswordResetController::class, 'forgot']);
+Route::post('/reset-password', [PasswordResetController::class, 'reset']);
 
 // AUTHENTICATED ROUTES (Only requires valid token)
 Route::middleware(['auth:sanctum'])->group(function () {
