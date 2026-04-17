@@ -65,7 +65,7 @@ class EmailVerificationController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function checkStatus(Request $request)
+    public function checkStatus(\Illuminate\Http\Request  $request)
     {
         $user = $request->user();
 
