@@ -7,38 +7,25 @@ use Illuminate\Validation\Rules\Password;
 
 class RegisterRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         return [
             'name' => 'required|string|max:100',
             'username' => 'required|string|max:100|unique:users,username',
             'email' => 'required|email|max:255|unique:users,email',
-            'password' => [
-                'required',
-                'confirmed',
-                Password::min(8)
-                    ->letters()
-                    ->mixedCase()
-                    ->numbers()
-                    ->symbols()
-            ],
+            'password' =>  [
+            'required',
+            'confirmed',
+            Password::defaults()
+        ],
         ];
     }
 
-    /**
-     * Get custom messages for validation errors.
-     */
     public function messages(): array
     {
         return [
@@ -57,9 +44,6 @@ class RegisterRequest extends FormRequest
         ];
     }
 
-    /**
-     * Prepare data for validation.
-     */
     protected function prepareForValidation(): void
     {
         $this->merge([

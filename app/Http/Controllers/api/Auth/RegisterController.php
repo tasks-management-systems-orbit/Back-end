@@ -15,27 +15,19 @@ class RegisterController extends Controller
     public function __construct(
         protected AuthService $authService,
         protected VerificationCodeService $verificationService
-    ) {}
+    ) {
+    }
 
 
     public function register(RegisterRequest $request)
-    {
-        $user = $this->authService->register($request->validated());
+{
+    $user = $this->authService->register($request->validated());
 
-        $this->verificationService->generateAndSend($user->email, $user->name);
+    $this->verificationService->generateAndSend($user->email, $user->name);
 
-        $token = $user->createToken('mobile_app')->plainTextToken;
-
-        return $this->successResponse([
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'username' => $user->username,
-                'email' => $user->email,
-            ],
-            'token' => $token,
-            'token_type' => 'Bearer',
-            'requires_verification' => true
-        ], 'Account created successfully. Please verify your email.', 201);
-    }
+    return $this->successResponse([
+        'email' => $user->email,
+        'requires_verification' => true
+    ], 'Account created successfully. Please verify your email to login.', 201);
+}
 }

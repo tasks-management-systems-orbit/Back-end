@@ -16,12 +16,6 @@ class EmailVerificationController extends Controller
 
     public function __construct(protected VerificationCodeService $verificationService) {}
 
-    /**
-     * Verify email using verification code
-     *
-     * @param VerifyEmailRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function verify(VerifyEmailRequest $request)
     {
         $verified = $this->verificationService->verify(
@@ -36,36 +30,28 @@ class EmailVerificationController extends Controller
         return $this->successResponse(null, 'Email verified successfully. You can now login.');
     }
 
-    /**
-     * Resend verification code to email
-     *
-     * @param ResendVerificationRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function resend(ResendVerificationRequest $request)
     {
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return $this->notFoundResponse('User not found.');
+            return $this->successResponse(null, 'If your email is registered, you will receive a verification code.');
+        }
+
+        if (!$user->is_active) {
+            return $this->successResponse(null, 'If your email is registered, you will receive a verification code.');
         }
 
         if ($user->hasVerifiedEmail()) {
-            return $this->errorResponse('Email already verified.', 400);
+            return $this->successResponse(null, 'If your email is registered, you will receive a verification code.');
         }
 
         $this->verificationService->generateAndSend($user->email, $user->name);
 
-        return $this->successResponse(null, 'New verification code sent to your email.');
+        return $this->successResponse(null, 'If your email is registered, you will receive a verification code.');
     }
 
-    /**
-     * Check email verification status for authenticated user
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function checkStatus(\Illuminate\Http\Request  $request)
+    public function checkStatus(Request $request)
     {
         $user = $request->user();
 

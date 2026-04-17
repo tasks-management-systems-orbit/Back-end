@@ -6,17 +6,11 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class LoginRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         return [
@@ -27,9 +21,6 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get custom messages for validation errors.
-     */
     public function messages(): array
     {
         return [
@@ -40,9 +31,6 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /**
-     * Determine which field to use for login (email or username)
-     */
     public function getLoginField(): string
     {
         $login = $this->input('login');
@@ -54,17 +42,11 @@ class LoginRequest extends FormRequest
         return 'username';
     }
 
-    /**
-     * Get the login value
-     */
     public function getLoginValue(): string
     {
         return $this->input('login');
     }
 
-    /**
-     * Prepare data for validation.
-     */
     protected function prepareForValidation(): void
     {
         if ($this->has('login')) {

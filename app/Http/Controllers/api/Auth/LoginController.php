@@ -2,28 +2,25 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
+use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Auth\LoginRequest;
 use App\Http\Traits\ApiResponseTrait;
 use App\Services\AuthService;
-use Illuminate\Http\Request;  // ✅ Added this
 
 class LoginController extends Controller
 {
-    use ApiResponseTrait;
+    use ApiResponseTrait ;
 
     public function __construct(protected AuthService $authService)
     {
     }
 
-    /**
-     * Login user and create token
-     *
-     */
-    public function login(LoginRequest $request)  // ✅ Fixed type hint
+    public function login(LoginRequest $request)
     {
         $field = $request->getLoginField();
         $value = $request->input('login');
+
 
         $user = $this->authService->login(
             $field,
@@ -34,7 +31,7 @@ class LoginController extends Controller
 
         if (!$user->hasVerifiedEmail()) {
             return $this->errorResponse(
-                'Email verification required. A new verification code has been sent.',
+                'Email verification required.',
                 403
             );
         }
@@ -60,15 +57,14 @@ class LoginController extends Controller
         ], 'Login successful.');
     }
 
-    /**
-     * Get authenticated user details
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function me(Request $request)  // ✅ Fixed type hint
+    public function me(Request $request)
     {
         $user = $request->user();
+
+        if (!$user->is_active) {
+            return $this->errorResponse('Your account is deactivated. Please contact support.', 403);
+        }
+
 
         return $this->successResponse([
             'id' => $user->id,

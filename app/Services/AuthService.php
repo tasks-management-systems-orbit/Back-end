@@ -8,9 +8,6 @@ use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
-    /**
-     * Register a new user
-     */
     public function register(array $data): User
     {
         return User::create([
@@ -23,9 +20,6 @@ class AuthService
         ]);
     }
 
-    /**
-     * Login user - API version (stateless, no sessions)
-     */
     public function login(string $field, string $value, string $password, bool $remember = false): ?User
     {
         $user = User::where($field, $value)->first();
@@ -39,6 +33,12 @@ class AuthService
         if (!Hash::check($password, $user->password)) {
             throw ValidationException::withMessages([
                 'password' => ['Incorrect password.']
+            ]);
+        }
+
+        if (!$user->is_active) {
+            throw ValidationException::withMessages([
+                'login' => ['Your account is deactivated. Please contact support.']
             ]);
         }
 
