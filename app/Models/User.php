@@ -128,4 +128,21 @@ class User extends Authenticatable
     {
         return $this->hasMany(Request::class, 'receiver_id');
     }
+
+public function reportsMade()
+{
+    return $this->hasMany(Report::class, 'reporter_id');
+}
+
+public function hasReported(User $user): bool
+{
+    return Report::where('reporter_id', $this->id)
+        ->where('reported_user_id', $user->id)
+        ->exists();
+}
+
+public function getReportsCountAttribute(): int
+{
+    return Report::where('reported_user_id', $this->id)->count();
+}
 }

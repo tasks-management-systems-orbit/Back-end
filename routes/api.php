@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\TaskAssignmentController;
 use App\Http\Controllers\Api\TaskDependencyController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
+use App\Http\Controllers\Api\ReportController;
+
 
 
 
@@ -44,7 +46,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/profiles/{profile}/skills', [ProfileController::class, 'addSkill']);
     Route::put('/profiles/{profile}/skills/{skill}', [ProfileController::class, 'updateSkillRating']);
     Route::delete('/profiles/{profile}/skills/{skill}', [ProfileController::class, 'removeSkill']);
-    
+
     Route::apiResource('profiles', ProfileController::class);
 
     Route::post('/profiles/block/{userId}', [ProfileController::class, 'blockUser']);
@@ -144,3 +146,13 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
         Route::delete('/{id}', [NotificationController::class, 'destroy']);
     });
 });
+
+
+
+// REPORT ROUTES
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+        Route::post('/reports', [ReportController::class, 'store']);
+        Route::get('/', [ReportController::class, 'getAllReports']);
+        Route::get('/user/{userId}', [ReportController::class, 'getUserReports']);
+    });
+
