@@ -40,7 +40,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // PROFILES ROUTES (Requires authentication only)
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/my-profile', [ProfileController::class, 'myProfile']);
-    Route::put('/profiles/{profile}/stats', [ProfileController::class, 'updateStats']);
 
     Route::get('/profiles/{profile}/skills', [ProfileController::class, 'getSkills']);
     Route::post('/profiles/{profile}/skills', [ProfileController::class, 'addSkill']);
@@ -62,7 +61,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // PROJECTS ROUTES (Requires authentication + active account + verified email)
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::get('/my-projects', [ProjectController::class, 'myProjects']);
-    Route::get('/my-projects/stats', [ProjectController::class, 'myProjectsStats']);
     Route::post('/projects/{project}/restore', [ProjectController::class, 'restore']);
     Route::apiResource('projects', ProjectController::class);
 });
@@ -151,8 +149,10 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
 
 // REPORT ROUTES
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
-        Route::post('/reports', [ReportController::class, 'store']);
+    Route::prefix('reports')->group(function () {
+        Route::post('/', [ReportController::class, 'store']);
         Route::get('/', [ReportController::class, 'getAllReports']);
         Route::get('/user/{userId}', [ReportController::class, 'getUserReports']);
     });
+});
 

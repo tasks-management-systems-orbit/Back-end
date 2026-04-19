@@ -78,19 +78,19 @@ class ProfileController extends Controller
     }
 
     public function show(Request $request, Profile $profile): ProfileResource|JsonResponse
-{
-    $user = $request->user();
-    $isOwner = $user && $user->id === $profile->user_id;
+    {
+        $user = $request->user();
+        $isOwner = $user && $user->id === $profile->user_id;
 
-    if (!$profile->is_public && !$isOwner) {
-        return response()->json([
-            'success' => false,
-            'message' => 'This profile is private'
-        ], 403);
+        if (!$profile->is_public && !$isOwner) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This profile is private'
+            ], 403);
+        }
+
+        return new ProfileResource($profile->load('user'));
     }
-
-    return new ProfileResource($profile->load('user'));
-}
 
     public function update(UpdateProfileRequest $request, Profile $profile): JsonResponse
     {
@@ -165,21 +165,7 @@ class ProfileController extends Controller
         return new ProfileResource($profile->load('user'));
     }
 
-    public function updateStats(Request $request, Profile $profile): JsonResponse
-    {
-        $request->validate([
-            'projects_count' => 'sometimes|integer|min:0',
-            'tasks_completed' => 'sometimes|integer|min:0',
-        ]);
 
-        $profile->update($request->only(['projects_count', 'tasks_completed']));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Statistics updated successfully',
-            'data' => new ProfileResource($profile)
-        ]);
-    }
 
 
 
@@ -305,84 +291,84 @@ class ProfileController extends Controller
 
 
 
-public function addSkill(Request $request, Profile $profile): JsonResponse
-{
-    $request->validate([
-        'skill' => 'required|string|max:100',
-        'rating' => 'sometimes|integer|min:1|max:10'
-    ]);
+    public function addSkill(Request $request, Profile $profile): JsonResponse
+    {
+        $request->validate([
+            'skill' => 'required|string|max:100',
+            'rating' => 'sometimes|integer|min:1|max:10'
+        ]);
 
-    $rating = $request->get('rating', 5);
-    $added = $profile->addSkill($request->skill, $rating);
+        $rating = $request->get('rating', 5);
+        $added = $profile->addSkill($request->skill, $rating);
 
-    if (!$added) {
+        if (!$added) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Skill already exists'
+            ], 409);
+        }
+
         return response()->json([
-            'success' => false,
-            'message' => 'Skill already exists'
-        ], 409);
+            'success' => true,
+            'message' => 'Skill added successfully',
+            'data' => new ProfileResource($profile->fresh()->load('user'))
+        ]);
     }
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Skill added successfully',
-        'data' => new ProfileResource($profile->fresh()->load('user'))
-    ]);
-}
+    public function updateSkillRating(Request $request, Profile $profile, string $skill): JsonResponse
+    {
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:10'
+        ]);
 
-public function updateSkillRating(Request $request, Profile $profile, string $skill): JsonResponse
-{
-    $request->validate([
-        'rating' => 'required|integer|min:1|max:10'
-    ]);
+        $updated = $profile->updateSkillRating($skill, $request->rating);
 
-    $updated = $profile->updateSkillRating($skill, $request->rating);
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Skill not found'
+            ], 404);
+        }
 
-    if (!$updated) {
         return response()->json([
-            'success' => false,
-            'message' => 'Skill not found'
-        ], 404);
+            'success' => true,
+            'message' => 'Skill rating updated successfully',
+            'data' => new ProfileResource($profile->fresh()->load('user'))
+        ]);
     }
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Skill rating updated successfully',
-        'data' => new ProfileResource($profile->fresh()->load('user'))
-    ]);
-}
+    public function removeSkill(Profile $profile, string $skill): JsonResponse
+    {
+        $removed = $profile->removeSkill($skill);
 
-public function removeSkill(Profile $profile, string $skill): JsonResponse
-{
-    $removed = $profile->removeSkill($skill);
+        if (!$removed) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Skill not found'
+            ], 404);
+        }
 
-    if (!$removed) {
         return response()->json([
-            'success' => false,
-            'message' => 'Skill not found'
-        ], 404);
+            'success' => true,
+            'message' => 'Skill removed successfully',
+            'data' => new ProfileResource($profile->fresh()->load('user'))
+        ]);
     }
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Skill removed successfully',
-        'data' => new ProfileResource($profile->fresh()->load('user'))
-    ]);
+    public function getSkills(Profile $profile): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'skills' => $profile->skills,
+                'average_rating' => $profile->average_skill_rating,
+                'top_skills' => $profile->top_skills
+            ]
+        ]);
+    }
+
+
+
+
+
 }
-
-public function getSkills(Profile $profile): JsonResponse
-{
-    return response()->json([
-        'success' => true,
-        'data' => [
-            'skills' => $profile->skills,
-            'average_rating' => $profile->average_skill_rating,
-            'top_skills' => $profile->top_skills
-        ]
-    ]);
-}
-
-
-
-
-
-            }

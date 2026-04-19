@@ -1,5 +1,4 @@
 <?php
-// database/migrations/2024_01_15_000004_create_tasks_table.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -16,7 +15,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->foreignId('status_id')->constrained('task_statuses')->cascadeOnDelete();
             $table->enum('priority', ['urgent', 'high', 'medium', 'low'])->default('medium');
-            $table->date('due_date')->nullable();  
+            $table->date('due_date')->nullable();
             $table->integer('position')->default(0);
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
 
@@ -28,6 +27,7 @@ return new class extends Migration
 
             $table->index(['project_id', 'status_id', 'position']);
             $table->index('assigned_to');
+            $table->timestamp('started_at')->nullable();
             $table->index('due_date');
             $table->index('priority');
         });

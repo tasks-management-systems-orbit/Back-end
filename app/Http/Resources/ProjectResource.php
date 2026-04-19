@@ -23,7 +23,7 @@ class ProjectResource extends JsonResource
             }),
             'members_count' => $this->whenCounted('members'),
             'tasks_count' => $this->whenCounted('tasks'),
-            'role' => $this->when(isset($this->member_role), $this->member_role),
+            'role' => $this->when(isset($this->user_role), $this->user_role),
             'is_owner' => $this->when(isset($this->is_owner), $this->is_owner),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

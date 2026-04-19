@@ -10,6 +10,7 @@ use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Events\ProjectCreated;
 
 class ProjectController extends Controller
 {
@@ -38,7 +39,7 @@ class ProjectController extends Controller
             ->paginate($perPage);
 
         foreach ($projects as $project) {
-            $project->user_role = $this->getUserRoleInProject($project, $userId);
+            $project->user_role = $project->users->firstWhere('id', $userId)?->pivot->role ?? 'none';
             $project->is_owner = $project->created_by === $userId;
         }
 
@@ -89,7 +90,7 @@ class ProjectController extends Controller
         $projects = $query->paginate($perPage);
 
         foreach ($projects as $project) {
-            $project->user_role = $this->getUserRoleInProject($project, $userId);
+            $project->user_role = $project->users->firstWhere('id', $userId)?->pivot->role ?? 'none';
             $project->is_owner = $project->created_by === $userId;
         }
 
@@ -129,7 +130,7 @@ class ProjectController extends Controller
 
         $project->loadCount(['users as members_count', 'tasks as tasks_count']);
 
-        $project->user_role = $this->getUserRoleInProject($project, $userId);
+        $project->user_role = $project->users->firstWhere('id', $userId)?->pivot->role ?? 'none';
         $project->is_owner = $project->created_by === $userId;
 
         return response()->json([
@@ -150,7 +151,7 @@ class ProjectController extends Controller
             ]);
 
             $project->users()->attach($request->user()->id, ['role' => 'owner']);
-
+            event(new ProjectCreated($project));
             DB::commit();
 
             return response()->json([

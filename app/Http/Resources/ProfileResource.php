@@ -16,7 +16,10 @@ class ProfileResource extends JsonResource
                 return [
                     'id' => $this->user->id,
                     'name' => $this->user->name,
-                    'email' => $this->user->email,
+                    'email' => $this->when(
+                        request()->user() && request()->user()->id === $this->user_id,
+                        $this->user->email
+                    ),
                 ];
             }),
             'phone' => $this->phone,

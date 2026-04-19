@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Events\UserJoinedProject;
 
 class ProjectUserController extends Controller
 {
@@ -56,52 +57,54 @@ class ProjectUserController extends Controller
     }
 
     public function addUser(AddUserRequest $request, Project $project): JsonResponse
-    {
-        $userId = $request->user()->id;
-        $currentUserRole = $project->getUserRole($userId);
+{
+    $userId = $request->user()->id;
+    $currentUserRole = $project->getUserRole($userId);
 
-        if ($project->created_by !== $userId && !in_array($currentUserRole, ['owner', 'manager'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You do not have permission to add users to this project'
-            ], 403);
-        }
-
-        $newUserId = $request->user_id;
-
-        if ($project->hasUser($newUserId)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User is already a user of this project'
-            ], 409);
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $project->addUser($newUserId, $request->role);
-
-            DB::commit();
-
-            $newUser = User::with('profile')->find($newUserId);
-            $newUser->role = $request->role;
-
-            return response()->json([
-                'success' => true,
-                'message' => 'User added successfully',
-                'data' => new ProjectUserResource($newUser)
-            ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to add user',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+    if ($project->created_by !== $userId && !in_array($currentUserRole, ['owner', 'manager'])) {
+        return response()->json([
+            'success' => false,
+            'message' => 'You do not have permission to add users to this project'
+        ], 403);
     }
+
+    $newUserId = $request->user_id;
+
+    if ($project->hasUser($newUserId)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'User is already a user of this project'
+        ], 409);
+    }
+
+    try {
+        DB::beginTransaction();
+
+        $project->addUser($newUserId, $request->role);
+
+        DB::commit();
+
+        $newUser = User::with('profile')->find($newUserId);
+        $newUser->role = $request->role;
+
+        event(new UserJoinedProject($newUser, $project));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User added successfully',
+            'data' => new ProjectUserResource($newUser)
+        ], 201);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to add user',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 
     public function updateRole(UpdateUserRoleRequest $request, Project $project, int $userId): JsonResponse
     {

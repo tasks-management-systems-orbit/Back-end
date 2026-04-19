@@ -76,7 +76,7 @@ class NotificationController extends Controller
         return $this->errorResponse('Notification not found', 404);
     }
 
-    public function test(Request $request)
+    public function test(Request $request)       //TODO  DELETE IN PRODCTION
     {
         $request->validate([
             'message' => 'required|string',

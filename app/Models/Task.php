@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon;
+use App\Events\TaskCompleted;
+
 
 class Task extends Model
 {
@@ -125,6 +126,7 @@ class Task extends Model
     {
         if (!$this->isCompleted() && $this->canBeCompleted()) {
             $this->update(['completed_at' => now()]);
+            event(new TaskCompleted($this));
         }
     }
 
@@ -132,19 +134,19 @@ class Task extends Model
     {
         foreach ($this->dependencies as $dependency) {
             $type = $dependency->pivot->type;
-            
+
             if ($type === 'FS' && !$dependency->isCompleted()) {
                 return true;
             }
-            
+
             if ($type === 'SS' && !$dependency->isStarted()) {
                 return true;
             }
-            
+
             if ($type === 'FF' && !$dependency->isCompleted()) {
                 return true;
             }
-            
+
             if ($type === 'SF' && !$dependency->isStarted()) {
                 return true;
             }
@@ -156,11 +158,11 @@ class Task extends Model
     {
         foreach ($this->dependencies as $dependency) {
             $type = $dependency->pivot->type;
-            
+
             if ($type === 'FS' && !$dependency->isCompleted()) {
                 return false;
             }
-            
+
             if ($type === 'SS' && !$dependency->isStarted()) {
                 return false;
             }
@@ -172,19 +174,19 @@ class Task extends Model
     {
         foreach ($this->dependencies as $dependency) {
             $type = $dependency->pivot->type;
-            
+
             if ($type === 'FS' && !$dependency->isCompleted()) {
                 return false;
             }
-            
+
             if ($type === 'SS' && !$dependency->isStarted()) {
                 return false;
             }
-            
+
             if ($type === 'FF' && !$dependency->isCompleted()) {
                 return false;
             }
-            
+
             if ($type === 'SF' && !$dependency->isStarted()) {
                 return false;
             }
