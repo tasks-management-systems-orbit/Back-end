@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Auth\ResendVerificationRequest;
 use App\Http\Requests\Api\Auth\VerifyEmailRequest;
 use App\Http\Traits\ApiResponseTrait;
+use App\Mail\WelcomeMail;
 use App\Models\Request;
 use App\Models\User;
 use App\Services\VerificationCodeService;
+use Illuminate\Support\Facades\Mail;
 
 class EmailVerificationController extends Controller
 {
@@ -17,18 +19,25 @@ class EmailVerificationController extends Controller
     public function __construct(protected VerificationCodeService $verificationService) {}
 
     public function verify(VerifyEmailRequest $request)
-    {
-        $verified = $this->verificationService->verify(
-            $request->email,
-            $request->code
-        );
+{
+    $user = User::where('email', $request->email)->first();
+    $wasAlreadyVerified = $user && $user->hasVerifiedEmail();
 
-        if (!$verified) {
-            return $this->errorResponse('Invalid or expired verification code.', 400);
-        }
+    $verified = $this->verificationService->verify(
+        $request->email,
+        $request->code
+    );
 
-        return $this->successResponse(null, 'Email verified successfully. You can now login.');
+    if (!$verified) {
+        return $this->errorResponse('Invalid or expired verification code.', 400);
     }
+
+    if (!$wasAlreadyVerified) {
+        Mail::to($user->email)->send(new WelcomeMail($user->name));
+    }
+
+    return $this->successResponse(null, 'Email verified successfully. You can now login.');
+}
 
     public function resend(ResendVerificationRequest $request)
     {

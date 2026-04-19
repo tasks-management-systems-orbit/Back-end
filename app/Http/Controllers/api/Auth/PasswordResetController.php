@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ResetPasswordCodeMail;
+use App\Mail\PasswordChangedMail;
 
 class PasswordResetController extends Controller
 {
@@ -68,6 +69,8 @@ class PasswordResetController extends Controller
         $user = User::where('email', $request->email)->first();
         $user->password = Hash::make($request->password);
         $user->save();
+
+        Mail::to($user->email)->send(new PasswordChangedMail($user->name, request()->ip()));
 
         DB::table('password_reset_codes')
             ->where('email', $request->email)
