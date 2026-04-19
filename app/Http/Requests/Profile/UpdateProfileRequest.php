@@ -1,5 +1,4 @@
 <?php
-// app/Http/Requests/Profile/UpdateProfileRequest.php
 
 namespace App\Http\Requests\Profile;
 
@@ -22,23 +21,37 @@ class UpdateProfileRequest extends FormRequest
             'bio' => 'nullable|string|max:1000',
             'job_title' => 'nullable|string|max:255',
             'skills' => 'nullable|array',
-            'skills.*' => 'string|max:100',
+            'skills.*.name' => 'required|string|max:100',
+            'skills.*.rating' => 'sometimes|integer|min:1|max:10',
+            'skills.*' => 'max:100',
             'avatar' => 'nullable|string|max:255|url',
             'location' => 'nullable|string|max:255',
-            'twitter_url' => 'nullable|string|max:255|url',
             'alternative_email' => 'nullable|string|email|max:255',
+
+            // Social links
+            'twitter_url' => 'nullable|string|max:255|url',
+            'facebook_url' => 'nullable|string|max:255|url',
+            'instagram_url' => 'nullable|string|max:255|url',
+            'youtube_url' => 'nullable|string|max:255|url',
             'github_url' => 'nullable|string|max:255|url',
             'portfolio_url' => 'nullable|string|max:255|url',
             'linkedin_url' => 'nullable|string|max:255|url',
             'cv_url' => 'nullable|string|max:255|url',
-            'language' => 'nullable|string|max:10|in:ar,en,fr,es',
+
+            // Preferences
+            'language' => ['nullable', Rule::in(['ar', 'en'])],
             'theme' => ['nullable', Rule::in(['light', 'dark'])],
+
+            // Privacy settings
             'is_public' => 'nullable|boolean',
+            'allow_messages' => 'nullable|boolean',
+            'allow_invitation_requests' => 'nullable|boolean',
+
+            // Stats
             'projects_count' => 'nullable|integer|min:0',
             'tasks_completed' => 'nullable|integer|min:0',
         ];
     }
-
 
     public function messages(): array
     {
@@ -53,14 +66,15 @@ class UpdateProfileRequest extends FormRequest
             'avatar.url' => 'Avatar URL must be a valid URL',
             'location.max' => 'Location must not exceed 255 characters',
             'twitter_url.url' => 'Twitter URL must be a valid URL',
-            'alternative_email.email' => 'Alternative email must be a valid email address',
+            'facebook_url.url' => 'Facebook URL must be a valid URL',
+            'instagram_url.url' => 'Instagram URL must be a valid URL',
+            'youtube_url.url' => 'YouTube URL must be a valid URL',
             'github_url.url' => 'GitHub URL must be a valid URL',
             'portfolio_url.url' => 'Portfolio URL must be a valid URL',
             'linkedin_url.url' => 'LinkedIn URL must be a valid URL',
             'cv_url.url' => 'CV URL must be a valid URL',
-            'language.in' => 'Language must be one of: ar, en, fr, es',
+            'language.in' => 'Language must be either ar or en',
             'theme.in' => 'Theme must be either light or dark',
-            'is_public.boolean' => 'Is public field must be true or false',
             'projects_count.integer' => 'Projects count must be an integer',
             'projects_count.min' => 'Projects count must be at least 0',
             'tasks_completed.integer' => 'Tasks completed must be an integer',

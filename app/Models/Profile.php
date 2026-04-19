@@ -20,8 +20,11 @@ class Profile extends Model
         'skills',
         'avatar',
         'location',
-        'twitter_url',
         'alternative_email',
+        'twitter_url',
+        'facebook_url',
+        'instagram_url',
+        'youtube_url',
         'github_url',
         'portfolio_url',
         'linkedin_url',
@@ -29,24 +32,35 @@ class Profile extends Model
         'language',
         'theme',
         'is_public',
+        'allow_messages',
+        'allow_invitation_requests',
         'projects_count',
         'tasks_completed',
+        'report_count',
     ];
 
     protected $casts = [
         'skills' => 'array',
         'is_public' => 'boolean',
+        'allow_messages' => 'boolean',
+        'allow_invitation_requests' => 'boolean',
         'projects_count' => 'integer',
         'tasks_completed' => 'integer',
+        'report_count' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
     protected $attributes = [
+        'language' => 'ar',
         'theme' => 'light',
         'is_public' => false,
+        'allow_messages' => false,
+        'allow_invitation_requests' => false,
         'projects_count' => 0,
         'tasks_completed' => 0,
+        'report_count' => 0,
+        'skills' => '[]',
     ];
 
     public function user(): BelongsTo
@@ -54,39 +68,141 @@ class Profile extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function getSkillsListAttribute(): array
+    public function getSkillsAttribute($value): array
     {
-        if (is_array($this->skills)) {
-            return $this->skills;
+        $skills = json_decode($value ?? '[]', true);
+
+        if (!is_array($skills)) {
+            return [];
         }
 
-        return json_decode($this->skills ?? '[]', true) ?? [];
-    }
-
-    public function setSkillsAttribute($value)
-    {
-        $this->attributes['skills'] = is_array($value) ? json_encode($value) : $value;
-    }
-
-    public function addSkill(string $skill): void
-    {
-        $skills = $this->skills_list;
-        if (!in_array($skill, $skills)) {
-            $skills[] = $skill;
-            $this->skills = $skills;
-            $this->save();
+        if (isset($skills[0]) && is_string($skills[0])) {
+            $converted = [];
+            foreach ($skills as $skill) {
+                $converted[] = ['name' => $skill, 'rating' => 5];
+            }
+            return $converted;
         }
+
+        return $skills;
     }
 
-    public function removeSkill(string $skill): void
+    public function setSkillsAttribute($value): void
     {
-        $skills = $this->skills_list;
-        $key = array_search($skill, $skills);
-        if ($key !== false) {
-            unset($skills[$key]);
-            $this->skills = array_values($skills);
-            $this->save();
+        if (is_string($value)) {
+            $this->attributes['skills'] = $value;
+            return;
         }
+
+        if (!is_array($value)) {
+            $this->attributes['skills'] = '[]';
+            return;
+        }
+
+        $validated = [];
+        foreach ($value as $skill) {
+            if (is_array($skill) && isset($skill['name'])) {
+                $validated[] = [
+                    'name' => trim($skill['name']),
+                    'rating' => isset($skill['rating']) ? min(10, max(1, (int)$skill['rating'])) : 5
+                ];
+            } elseif (is_string($skill)) {
+                // Handle old format
+                $validated[] = ['name' => $skill, 'rating' => 5];
+            }
+        }
+
+        $this->attributes['skills'] = json_encode($validated);
     }
 
+    public function getSkillNamesAttribute(): array
+    {
+        return array_column($this->skills, 'name');
+    }
+
+    public function addSkill(string $skillName, int $rating = 5): bool
+    {
+        $skills = $this->skills;
+        $skillName = trim($skillName);
+
+        foreach ($skills as $index => $skill) {
+            if (strcasecmp($skill['name'], $skillName) === 0) {
+                return false;
+            }
+        }
+
+        $skills[] = [
+            'name' => $skillName,
+            'rating' => min(10, max(1, $rating))
+        ];
+
+        $this->skills = $skills;
+        return (bool) $this->save();
+    }
+
+    public function updateSkillRating(string $skillName, int $rating): bool
+    {
+        $skills = $this->skills;
+        $skillName = trim($skillName);
+        $rating = min(10, max(1, $rating));
+
+        foreach ($skills as $index => $skill) {
+            if (strcasecmp($skill['name'], $skillName) === 0) {
+                $skills[$index]['rating'] = $rating;
+                $this->skills = $skills;
+                return (bool) $this->save();
+            }
+        }
+
+        return false;
+    }
+
+    public function removeSkill(string $skillName): bool
+    {
+        $skills = $this->skills;
+        $skillName = trim($skillName);
+
+        foreach ($skills as $index => $skill) {
+            if (strcasecmp($skill['name'], $skillName) === 0) {
+                unset($skills[$index]);
+                $this->skills = array_values($skills);
+                return (bool) $this->save();
+            }
+        }
+
+        return false;
+    }
+
+    public function getAverageSkillRatingAttribute(): float
+    {
+        $skills = $this->skills;
+
+        if (empty($skills)) {
+            return 0;
+        }
+
+        $total = array_sum(array_column($skills, 'rating'));
+        return round($total / count($skills), 1);
+    }
+
+    public function getTopSkillsAttribute(int $limit = 5): array
+    {
+        $skills = $this->skills;
+
+        usort($skills, function ($a, $b) {
+            return $b['rating'] <=> $a['rating'];
+        });
+
+        return array_slice($skills, 0, $limit);
+    }
+
+    protected static function booted()
+    {
+        static::saving(function ($profile) {
+            if (!$profile->is_public) {
+                $profile->allow_messages = false;
+                $profile->allow_invitation_requests = false;
+            }
+        });
+    }
 }
