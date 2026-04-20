@@ -1,21 +1,22 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Http\Controllers\Api\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\LogoutController;
-use App\Http\Controllers\Api\Auth\EmailVerificationController;
+use App\Http\Controllers\Api\Auth\PasswordResetController;
+use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\NoteController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectUserController;
-use App\Http\Controllers\Api\TaskStatusController;
-use App\Http\Controllers\Api\CommentController;
-use App\Http\Controllers\Api\TaskController;
-use App\Http\Controllers\Api\TaskAssignmentController;
-use App\Http\Controllers\Api\TaskDependencyController;
-use App\Http\Controllers\Api\NotificationController;
-use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\TaskAssignmentController;
+use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\Api\TaskDependencyController;
+use App\Http\Controllers\Api\TaskStatusController;
+use Illuminate\Support\Facades\Route;
 
 // PUBLIC ROUTES (No authentication required)
 Route::post('/register', [RegisterController::class, 'register']);
@@ -54,6 +55,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
+
+// NOTES ROUTES
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::get('/my-note', [NoteController::class, 'show']);
+    Route::put('/note', [NoteController::class, 'write']);
+    Route::delete('/note', [NoteController::class, 'clear']);
+});
 
 // PROJECTS ROUTES - Read only (always accessible)
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
