@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectUserController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\TaskAssignmentController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TaskDependencyController;
@@ -57,6 +58,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
+
+// SEARCH ROUTES
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::get('/search', [SearchController::class, 'search']);
+});
 
 // FAVORITE PROJECTS ROUTES
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
