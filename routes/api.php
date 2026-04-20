@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileController;
@@ -55,6 +56,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
+
+// FAVORITES ROUTES
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::post('/my-favorites/toggle/{userId}', [FavoriteController::class, 'toggle']);
+    Route::get('/my-favorites', [FavoriteController::class, 'index']);
+    Route::post('/my-favorites', [FavoriteController::class, 'store']);
+    Route::delete('/my-favorites/{userId}', [FavoriteController::class, 'destroy']);
+    Route::get('/my-favorites/check/{userId}', [FavoriteController::class, 'check']);
+});
 
 // NOTES ROUTES
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
