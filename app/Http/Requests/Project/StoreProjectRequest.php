@@ -16,6 +16,11 @@ class StoreProjectRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:5000',
+            'image' => 'nullable|string|max:255|url',
+            'status' => 'nullable|in:active,paused,completed',
+            'visibility' => 'nullable|in:private,public',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
         ];
     }
 

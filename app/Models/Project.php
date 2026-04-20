@@ -19,10 +19,17 @@ class Project extends Model
     protected $fillable = [
         'name',
         'description',
+        'image',
+        'status',
+        'visibility',
+        'start_date',
+        'end_date',
         'created_by',
     ];
 
     protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',

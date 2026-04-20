@@ -17,9 +17,6 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\ReportController;
 
-
-
-
 // PUBLIC ROUTES (No authentication required)
 Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/login', [LoginController::class, 'login']);
@@ -54,87 +51,51 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/profiles/{profile}/can-message', [ProfileController::class, 'canSendMessage']);
     Route::get('/profiles/{profile}/can-invite', [ProfileController::class, 'canSendInvitation']);
-
-
 });
 
-// PROJECTS ROUTES (Requires authentication + active account + verified email)
+// ============= ROUTES OUTSIDE project.not.locked (Always work) =============
+
+// PROJECTS ROUTES - Read only (always accessible)
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::get('/my-projects', [ProjectController::class, 'myProjects']);
-    Route::post('/projects/{project}/restore', [ProjectController::class, 'restore']);
-    Route::apiResource('projects', ProjectController::class);
+    Route::get('/projects/{project}', [ProjectController::class, 'show']);
+    Route::patch('/projects/{project}/status', [ProjectController::class, 'updateStatus']);
+    Route::patch('/projects/{project}/visibility', [ProjectController::class, 'updateVisibility']);
 });
 
-// PROJECT USERS ROUTES (Requires authentication + active account + verified email)
+// PROJECT USERS ROUTES - Read only (always accessible)
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/users')->group(function () {
         Route::get('/', [ProjectUserController::class, 'index']);
-        Route::post('/', [ProjectUserController::class, 'addUser']);
-        Route::put('/{userId}/role', [ProjectUserController::class, 'updateRole']);
-        Route::delete('/{userId}', [ProjectUserController::class, 'removeUser']);
         Route::post('/leave', [ProjectUserController::class, 'leaveProject']);
-        Route::post('/transfer-ownership/{userId}', [ProjectUserController::class, 'transferOwnership']);
     });
 });
 
-// TASK STATUSES ROUTES (Requires authentication + active account + verified email)
-Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
-    Route::prefix('projects/{project}/statuses')->group(function () {
-        Route::get('/', [TaskStatusController::class, 'index']);
-        Route::post('/', [TaskStatusController::class, 'store']);
-        Route::post('/default', [TaskStatusController::class, 'defaultStatuses']);
-        Route::post('/reorder', [TaskStatusController::class, 'reorder']);
-        Route::get('/{taskStatus}', [TaskStatusController::class, 'show']);
-        Route::put('/{taskStatus}', [TaskStatusController::class, 'update']);
-        Route::delete('/{taskStatus}', [TaskStatusController::class, 'destroy']);
-    });
-});
-
-// TASKS ROUTES (Requires authentication + active account + verified email)
+// TASKS ROUTES - Read only (always accessible)
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/tasks')->group(function () {
         Route::get('/', [TaskController::class, 'index']);
-        Route::post('/', [TaskController::class, 'store']);
-        Route::post('/reorder', [TaskController::class, 'reorder']);
         Route::get('/{task}', [TaskController::class, 'show']);
-        Route::put('/{task}', [TaskController::class, 'update']);
-        Route::put('/{task}/status', [TaskController::class, 'updateStatus']);
-        Route::delete('/{task}', [TaskController::class, 'destroy']);
     });
 });
 
-// TASK ASSIGNMENTS ROUTES (Requires authentication + active account + verified email)
+// TASK ASSIGNMENTS ROUTES - Read only (always accessible)
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/tasks/{task}/assignments')->group(function () {
         Route::get('/', [TaskAssignmentController::class, 'index']);
-        Route::post('/', [TaskAssignmentController::class, 'assign']);
-        Route::delete('/{userId}', [TaskAssignmentController::class, 'unassign']);
     });
     Route::get('/my-assigned-tasks', [TaskAssignmentController::class, 'myAssignedTasks']);
 });
 
-// TASK DEPENDENCIES ROUTES (Requires authentication + active account + verified email)
+// TASK DEPENDENCIES ROUTES - Read only (always accessible)
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/tasks/{task}/dependencies')->group(function () {
         Route::get('/', [TaskDependencyController::class, 'index']);
-        Route::post('/', [TaskDependencyController::class, 'addDependency']);
-        Route::delete('/{dependsOnTaskId}', [TaskDependencyController::class, 'removeDependency']);
-        Route::put('/{dependsOnTaskId}/type', [TaskDependencyController::class, 'updateDependencyType']);
     });
 });
 
-// COMMENTS ROUTES (Requires authentication + active account + verified email)
-Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
-    Route::prefix('tasks/{task}/comments')->group(function () {
-        Route::get('/', [CommentController::class, 'index']);
-        Route::post('/', [CommentController::class, 'store']);
-        Route::get('/{comment}', [CommentController::class, 'show']);
-        Route::put('/{comment}', [CommentController::class, 'update']);
-        Route::delete('/{comment}', [CommentController::class, 'destroy']);
-    });
-});
 
-// NOTIFICATIONS ROUTES (Requires authentication + active account + verified email)
+// NOTIFICATIONS ROUTES (always accessible)
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('notifications')->group(function () {
         Route::post('/test', [NotificationController::class, 'test']);
@@ -145,9 +106,7 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
     });
 });
 
-
-
-// REPORT ROUTES
+// REPORT ROUTES (always accessible)
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('reports')->group(function () {
         Route::post('/', [ReportController::class, 'store']);
@@ -156,3 +115,82 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
     });
 });
 
+// COMMENTS ROUTES (always accessible)
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::prefix('tasks/{task}/comments')->group(function () {
+        Route::get('/', [CommentController::class, 'index']);
+        Route::get('/{comment}', [CommentController::class, 'show']);
+    });
+});
+
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::post('/projects/{project}/restore', [ProjectController::class, 'restore']);
+});
+
+
+// ============= ROUTES INSIDE project.not.locked (Blocked when project is paused/completed) =============
+
+// COMMENTS ROUTES (always accessible)
+Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'])->group(function () {
+    Route::prefix('tasks/{task}/comments')->group(function () {
+        Route::post('/', [CommentController::class, 'store']);
+        Route::put('/{comment}', [CommentController::class, 'update']);
+        Route::delete('/{comment}', [CommentController::class, 'destroy']);
+    });
+});
+
+// PROJECTS ROUTES - Write operations
+Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'])->group(function () {
+    Route::post('/projects', [ProjectController::class, 'store']);
+    Route::put('/projects/{project}', [ProjectController::class, 'update']);
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
+});
+
+// PROJECT USERS ROUTES - Write operations
+Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'])->group(function () {
+    Route::prefix('projects/{project}/users')->group(function () {
+        Route::post('/', [ProjectUserController::class, 'addUser']);
+        Route::put('/{userId}/role', [ProjectUserController::class, 'updateRole']);
+        Route::delete('/{userId}', [ProjectUserController::class, 'removeUser']);
+        Route::post('/transfer-ownership/{userId}', [ProjectUserController::class, 'transferOwnership']);
+    });
+});
+
+// TASK STATUSES ROUTES (all operations - write)
+Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'])->group(function () {
+    Route::prefix('projects/{project}/statuses')->group(function () {
+        Route::post('/', [TaskStatusController::class, 'store']);
+        Route::post('/default', [TaskStatusController::class, 'defaultStatuses']);
+        Route::post('/reorder', [TaskStatusController::class, 'reorder']);
+        Route::put('/{taskStatus}', [TaskStatusController::class, 'update']);
+        Route::delete('/{taskStatus}', [TaskStatusController::class, 'destroy']);
+    });
+});
+
+// TASKS ROUTES - Write operations
+Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'])->group(function () {
+    Route::prefix('projects/{project}/tasks')->group(function () {
+        Route::post('/', [TaskController::class, 'store']);
+        Route::post('/reorder', [TaskController::class, 'reorder']);
+        Route::put('/{task}', [TaskController::class, 'update']);
+        Route::put('/{task}/status', [TaskController::class, 'updateStatus']);
+        Route::delete('/{task}', [TaskController::class, 'destroy']);
+    });
+});
+
+// TASK ASSIGNMENTS ROUTES - Write operations
+Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'])->group(function () {
+    Route::prefix('projects/{project}/tasks/{task}/assignments')->group(function () {
+        Route::post('/', [TaskAssignmentController::class, 'assign']);
+        Route::delete('/{userId}', [TaskAssignmentController::class, 'unassign']);
+    });
+});
+
+// TASK DEPENDENCIES ROUTES - Write operations
+Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'])->group(function () {
+    Route::prefix('projects/{project}/tasks/{task}/dependencies')->group(function () {
+        Route::post('/', [TaskDependencyController::class, 'addDependency']);
+        Route::delete('/{dependsOnTaskId}', [TaskDependencyController::class, 'removeDependency']);
+        Route::put('/{dependsOnTaskId}/type', [TaskDependencyController::class, 'updateDependencyType']);
+    });
+});
