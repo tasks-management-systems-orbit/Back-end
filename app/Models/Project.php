@@ -42,6 +42,12 @@ class Project extends Model
 
     // ============== Relationships ==============
 
+    public function favoritedBy()
+    {
+        return $this->belongsToMany(User::class, 'favorite_projects', 'project_id', 'user_id')
+            ->withTimestamps();
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

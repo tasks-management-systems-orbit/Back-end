@@ -196,4 +196,30 @@ class User extends Authenticatable
     {
         return $this->favoriteUsers()->where('favorite_user_id', $user->id)->exists();
     }
+
+    public function favoriteProjects()
+    {
+        return $this->belongsToMany(Project::class, 'favorite_projects', 'user_id', 'project_id')
+            ->withTimestamps();
+    }
+
+    public function addProjectToFavorites(Project $project): bool
+    {
+        if ($this->favoriteProjects()->where('project_id', $project->id)->exists()) {
+            return false;
+        }
+
+        $this->favoriteProjects()->attach($project->id);
+        return true;
+    }
+
+    public function removeProjectFromFavorites(Project $project): bool
+    {
+        return $this->favoriteProjects()->detach($project->id) > 0;
+    }
+
+    public function isProjectFavorite(Project $project): bool
+    {
+        return $this->favoriteProjects()->where('project_id', $project->id)->exists();
+    }
 }
