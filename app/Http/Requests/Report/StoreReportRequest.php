@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Report;
+namespace app\Http\Requests\Report;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -11,22 +11,22 @@ class StoreReportRequest extends FormRequest
         return true;
     }
 
-public function rules(): array
-{
-    return [
-        'reported_user_id' => [
-            'required',
-            'exists:users,id',
-            function ($attribute, $value, $fail) {
-                if ($value == $this->user()->id) {
-                    $fail('You cannot report yourself.');
-                }
-            },
-        ],
-        'reason' => 'required|string|max:255',
-        'details' => 'nullable|string|max:1000',
-    ];
-}
+    public function rules(): array
+    {
+        return [
+            'reported_user_id' => [
+                'required',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    if ($value == $this->user()->id) {
+                        $fail('You cannot report yourself.');
+                    }
+                },
+            ],
+            'reason' => 'required|string|max:255',
+            'details' => 'nullable|string|max:1000',
+        ];
+    }
 
     public function messages(): array
     {

@@ -1,20 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\Api\Auth;
+namespace app\Http\Controllers\api\Auth;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Auth\LoginRequest;
+use App\Http\Requests\api\Auth\LoginRequest;
 use App\Http\Traits\ApiResponseTrait;
 use App\Services\AuthService;
 
 class LoginController extends Controller
 {
-    use ApiResponseTrait ;
+    use ApiResponseTrait;
 
-    public function __construct(protected AuthService $authService)
-    {
-    }
+    public function __construct(protected AuthService $authService) {}
 
     public function login(LoginRequest $request)
     {

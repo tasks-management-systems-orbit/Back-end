@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Api\Auth;
+namespace app\Http\Controllers\api\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Auth\RegisterRequest;
+use App\Http\Requests\api\Auth\RegisterRequest;
 use App\Http\Traits\ApiResponseTrait;
 use App\Services\AuthService;
 use App\Services\VerificationCodeService;
@@ -15,19 +15,18 @@ class RegisterController extends Controller
     public function __construct(
         protected AuthService $authService,
         protected VerificationCodeService $verificationService
-    ) {
-    }
+    ) {}
 
 
     public function register(RegisterRequest $request)
-{
-    $user = $this->authService->register($request->validated());
+    {
+        $user = $this->authService->register($request->validated());
 
-    $this->verificationService->generateAndSend($user->email, $user->name);
+        $this->verificationService->generateAndSend($user->email, $user->name);
 
-    return $this->successResponse([
-        'email' => $user->email,
-        'requires_verification' => true
-    ], 'Account created successfully. Please verify your email to login.', 201);
-}
+        return $this->successResponse([
+            'email' => $user->email,
+            'requires_verification' => true
+        ], 'Account created successfully. Please verify your email to login.', 201);
+    }
 }

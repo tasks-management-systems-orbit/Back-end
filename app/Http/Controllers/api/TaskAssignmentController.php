@@ -1,7 +1,7 @@
 <?php
 // app/Http/Controllers/Api/TaskAssignmentController.php
 
-namespace App\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Task\AssignUsersRequest;
@@ -86,7 +86,6 @@ class TaskAssignmentController extends Controller
                     ]),
                 ],
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -134,7 +133,6 @@ class TaskAssignmentController extends Controller
                 'success' => true,
                 'message' => 'User unassigned from task successfully',
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace app\Services;
 
 use App\Models\Notification;
 use App\Events\NotificationSent;
@@ -25,7 +25,6 @@ class NotificationService
 
 
             return $notification;
-
         } catch (\Exception $e) {
             Log::error('Failed to send notification: ' . $e->getMessage());
             return null;
@@ -43,7 +42,7 @@ class NotificationService
 
     public function sendToProjectMembers($projectId, $title, $message, $type = 'info', $data = null)
     {
-        $project = \App\Models\Project::findOrFail($projectId);
+        $project = \app\Models\Project::findOrFail($projectId);
         $userIds = $project->users()->pluck('user_id')->toArray();
 
         return $this->sendToMany($userIds, $title, $message, $type, $data);
@@ -90,6 +89,4 @@ class NotificationService
         return Notification::where('created_at', '<', now()->subDays($days))
             ->delete();
     }
-
-
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Project\StoreProjectRequest;
@@ -166,7 +166,6 @@ class ProjectController extends Controller
                 'message' => 'Project created successfully',
                 'data' => new ProjectResource($project->load('creator'))
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

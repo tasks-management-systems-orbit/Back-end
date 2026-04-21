@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TaskDependency\AddDependencyRequest;
@@ -118,7 +118,6 @@ class TaskDependencyController extends Controller
                     'type_description' => $task->getTypeDescription($type),
                 ],
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -159,7 +158,6 @@ class TaskDependencyController extends Controller
                 'success' => true,
                 'message' => 'Dependency removed successfully',
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -209,7 +207,6 @@ class TaskDependencyController extends Controller
                     'type_description' => $task->getTypeDescription($type),
                 ],
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

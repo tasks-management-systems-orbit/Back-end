@@ -1,7 +1,7 @@
 <?php
 // app/Http/Requests/Task/UpdateTaskStatusRequest.php
 
-namespace App\Http\Requests\Task;
+namespace app\Http\Requests\Task;
 
 use Illuminate\Foundation\Http\FormRequest;
 

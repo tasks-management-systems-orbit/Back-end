@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Api\Auth;
+namespace app\Http\Requests\api\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
@@ -19,10 +19,10 @@ class RegisterRequest extends FormRequest
             'username' => 'required|string|max:100|unique:users,username',
             'email' => 'required|email|max:255|unique:users,email',
             'password' =>  [
-            'required',
-            'confirmed',
-            Password::defaults()
-        ],
+                'required',
+                'confirmed',
+                Password::defaults()
+            ],
         ];
     }
 

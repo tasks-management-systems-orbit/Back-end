@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Search\SearchRequest;
@@ -103,14 +103,11 @@ class SearchController extends Controller
 
         if ($lowerName === $lowerQuery || $lowerUsername === $lowerQuery) {
             $score += 100;
-        }
-        elseif (str_starts_with($lowerName, $lowerQuery) || str_starts_with($lowerUsername, $lowerQuery)) {
+        } elseif (str_starts_with($lowerName, $lowerQuery) || str_starts_with($lowerUsername, $lowerQuery)) {
             $score += 80;
-        }
-        elseif (str_contains($lowerName, " {$lowerQuery} ") || str_contains($lowerUsername, " {$lowerQuery} ")) {
+        } elseif (str_contains($lowerName, " {$lowerQuery} ") || str_contains($lowerUsername, " {$lowerQuery} ")) {
             $score += 60;
-        }
-        elseif (str_contains($lowerName, $lowerQuery) || str_contains($lowerUsername, $lowerQuery)) {
+        } elseif (str_contains($lowerName, $lowerQuery) || str_contains($lowerUsername, $lowerQuery)) {
             $score += 40;
         }
 
@@ -129,14 +126,11 @@ class SearchController extends Controller
 
         if ($lowerName === $lowerQuery) {
             $score += 100;
-        }
-        elseif (str_starts_with($lowerName, $lowerQuery)) {
+        } elseif (str_starts_with($lowerName, $lowerQuery)) {
             $score += 80;
-        }
-        elseif (str_contains($lowerName, " {$lowerQuery} ")) {
+        } elseif (str_contains($lowerName, " {$lowerQuery} ")) {
             $score += 60;
-        }
-        elseif (str_contains($lowerName, $lowerQuery)) {
+        } elseif (str_contains($lowerName, $lowerQuery)) {
             $score += 40;
         }
 

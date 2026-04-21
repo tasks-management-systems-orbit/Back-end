@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Comment\StoreCommentRequest;
@@ -58,7 +58,6 @@ class CommentController extends Controller
                 'message' => 'Comment added successfully',
                 'data' => new CommentResource($comment),
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -128,7 +127,6 @@ class CommentController extends Controller
                 'message' => 'Comment updated successfully',
                 'data' => new CommentResource($comment->load(['user', 'user.profile'])),
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -180,7 +178,6 @@ class CommentController extends Controller
                 'success' => true,
                 'message' => 'Comment deleted successfully',
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TaskStatus\StoreTaskStatusRequest;
@@ -61,7 +61,6 @@ class TaskStatusController extends Controller
                 'message' => 'Task status created successfully',
                 'data' => new TaskStatusResource($status),
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -129,7 +128,6 @@ class TaskStatusController extends Controller
                 'message' => 'Task status updated successfully',
                 'data' => new TaskStatusResource($taskStatus),
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -175,7 +173,6 @@ class TaskStatusController extends Controller
                 'success' => true,
                 'message' => 'Task status deleted successfully',
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -211,7 +208,6 @@ class TaskStatusController extends Controller
                 'message' => 'Task statuses reordered successfully',
                 'data' => TaskStatusResource::collection($updatedStatuses),
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -256,7 +252,6 @@ class TaskStatusController extends Controller
                 'message' => 'Default statuses created successfully',
                 'data' => TaskStatusResource::collection($statuses),
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

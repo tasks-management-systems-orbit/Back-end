@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Listeners;
+namespace app\Listeners;
 
 use App\Events\ProjectCreated;
 

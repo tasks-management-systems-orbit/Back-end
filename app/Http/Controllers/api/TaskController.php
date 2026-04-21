@@ -1,7 +1,7 @@
 <?php
 // app/Http/Controllers/Api/TaskController.php
 
-namespace App\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Task\StoreTaskRequest;
@@ -104,7 +104,6 @@ class TaskController extends Controller
                 'message' => 'Task created successfully',
                 'data' => new TaskResource($task),
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -152,10 +151,8 @@ class TaskController extends Controller
         $isTaskAssignee = ($task->assigned_to === $userId) || $task->assignees()->where('user_id', $userId)->exists();
 
         if ($isOwner || $isManager) {
-        }
-        elseif ($isUser && $isTaskAssignee) {
-        }
-        else {
+        } elseif ($isUser && $isTaskAssignee) {
+        } else {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to update this task',
@@ -167,11 +164,17 @@ class TaskController extends Controller
 
             if ($isUser && !$isOwner && !$isManager) {
                 $task->update($request->only([
-                    'title', 'description'
+                    'title',
+                    'description'
                 ]));
             } else {
                 $task->update($request->only([
-                    'title', 'description', 'priority', 'due_date', 'assigned_to', 'position'
+                    'title',
+                    'description',
+                    'priority',
+                    'due_date',
+                    'assigned_to',
+                    'position'
                 ]));
             }
 
@@ -188,7 +191,6 @@ class TaskController extends Controller
                 'message' => 'Task updated successfully',
                 'data' => new TaskResource($task),
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -217,10 +219,8 @@ class TaskController extends Controller
         $isTaskAssignee = ($task->assigned_to === $userId) || $task->assignees()->where('user_id', $userId)->exists();
 
         if ($isOwner || $isManager) {
-        }
-        elseif ($isUser && $isTaskAssignee) {
-        }
-        else {
+        } elseif ($isUser && $isTaskAssignee) {
+        } else {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to change task status',
@@ -240,8 +240,8 @@ class TaskController extends Controller
 
             $newPosition = $request->position ??
                 Task::where('project_id', $project->id)
-                    ->where('status_id', $newStatusId)
-                    ->max('position') + 1;
+                ->where('status_id', $newStatusId)
+                ->max('position') + 1;
 
             $task->update([
                 'status_id' => $newStatusId,
@@ -262,7 +262,6 @@ class TaskController extends Controller
                 'message' => 'Task status updated successfully',
                 'data' => new TaskResource($task),
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -296,7 +295,6 @@ class TaskController extends Controller
                 'success' => true,
                 'message' => 'Tasks reordered successfully',
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -335,7 +333,6 @@ class TaskController extends Controller
                 'success' => true,
                 'message' => 'Task deleted successfully',
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

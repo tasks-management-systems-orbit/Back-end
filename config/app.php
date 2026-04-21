@@ -124,8 +124,8 @@ return [
     ],
 
     // 'providers' => [
-        App\Providers\AppServiceProvider::class,
-        // Laravel\Reverb\ReverbServiceProvider::class,
+    app\Providers\AppServiceProvider::class,
+    // Laravel\Reverb\ReverbServiceProvider::class,
     // ],
 
 

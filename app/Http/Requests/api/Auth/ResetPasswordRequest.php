@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Api\Auth;
+namespace app\Http\Requests\api\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
@@ -15,10 +15,10 @@ class ResetPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-        'email' => 'required|email|exists:users,email',
-        'code' => 'required|string|size:6',
-        'password' => ['required', 'confirmed', Password::defaults()],
-    ];
+            'email' => 'required|email|exists:users,email',
+            'code' => 'required|string|size:6',
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ];
     }
 
     public function messages(): array

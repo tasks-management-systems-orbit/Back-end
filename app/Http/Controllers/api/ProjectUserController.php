@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProjectUser\AddUserRequest;
@@ -57,54 +57,53 @@ class ProjectUserController extends Controller
     }
 
     public function addUser(AddUserRequest $request, Project $project): JsonResponse
-{
-    $userId = $request->user()->id;
-    $currentUserRole = $project->getUserRole($userId);
+    {
+        $userId = $request->user()->id;
+        $currentUserRole = $project->getUserRole($userId);
 
-    if ($project->created_by !== $userId && !in_array($currentUserRole, ['owner', 'manager'])) {
-        return response()->json([
-            'success' => false,
-            'message' => 'You do not have permission to add users to this project'
-        ], 403);
+        if ($project->created_by !== $userId && !in_array($currentUserRole, ['owner', 'manager'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to add users to this project'
+            ], 403);
+        }
+
+        $newUserId = $request->user_id;
+
+        if ($project->hasUser($newUserId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User is already a user of this project'
+            ], 409);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $project->addUser($newUserId, $request->role);
+
+            DB::commit();
+
+            $newUser = User::with('profile')->find($newUserId);
+            $newUser->role = $request->role;
+
+            event(new UserJoinedProject($newUser, $project));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User added successfully',
+                'data' => new ProjectUserResource($newUser)
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add user',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-
-    $newUserId = $request->user_id;
-
-    if ($project->hasUser($newUserId)) {
-        return response()->json([
-            'success' => false,
-            'message' => 'User is already a user of this project'
-        ], 409);
-    }
-
-    try {
-        DB::beginTransaction();
-
-        $project->addUser($newUserId, $request->role);
-
-        DB::commit();
-
-        $newUser = User::with('profile')->find($newUserId);
-        $newUser->role = $request->role;
-
-        event(new UserJoinedProject($newUser, $project));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User added successfully',
-            'data' => new ProjectUserResource($newUser)
-        ], 201);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to add user',
-            'error' => $e->getMessage()
-        ], 500);
-    }
-}
 
     public function updateRole(UpdateUserRoleRequest $request, Project $project, int $userId): JsonResponse
     {
@@ -156,7 +155,6 @@ class ProjectUserController extends Controller
                 'message' => 'User role updated successfully',
                 'data' => new ProjectUserResource($updatedUser)
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -221,7 +219,6 @@ class ProjectUserController extends Controller
                 'success' => true,
                 'message' => 'User removed successfully'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -262,7 +259,6 @@ class ProjectUserController extends Controller
                 'success' => true,
                 'message' => 'You have left the project successfully'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -316,7 +312,6 @@ class ProjectUserController extends Controller
                     'previous_owner_id' => $currentUserId,
                 ]
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

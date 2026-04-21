@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Providers;
+namespace app\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
-        \App\Events\TaskCompleted::class => [
-            \App\Listeners\UpdateUserStats::class,
+        \app\Events\TaskCompleted::class => [
+            \app\Listeners\UpdateUserStats::class,
         ],
-        \App\Events\ProjectCreated::class => [
-            \App\Listeners\UpdateUserProjectsCount::class,
+        \app\Events\ProjectCreated::class => [
+            \app\Listeners\UpdateUserProjectsCount::class,
         ],
-        \App\Events\UserJoinedProject::class => [
-            \App\Listeners\UpdateUserProjectsCountOnJoin::class,
+        \app\Events\UserJoinedProject::class => [
+            \app\Listeners\UpdateUserProjectsCountOnJoin::class,
         ],
     ];
 

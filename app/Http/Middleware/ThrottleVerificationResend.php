@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace app\Http\Middleware;
 
 use Closure;
 use Illuminate\Cache\RateLimiter;
@@ -24,7 +24,7 @@ class ThrottleVerificationResend
         }
 
         $key = 'resend-verification:' . $email;
-        $maxAttempts =5;
+        $maxAttempts = 5;
         $decayMinutes = 15;
 
         if ($this->limiter->tooManyAttempts($key, $maxAttempts)) {

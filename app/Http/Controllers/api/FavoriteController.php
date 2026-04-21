@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\AddFavoriteRequest;
+use App\Http\Requests\FavoriteUser\AddFavoriteRequest;
 use App\Http\Resources\FavoriteResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;

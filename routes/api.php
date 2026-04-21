@@ -1,24 +1,24 @@
 <?php
 
-use App\Http\Controllers\Api\Auth\EmailVerificationController;
-use App\Http\Controllers\Api\Auth\LoginController;
-use App\Http\Controllers\Api\Auth\LogoutController;
-use App\Http\Controllers\Api\Auth\PasswordResetController;
-use App\Http\Controllers\Api\Auth\RegisterController;
-use App\Http\Controllers\Api\CommentController;
-use App\Http\Controllers\Api\FavoriteController;
-use App\Http\Controllers\Api\FavoriteProjectController;
-use App\Http\Controllers\Api\NoteController;
-use App\Http\Controllers\Api\NotificationController;
-use App\Http\Controllers\Api\ProfileController;
-use App\Http\Controllers\Api\ProjectController;
-use App\Http\Controllers\Api\ProjectUserController;
-use App\Http\Controllers\Api\ReportController;
-use App\Http\Controllers\Api\SearchController;
-use App\Http\Controllers\Api\TaskAssignmentController;
-use App\Http\Controllers\Api\TaskController;
-use App\Http\Controllers\Api\TaskDependencyController;
-use App\Http\Controllers\Api\TaskStatusController;
+use App\Http\Controllers\api\Auth\EmailVerificationController;
+use App\Http\Controllers\api\Auth\LoginController;
+use App\Http\Controllers\api\Auth\LogoutController;
+use App\Http\Controllers\api\Auth\PasswordResetController;
+use App\Http\Controllers\api\Auth\RegisterController;
+use App\Http\Controllers\api\CommentController;
+use App\Http\Controllers\api\FavoriteController;
+use App\Http\Controllers\api\FavoriteProjectController;
+use App\Http\Controllers\api\NoteController;
+use App\Http\Controllers\api\NotificationController;
+use App\Http\Controllers\api\ProfileController;
+use App\Http\Controllers\api\ProjectController;
+use App\Http\Controllers\api\ProjectUserController;
+use App\Http\Controllers\api\ReportController;
+use App\Http\Controllers\api\SearchController;
+use App\Http\Controllers\api\TaskAssignmentController;
+use App\Http\Controllers\api\TaskController;
+use App\Http\Controllers\api\TaskDependencyController;
+use App\Http\Controllers\api\TaskStatusController;
 use Illuminate\Support\Facades\Route;
 
 // PUBLIC ROUTES (No authentication required)

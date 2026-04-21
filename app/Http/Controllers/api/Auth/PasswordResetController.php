@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\Api\Auth;
+namespace app\Http\Controllers\api\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Auth\ForgotPasswordRequest;
-use App\Http\Requests\Api\Auth\ResetPasswordRequest;
+use App\Http\Requests\api\Auth\ForgotPasswordRequest;
+use App\Http\Requests\api\Auth\ResetPasswordRequest;
 use App\Http\Traits\ApiResponseTrait;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;

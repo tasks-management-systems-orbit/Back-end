@@ -1,7 +1,7 @@
 <?php
 // app/Http/Controllers/Api/ProfileController.php
 
-namespace App\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile\StoreProfileRequest;
@@ -65,7 +65,6 @@ class ProfileController extends Controller
                 'message' => 'Profile saved successfully',
                 'data' => new ProfileResource($profile->load('user'))
             ], 200);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -114,7 +113,6 @@ class ProfileController extends Controller
                 'message' => 'Profile updated successfully',
                 'data' => new ProfileResource($profile->fresh()->load('user'))
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -139,7 +137,6 @@ class ProfileController extends Controller
                 'success' => true,
                 'message' => 'Profile deleted successfully'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -173,7 +170,7 @@ class ProfileController extends Controller
     {
         try {
             $user = $request->user();
-            $userToBlock = \App\Models\User::findOrFail($userId);
+            $userToBlock = \app\Models\User::findOrFail($userId);
 
             if ($user->id === $userToBlock->id) {
                 return response()->json([
@@ -188,7 +185,6 @@ class ProfileController extends Controller
                 'success' => true,
                 'message' => "User blocked successfully"
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -202,7 +198,7 @@ class ProfileController extends Controller
     {
         try {
             $user = $request->user();
-            $userToUnblock = \App\Models\User::findOrFail($userId);
+            $userToUnblock = \app\Models\User::findOrFail($userId);
 
             $user->unblockUser($userToUnblock);
 
@@ -210,7 +206,6 @@ class ProfileController extends Controller
                 'success' => true,
                 'message' => "User unblocked successfully"
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -366,9 +361,4 @@ class ProfileController extends Controller
             ]
         ]);
     }
-
-
-
-
-
 }

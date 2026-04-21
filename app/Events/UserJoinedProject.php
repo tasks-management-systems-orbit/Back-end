@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Events;
+namespace app\Events;
 
 use App\Models\Project;
 use App\Models\User;

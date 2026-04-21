@@ -1,7 +1,7 @@
 <?php
 // app/Models/TaskStatus.php
 
-namespace App\Models;
+namespace app\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
