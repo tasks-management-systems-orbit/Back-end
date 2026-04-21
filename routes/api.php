@@ -6,12 +6,15 @@ use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\FavoriteController;
+use App\Http\Controllers\Api\FavoriteProjectController;
 use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectUserController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\TaskAssignmentController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TaskDependencyController;
@@ -55,6 +58,29 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
+
+// SEARCH ROUTES
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::get('/search', [SearchController::class, 'search']);
+});
+
+// FAVORITE PROJECTS ROUTES
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::post('/my-favorite-projects/toggle/{projectId}', [FavoriteProjectController::class, 'toggle']);
+    Route::get('/my-favorite-projects', [FavoriteProjectController::class, 'index']);
+    Route::post('/my-favorite-projects', [FavoriteProjectController::class, 'store']);
+    Route::delete('/my-favorite-projects/{projectId}', [FavoriteProjectController::class, 'destroy']);
+    Route::get('/my-favorite-projects/check/{projectId}', [FavoriteProjectController::class, 'check']);
+});
+
+// FAVORITES ROUTES
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::post('/my-favorites/toggle/{userId}', [FavoriteController::class, 'toggle']);
+    Route::get('/my-favorites', [FavoriteController::class, 'index']);
+    Route::post('/my-favorites', [FavoriteController::class, 'store']);
+    Route::delete('/my-favorites/{userId}', [FavoriteController::class, 'destroy']);
+    Route::get('/my-favorites/check/{userId}', [FavoriteController::class, 'check']);
+});
 
 // NOTES ROUTES
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {

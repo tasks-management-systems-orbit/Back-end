@@ -155,4 +155,71 @@ class User extends Authenticatable
     {
         return Report::where('reported_user_id', $this->id)->count();
     }
+
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class, 'user_id');
+    }
+
+    public function favoriteUsers()
+    {
+        return $this->belongsToMany(User::class, 'favorites', 'user_id', 'favorite_user_id')
+            ->withTimestamps();
+    }
+
+    public function favoritedBy()
+    {
+        return $this->belongsToMany(User::class, 'favorites', 'favorite_user_id', 'user_id')
+            ->withTimestamps();
+    }
+
+    public function addToFavorites(User $user): bool
+    {
+        if ($this->id === $user->id) {
+            return false;
+        }
+
+        if ($this->favoriteUsers()->where('favorite_user_id', $user->id)->exists()) {
+            return false;
+        }
+
+        $this->favoriteUsers()->attach($user->id);
+        return true;
+    }
+
+    public function removeFromFavorites(User $user): bool
+    {
+        return $this->favoriteUsers()->detach($user->id) > 0;
+    }
+
+    public function isFavorite(User $user): bool
+    {
+        return $this->favoriteUsers()->where('favorite_user_id', $user->id)->exists();
+    }
+
+    public function favoriteProjects()
+    {
+        return $this->belongsToMany(Project::class, 'favorite_projects', 'user_id', 'project_id')
+            ->withTimestamps();
+    }
+
+    public function addProjectToFavorites(Project $project): bool
+    {
+        if ($this->favoriteProjects()->where('project_id', $project->id)->exists()) {
+            return false;
+        }
+
+        $this->favoriteProjects()->attach($project->id);
+        return true;
+    }
+
+    public function removeProjectFromFavorites(Project $project): bool
+    {
+        return $this->favoriteProjects()->detach($project->id) > 0;
+    }
+
+    public function isProjectFavorite(Project $project): bool
+    {
+        return $this->favoriteProjects()->where('project_id', $project->id)->exists();
+    }
 }
