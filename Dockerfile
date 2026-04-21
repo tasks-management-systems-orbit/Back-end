@@ -1,9 +1,16 @@
 FROM php:8.2-apache
 
-# 1. Install system dependencies & PHP extensions
+# 1. Install system dependencies & PHP extensions (Updated for PostgreSQL)
 RUN apt-get update && apt-get install -y \
-    git curl unzip libpq-dev libonig-dev libzip-dev zip libpng-dev \
-    && docker-php-ext-install pdo pdo_mysql mbstring zip pcntl exif bcmath gd \
+    git \
+    curl \
+    unzip \
+    libpq-dev \
+    libonig-dev \
+    libzip-dev \
+    zip \
+    libpng-dev \
+    && docker-php-ext-install pdo pdo_pgsql mbstring zip pcntl exif bcmath gd \
     && a2enmod rewrite \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
