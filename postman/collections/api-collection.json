@@ -887,6 +887,130 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "search",
+      "item": [
+        {
+          "name": "search",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/search?q=keyword", "host": ["{{baseURL}}"], "path": ["search"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "favorites",
+      "item": [
+        {
+          "name": "get-favorites",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/my-favorites", "host": ["{{baseURL}}"], "path": ["my-favorites"] }
+          },
+          "response": []
+        },
+        {
+          "name": "add-favorite",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/my-favorites", "host": ["{{baseURL}}"], "path": ["my-favorites"] }
+          },
+          "response": []
+        },
+        {
+          "name": "remove-favorite",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/my-favorites/{userId}", "host": ["{{baseURL}}"], "path": ["my-favorites", "{userId}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "toggle-favorite",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/my-favorites/toggle/{userId}", "host": ["{{baseURL}}"], "path": ["my-favorites", "toggle", "{userId}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "check-favorite",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/my-favorites/check/{userId}", "host": ["{{baseURL}}"], "path": ["my-favorites", "check", "{userId}"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "favorite-projects",
+      "item": [
+        {
+          "name": "get-favorite-projects",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/my-favorite-projects", "host": ["{{baseURL}}"], "path": ["my-favorite-projects"] }
+          },
+          "response": []
+        },
+        {
+          "name": "add-favorite-project",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"project_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/my-favorite-projects", "host": ["{{baseURL}}"], "path": ["my-favorite-projects"] }
+          },
+          "response": []
+        },
+        {
+          "name": "remove-favorite-project",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/my-favorite-projects/{projectId}", "host": ["{{baseURL}}"], "path": ["my-favorite-projects", "{projectId}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "toggle-favorite-project",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/my-favorite-projects/toggle/{projectId}", "host": ["{{baseURL}}"], "path": ["my-favorite-projects", "toggle", "{projectId}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "check-favorite-project",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/my-favorite-projects/check/{projectId}", "host": ["{{baseURL}}"], "path": ["my-favorite-projects", "check", "{projectId}"] }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "variable": [
