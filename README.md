@@ -1,59 +1,147 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Tasks Management API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel 12 REST API for project and task management with collaborative features.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **User Authentication**: Register, login, email verification, password reset
+- **Projects**: Create, manage, and organize projects with status tracking (active/paused/completed) and visibility settings (private/public)
+- **Tasks**: Full task management within projects with priorities, due dates, and positions
+- **Task Statuses**: Customizable statuses per project
+- **Task Assignments**: Assign tasks to project members
+- **Task Dependencies**: Define task dependencies
+- **Comments**: Discuss tasks with comments
+- **Notes**: Personal notes per user
+- **Profiles**: User profiles with skill ratings
+- **Block List**: Block other users
+- **Reports**: Report inappropriate content
+- **Notifications**: In-app notifications
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Laravel 12
+- Laravel Sanctum (API authentication)
+- SQLite/MySQL database
 
-## Learning Laravel
+## Setup
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## API Endpoints
 
-## Laravel Sponsors
+### Public Routes (No Auth)
+- `POST /api/register` - Register new user
+- `POST /api/login` - Login
+- `POST /api/verify-email` - Verify email
+- `POST /api/resend-verification` - Resend verification code
+- `POST /api/forgot-password` - Request password reset
+- `POST /api/reset-password` - Reset password
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Authenticated Routes
+All routes require `Authorization: Bearer {token}` header.
 
-### Premium Partners
+- `POST /api/logout` - Logout
+- `GET /api/me` - Get current user
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Projects
+- `GET /api/my-projects` - List user's projects
+- `GET /api/projects/{id}` - Get project details
+- `POST /api/projects` - Create project
+- `PUT /api/projects/{id}` - Update project
+- `DELETE /api/projects/{id}` - Delete project
+- `PATCH /api/projects/{id}/status` - Update project status
+- `PATCH /api/projects/{id}/visibility` - Update visibility
+- `POST /api/projects/{id}/restore` - Restore deleted project
 
-## Contributing
+### Project Users
+- `GET /api/projects/{id}/users` - List members
+- `POST /api/projects/{id}/users` - Add user
+- `PUT /api/projects/{id}/users/{userId}/role` - Update role
+- `DELETE /api/projects/{id}/users/{userId}` - Remove user
+- `POST /api/projects/{id}/users/leave` - Leave project
+- `POST /api/projects/{id}/users/transfer-ownership/{userId}` - Transfer ownership
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Tasks
+- `GET /api/projects/{id}/tasks` - List tasks
+- `GET /api/projects/{id}/tasks/{task}` - Get task
+- `POST /api/projects/{id}/tasks` - Create task
+- `PUT /api/projects/{id}/tasks/{task}` - Update task
+- `PUT /api/projects/{id}/tasks/{task}/status` - Update task status
+- `DELETE /api/projects/{id}/tasks/{task}` - Delete task
+- `POST /api/projects/{id}/tasks/reorder` - Reorder tasks
 
-## Code of Conduct
+### Task Assignments
+- `GET /api/projects/{id}/tasks/{task}/assignments` - List assignments
+- `POST /api/projects/{id}/tasks/{task}/assignments` - Assign user
+- `DELETE /api/projects/{id}/tasks/{task}/assignments/{userId}` - Unassign
+- `GET /api/my-assigned-tasks` - Get my assigned tasks
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Task Dependencies
+- `GET /api/projects/{id}/tasks/{task}/dependencies` - List dependencies
+- `POST /api/projects/{id}/tasks/{task}/dependencies` - Add dependency
+- `DELETE /api/projects/{id}/tasks/{task}/dependencies/{dependsOnTaskId}` - Remove dependency
+- `PUT /api/projects/{id}/tasks/{task}/dependencies/{dependsOnTaskId}/type` - Update dependency type
 
-## Security Vulnerabilities
+### Task Statuses
+- `GET /api/projects/{id}/statuses` - List statuses
+- `POST /api/projects/{id}/statuses` - Create status
+- `POST /api/projects/{id}/statuses/default` - Create default statuses
+- `POST /api/projects/{id}/statuses/reorder` - Reorder statuses
+- `PUT /api/projects/{id}/statuses/{status}` - Update status
+- `DELETE /api/projects/{id}/statuses/{status}` - Delete status
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Comments
+- `GET /api/tasks/{task}/comments` - List comments
+- `POST /api/tasks/{task}/comments` - Add comment
+- `GET /api/tasks/{task}/comments/{comment}` - Get comment
+- `PUT /api/tasks/{task}/comments/{comment}` - Update comment
+- `DELETE /api/tasks/{task}/comments/{comment}` - Delete comment
+
+### Notes
+- `GET /api/my-note` - Get my note
+- `PUT /api/note` - Write/update note
+- `DELETE /api/note` - Clear note
+
+### Profiles
+- `GET /api/my-profile` - Get my profile
+- `GET /api/profiles/{profile}` - Get profile
+- `POST /api/profiles` - Create profile
+- `PUT /api/profiles/{profile}` - Update profile
+- `DELETE /api/profiles/{profile}` - Delete profile
+- `GET /api/profiles/{profile}/skills` - Get skills
+- `POST /api/profiles/{profile}/skills` - Add skill
+- `PUT /api/profiles/{profile}/skills/{skill}` - Update skill rating
+- `DELETE /api/profiles/{profile}/skills/{skill}` - Remove skill
+- `POST /api/profiles/block/{userId}` - Block user
+- `DELETE /api/profiles/unblock/{userId}` - Unblock user
+- `GET /api/profiles/blocked-users` - Get blocked users
+- `GET /api/profiles/{profile}/can-message` - Check if can message
+- `GET /api/profiles/{profile}/can-invite` - Check if can invite
+
+### Notifications
+- `GET /api/notifications` - Get notifications
+- `PUT /api/notifications/{id}/read` - Mark as read
+- `PUT /api/notifications/read-all` - Mark all as read
+- `DELETE /api/notifications/{id}` - Delete notification
+
+### Reports
+- `POST /api/reports` - Create report
+- `GET /api/reports` - Get all reports
+- `GET /api/reports/user/{userId}` - Get user reports
+
+## Authentication
+
+Include token in requests:
+```
+Authorization: Bearer {your_token}
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT

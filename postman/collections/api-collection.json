@@ -1,0 +1,899 @@
+{
+  "info": {
+    "_postman_id": "951a352e-4aa1-4fbe-b759-40b1cd325422",
+    "name": "Tasks Management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "34117760"
+  },
+  "item": [
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "register",
+          "protocolProfileBehavior": { "disabledSystemHeaders": { "accept": true } },
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"osama\",\n    \"name\": \"osamad al-doajie\",\n    \"email\": \"osamadoage0@gmail.com\",\n    \"password\": \"12345678a#B\",\n    \"password_confirmation\": \"12345678a#B\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/register", "host": ["{{baseURL}}"], "path": ["register"] }
+          },
+          "response": []
+        },
+        {
+          "name": "login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"osamadoage0@gmail.com\",\n    \"password\": \"12345678a#B\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/login", "host": ["{{baseURL}}"], "path": ["login"] }
+          },
+          "response": []
+        },
+        {
+          "name": "verify-email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"verification_code\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/verify-email", "host": ["{{baseURL}}"], "path": ["verify-email"] }
+          },
+          "response": []
+        },
+        {
+          "name": "resend-verification",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"osamadoage0@gmail.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/resend-verification", "host": ["{{baseURL}}"], "path": ["resend-verification"] }
+          },
+          "response": []
+        },
+        {
+          "name": "forgot-password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"osamadoage0@gmail.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/forgot-password", "host": ["{{baseURL}}"], "path": ["forgot-password"] }
+          },
+          "response": []
+        },
+        {
+          "name": "reset-password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"osamadoage0@gmail.com\",\n    \"password\": \"newpassword123#\",\n    \"password_confirmation\": \"newpassword123#\",\n    \"reset_code\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/reset-password", "host": ["{{baseURL}}"], "path": ["reset-password"] }
+          },
+          "response": []
+        },
+        {
+          "name": "logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/logout", "host": ["{{baseURL}}"], "path": ["logout"] }
+          },
+          "response": []
+        },
+        {
+          "name": "me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/me", "host": ["{{baseURL}}"], "path": ["me"] }
+          },
+          "response": []
+        },
+        {
+          "name": "email-status",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/email-status", "host": ["{{baseURL}}"], "path": ["email-status"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "profiles",
+      "item": [
+        {
+          "name": "my-profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/my-profile", "host": ["{{baseURL}}"], "path": ["my-profile"] }
+          },
+          "response": []
+        },
+        {
+          "name": "get-profiles",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/profiles", "host": ["{{baseURL}}"], "path": ["profiles"] }
+          },
+          "response": []
+        },
+        {
+          "name": "create-profile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Doe\",\n    \"bio\": \"Software engineer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/profiles", "host": ["{{baseURL}}"], "path": ["profiles"] }
+          },
+          "response": []
+        },
+        {
+          "name": "get-profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/profiles/{profile}", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Doe Updated\",\n    \"bio\": \"Updated bio\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/profiles/{profile}", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "delete-profile",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/profiles/{profile}", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "get-skills",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/profiles/{profile}/skills", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}", "skills"] }
+          },
+          "response": []
+        },
+        {
+          "name": "add-skill",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"skill_name\": \"PHP\",\n    \"rating\": 4\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/profiles/{profile}/skills", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}", "skills"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-skill-rating",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rating\": 5\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/profiles/{profile}/skills/{skill}", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}", "skills", "{skill}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "remove-skill",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/profiles/{profile}/skills/{skill}", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}", "skills", "{skill}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "block-user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/profiles/block/{userId}", "host": ["{{baseURL}}"], "path": ["profiles", "block", "{userId}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "unblock-user",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/profiles/unblock/{userId}", "host": ["{{baseURL}}"], "path": ["profiles", "unblock", "{userId}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "blocked-users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/profiles/blocked-users", "host": ["{{baseURL}}"], "path": ["profiles", "blocked-users"] }
+          },
+          "response": []
+        },
+        {
+          "name": "can-message",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/profiles/{profile}/can-message", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}", "can-message"] }
+          },
+          "response": []
+        },
+        {
+          "name": "can-invite",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/profiles/{profile}/can-invite", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}", "can-invite"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "notes",
+      "item": [
+        {
+          "name": "get-note",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/my-note", "host": ["{{baseURL}}"], "path": ["my-note"] }
+          },
+          "response": []
+        },
+        {
+          "name": "write-note",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"This is my note content\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/note", "host": ["{{baseURL}}"], "path": ["note"] }
+          },
+          "response": []
+        },
+        {
+          "name": "clear-note",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/note", "host": ["{{baseURL}}"], "path": ["note"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "projects",
+      "item": [
+        {
+          "name": "my-projects",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/my-projects", "host": ["{{baseURL}}"], "path": ["my-projects"] }
+          },
+          "response": []
+        },
+        {
+          "name": "create-project",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"My New Project\",\n    \"description\": \"Project description\",\n    \"visibility\": \"private\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects", "host": ["{{baseURL}}"], "path": ["projects"] }
+          },
+          "response": []
+        },
+        {
+          "name": "get-project",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}", "host": ["{{baseURL}}"], "path": ["projects", "{project}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-project",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Project Name\",\n    \"description\": \"Updated description\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}", "host": ["{{baseURL}}"], "path": ["projects", "{project}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "delete-project",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}", "host": ["{{baseURL}}"], "path": ["projects", "{project}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"active\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/status", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "status"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-visibility",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"visibility\": \"public\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/visibility", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "visibility"] }
+          },
+          "response": []
+        },
+        {
+          "name": "restore-project",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/restore", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "restore"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "project-users",
+      "item": [
+        {
+          "name": "get-users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/users", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "users"] }
+          },
+          "response": []
+        },
+        {
+          "name": "add-user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": 1,\n    \"role\": \"member\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/users", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "users"] }
+          },
+          "response": []
+        },
+        {
+          "name": "leave-project",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/users/leave", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "users", "leave"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-role",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"role\": \"admin\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/users/{userId}/role", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "users", "{userId}", "role"] }
+          },
+          "response": []
+        },
+        {
+          "name": "remove-user",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/users/{userId}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "users", "{userId}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "transfer-ownership",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/users/transfer-ownership/{userId}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "users", "transfer-ownership", "{userId}"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "tasks",
+      "item": [
+        {
+          "name": "get-tasks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks"] }
+          },
+          "response": []
+        },
+        {
+          "name": "create-task",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"New Task\",\n    \"description\": \"Task description\",\n    \"status_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks"] }
+          },
+          "response": []
+        },
+        {
+          "name": "get-task",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-task",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Updated Task\",\n    \"description\": \"Updated description\",\n    \"status_id\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-task-status",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status_id\": 3\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/status", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "status"] }
+          },
+          "response": []
+        },
+        {
+          "name": "delete-task",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "reorder-tasks",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"task_ids\": [1, 2, 3]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/reorder", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "reorder"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "task-assignments",
+      "item": [
+        {
+          "name": "get-assignments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/assignments", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "assignments"] }
+          },
+          "response": []
+        },
+        {
+          "name": "assign-user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/assignments", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "assignments"] }
+          },
+          "response": []
+        },
+        {
+          "name": "unassign-user",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/assignments/{userId}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "assignments", "{userId}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "my-assigned-tasks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/my-assigned-tasks", "host": ["{{baseURL}}"], "path": ["my-assigned-tasks"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "task-dependencies",
+      "item": [
+        {
+          "name": "get-dependencies",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/dependencies", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "dependencies"] }
+          },
+          "response": []
+        },
+        {
+          "name": "add-dependency",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"depends_on_task_id\": 2,\n    \"type\": \"blocks\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/dependencies", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "dependencies"] }
+          },
+          "response": []
+        },
+        {
+          "name": "remove-dependency",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/dependencies/{dependsOnTaskId}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "dependencies", "{dependsOnTaskId}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-dependency-type",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"blocks\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/dependencies/{dependsOnTaskId}/type", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "dependencies", "{dependsOnTaskId}", "type"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "task-statuses",
+      "item": [
+        {
+          "name": "create-status",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"In Progress\",\n    \"color\": \"#FF5733\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/statuses", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "statuses"] }
+          },
+          "response": []
+        },
+        {
+          "name": "default-statuses",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/statuses/default", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "statuses", "default"] }
+          },
+          "response": []
+        },
+        {
+          "name": "reorder-statuses",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status_ids\": [1, 2, 3]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/statuses/reorder", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "statuses", "reorder"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-status",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Status\",\n    \"color\": \"#00FF00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/statuses/{taskStatus}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "statuses", "{taskStatus}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "delete-status",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/statuses/{taskStatus}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "statuses", "{taskStatus}"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "comments",
+      "item": [
+        {
+          "name": "get-comments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/tasks/{task}/comments", "host": ["{{baseURL}}"], "path": ["tasks", "{task}", "comments"] }
+          },
+          "response": []
+        },
+        {
+          "name": "get-comment",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/tasks/{task}/comments/{comment}", "host": ["{{baseURL}}"], "path": ["tasks", "{task}", "comments", "{comment}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "create-comment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"This is a comment\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/tasks/{task}/comments", "host": ["{{baseURL}}"], "path": ["tasks", "{task}", "comments"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-comment",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"Updated comment content\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/tasks/{task}/comments/{comment}", "host": ["{{baseURL}}"], "path": ["tasks", "{task}", "comments", "{comment}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "delete-comment",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/tasks/{task}/comments/{comment}", "host": ["{{baseURL}}"], "path": ["tasks", "{task}", "comments", "{comment}"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "notifications",
+      "item": [
+        {
+          "name": "test-notification",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Test\",\n    \"message\": \"Test message\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/notifications/test", "host": ["{{baseURL}}"], "path": ["notifications", "test"] }
+          },
+          "response": []
+        },
+        {
+          "name": "get-notifications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/notifications", "host": ["{{baseURL}}"], "path": ["notifications"] }
+          },
+          "response": []
+        },
+        {
+          "name": "mark-as-read",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/notifications/{id}/read", "host": ["{{baseURL}}"], "path": ["notifications", "{id}", "read"] }
+          },
+          "response": []
+        },
+        {
+          "name": "mark-all-as-read",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/notifications/read-all", "host": ["{{baseURL}}"], "path": ["notifications", "read-all"] }
+          },
+          "response": []
+        },
+        {
+          "name": "delete-notification",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/notifications/{id}", "host": ["{{baseURL}}"], "path": ["notifications", "{id}"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "reports",
+      "item": [
+        {
+          "name": "create-report",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"reported_user_id\": 1,\n    \"reason\": \"Inappropriate behavior\",\n    \"description\": \"Description of the issue\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/reports", "host": ["{{baseURL}}"], "path": ["reports"] }
+          },
+          "response": []
+        },
+        {
+          "name": "get-all-reports",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/reports", "host": ["{{baseURL}}"], "path": ["reports"] }
+          },
+          "response": []
+        },
+        {
+          "name": "get-user-reports",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/reports/user/{userId}", "host": ["{{baseURL}}"], "path": ["reports", "user", "{userId}"] }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseURL",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    }
+  ]
+}

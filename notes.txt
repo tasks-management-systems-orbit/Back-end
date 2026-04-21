@@ -1,0 +1,5 @@
+api testing:
+
+- get-profiles: returns empty data
+- delete-profile: has no validation
+- create-profile: i think returning an error if the user has a profile is better

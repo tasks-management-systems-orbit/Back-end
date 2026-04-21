@@ -120,8 +120,9 @@ class Profile extends Model
         return array_column($this->skills, 'name');
     }
 
-    public function addSkill(string $skillName, int $rating = 5): bool
+    public function addSkill(string $skillName, ?int $rating = null): bool
     {
+        $rating = $rating ?? 5;
         $skills = $this->skills;
         $skillName = trim($skillName);
 
@@ -185,8 +186,9 @@ class Profile extends Model
         return round($total / count($skills), 1);
     }
 
-    public function getTopSkillsAttribute(int $limit = 5): array
+    public function getTopSkillsAttribute(?int $limit = null): array
     {
+        $limit = $limit ?? 5;
         $skills = $this->skills;
 
         usort($skills, function ($a, $b) {
