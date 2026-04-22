@@ -37,12 +37,12 @@ class Comment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function project(): BelongsTo
-    {
-        return $this->task->project();
-    }
-
     // ============== Accessors ==============
+
+    public function getProjectAttribute()
+    {
+        return $this->task?->project;
+    }
 
     public function getUserNameAttribute(): string
     {

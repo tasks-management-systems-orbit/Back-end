@@ -148,21 +148,17 @@ class TaskAssignmentController extends Controller
     {
         $userId = $request->user()->id;
 
-        $tasks = Task::with(['project', 'status', 'creator', 'assignee', 'assignments'])
+        $tasks = Task::with(['project', 'status', 'creator', 'assignee', 'assignees'])
             ->where('assigned_to', $userId)
-            ->orWhereHas('assignments', fn($q) => $q->where('user_id', $userId))
+            ->orWhereHas('assignees', fn($q) => $q->where('user_id', $userId))
             ->orderBy('due_date')
             ->orderBy('priority', 'desc')
-            ->paginate(20);
+            ->get();
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'tasks' => TaskResource::collection($tasks),
-                'total' => $tasks->total(),
-                'per_page' => $tasks->perPage(),
-                'current_page' => $tasks->currentPage(),
-            ],
+            'data' => TaskResource::collection($tasks),
+            'total' => $tasks->count(),  
         ]);
     }
 

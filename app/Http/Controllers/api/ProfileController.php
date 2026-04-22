@@ -17,7 +17,6 @@ class ProfileController extends Controller
 {
     public function index(Request $request): ProfileCollection
     {
-        $perPage = $request->get('per_page', 15);
 
         $profiles = Profile::with('user')
             ->where('is_public', true) // Only show public profiles
@@ -31,7 +30,7 @@ class ProfileController extends Controller
                 $query->where('job_title', 'LIKE', '%' . $request->job_title . '%');
             })
             ->orderBy($request->get('sort_by', 'created_at'), $request->get('sort_direction', 'desc'))
-            ->paginate($perPage);
+            ->get();
 
         return new ProfileCollection($profiles);
     }

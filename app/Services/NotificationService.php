@@ -20,7 +20,7 @@ class NotificationService
                 'action_url' => $actionUrl,
             ]);
 
-            broadcast(new NotificationSent($notification))->toOthers();
+            broadcast(new NotificationSent($notification));
 
 
 
@@ -43,7 +43,7 @@ class NotificationService
     public function sendToProjectMembers($projectId, $title, $message, $type = 'info', $data = null)
     {
         $project = \app\Models\Project::findOrFail($projectId);
-        $userIds = $project->users()->pluck('user_id')->toArray();
+        $userIds = $project->users()->pluck('user.id')->toArray();
 
         return $this->sendToMany($userIds, $title, $message, $type, $data);
     }

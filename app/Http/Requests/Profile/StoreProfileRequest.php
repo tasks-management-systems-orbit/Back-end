@@ -21,7 +21,6 @@ class StoreProfileRequest extends FormRequest
             'skills' => 'nullable|array',
             'skills.*.name' => 'required|string|max:100',
             'skills.*.rating' => 'sometimes|integer|min:1|max:10',
-            'skills.*' => 'max:100',
             'avatar' => 'nullable|string|max:255|url',
             'location' => 'nullable|string|max:255',
             'alternative_email' => 'nullable|string|email|max:255',

@@ -179,9 +179,9 @@ class Task extends Model
                 return false;
             }
 
-            if ($type === 'SS' && !$dependency->isStarted()) {
-                return false;
-            }
+            // if ($type === 'SS' && !$dependency->isStarted()) {
+            //     return false;
+            // }
 
             if ($type === 'FF' && !$dependency->isCompleted()) {
                 return false;
@@ -275,7 +275,7 @@ class Task extends Model
 
     public function getAssignmentsCountAttribute(): int
     {
-        return $this->assignments()->count();
+        return $this->assignees()->count();
     }
 
     public function getDependenciesCountAttribute(): int
@@ -300,10 +300,12 @@ class Task extends Model
 
     public function scopeByAssignee($query, int $userId)
     {
-        return $query->where('assigned_to', $userId)
-            ->orWhereHas('assignees', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            });
+        return $query->where(function ($q) use ($userId) {
+            $q->where('assigned_to', $userId)
+                ->orWhereHas('assignees', function ($sub) use ($userId) {
+                    $sub->where('user_id', $userId);
+                });
+        })->distinct();  
     }
 
     public function scopeOverdue($query)

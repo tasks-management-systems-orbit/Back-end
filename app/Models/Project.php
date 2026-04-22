@@ -118,9 +118,7 @@ class Project extends Model
 
     public function getCompletedTasksCountAttribute(): int
     {
-        return $this->tasks()->whereHas('status', function ($query) {
-            $query->where('name', 'completed');
-        })->count();
+        return $this->tasks()->whereNotNull('completed_at')->count();
     }
 
     // ============== Management Methods ==============

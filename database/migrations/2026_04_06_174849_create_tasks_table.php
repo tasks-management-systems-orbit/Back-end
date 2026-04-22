@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
             $table->string('title', 255);
             $table->text('description')->nullable();
-            $table->foreignId('status_id')->constrained('task_statuses')->cascadeOnDelete();
+            $table->foreignId('status_id')->constrained('task_statuses')->restrictOnDelete();
             $table->enum('priority', ['urgent', 'high', 'medium', 'low'])->default('medium');
             $table->date('due_date')->nullable();
             $table->integer('position')->default(0);

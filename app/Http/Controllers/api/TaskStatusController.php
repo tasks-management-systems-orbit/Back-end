@@ -184,40 +184,51 @@ class TaskStatusController extends Controller
         }
     }
 
-    public function reorder(ReorderTaskStatusRequest $request, Project $project): JsonResponse
-    {
-        $this->checkProjectManager($project);
+public function reorder(ReorderTaskStatusRequest $request, Project $project): JsonResponse
+{
+    $this->checkProjectManager($project);
 
-        try {
-            DB::beginTransaction();
+    try {
+        DB::beginTransaction();
 
-            foreach ($request->statuses as $statusData) {
-                TaskStatus::where('id', $statusData['id'])
-                    ->where('project_id', $project->id)
-                    ->update(['position' => $statusData['position']]);
+        foreach ($request->statuses as $statusData) {
+            $status = TaskStatus::where('id', $statusData['id'])
+                ->where('project_id', $project->id)
+                ->first();
+
+            if (!$status) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid status ID: ' . $statusData['id']
+                ], 422);
             }
 
-            DB::commit();
-
-            $updatedStatuses = $project->taskStatuses()
-                ->orderBy('position')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Task statuses reordered successfully',
-                'data' => TaskStatusResource::collection($updatedStatuses),
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to reorder task statuses',
-                'error' => $e->getMessage(),
-            ], 500);
+            $status->update(['position' => $statusData['position']]);
         }
+
+        DB::commit();
+
+        $updatedStatuses = $project->taskStatuses()
+            ->orderBy('position')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Task statuses reordered successfully',
+            'data' => TaskStatusResource::collection($updatedStatuses),
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to reorder task statuses',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
 
     public function defaultStatuses(Project $project): JsonResponse
     {

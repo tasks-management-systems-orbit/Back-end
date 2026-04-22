@@ -17,12 +17,11 @@ class ProjectController extends Controller
     public function myProjects(Request $request): JsonResponse
     {
         $userId = $request->user()->id;
-        $perPage = $request->get('per_page', 15);
         $search = $request->get('search', null);
 
         $projects = Project::query()
             ->with(['creator', 'users'])
-            ->withCount(['users as members_count', 'tasks as tasks_count'])
+            ->withCount(['users', 'tasks'])
             ->where(function ($query) use ($userId) {
                 $query->where('created_by', $userId)
                     ->orWhereHas('users', function ($q) use ($userId) {
@@ -36,7 +35,7 @@ class ProjectController extends Controller
                 });
             })
             ->orderBy($request->get('sort_by', 'created_at'), $request->get('sort_direction', 'desc'))
-            ->paginate($perPage);
+            ->get();
 
         foreach ($projects as $project) {
             $project->user_role = $project->users->firstWhere('id', $userId)?->pivot->role ?? 'none';
@@ -69,7 +68,7 @@ class ProjectController extends Controller
 
         $query = Project::query()
             ->with(['creator', 'users'])
-            ->withCount(['users as members_count', 'tasks as tasks_count'])
+            ->withCount(['users as users_count', 'tasks as tasks_count'])
             ->where(function ($q) use ($userId) {
                 $q->where('created_by', $userId)
                     ->orWhereHas('users', function ($sub) use ($userId) {
@@ -130,7 +129,7 @@ class ProjectController extends Controller
             },
         ]);
 
-        $project->loadCount(['users as members_count', 'tasks as tasks_count']);
+        $project->loadCount(['users as users_count', 'tasks as tasks_count']);
 
         $project->user_role = $project->users->firstWhere('id', $userId)?->pivot->role ?? 'none';
         $project->is_owner = $project->created_by === $userId;

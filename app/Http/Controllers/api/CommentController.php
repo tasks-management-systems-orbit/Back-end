@@ -18,22 +18,16 @@ class CommentController extends Controller
     {
         $this->checkTaskAccess($request, $task);
 
-        $perPage = $request->get('per_page', 20);
 
         $comments = $task->comments()
             ->with(['user', 'user.profile'])
             ->latest()
-            ->paginate($perPage);
+            ->get();
 
         return response()->json([
             'success' => true,
             'data' => CommentResource::collection($comments),
-            'meta' => [
-                'total' => $comments->total(),
-                'per_page' => $comments->perPage(),
-                'current_page' => $comments->currentPage(),
-                'last_page' => $comments->lastPage(),
-            ],
+            'total' => $comments->count(),
         ]);
     }
 

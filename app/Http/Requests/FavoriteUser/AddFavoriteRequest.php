@@ -14,7 +14,15 @@ class AddFavoriteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'required|exists:users,id|different:auth.user.id',
+            'user_id' => [
+                'required',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    if ($value == $this->user()->id) {
+                        $fail('You cannot add yourself to favorites.');
+                    }
+                },
+            ],
         ];
     }
 

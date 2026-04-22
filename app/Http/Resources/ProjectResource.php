@@ -45,7 +45,7 @@ class ProjectResource extends JsonResource
                     'email' => $this->creator->email,
                 ];
             }),
-            'members_count' => $this->whenCounted('members'),
+            'users_count' => $this->whenCounted('users'),
             'tasks_count' => $this->whenCounted('tasks'),
             'user_role' => $this->user_role ?? null,
             'is_owner' => $this->is_owner ?? false,

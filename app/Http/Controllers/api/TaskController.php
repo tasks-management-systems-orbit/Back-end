@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Api/TaskController.php
 
 namespace app\Http\Controllers\api;
 
@@ -134,74 +133,68 @@ class TaskController extends Controller
         ]);
     }
 
-    public function update(UpdateTaskRequest $request, Project $project, Task $task): JsonResponse
-    {
-        if ($task->project_id !== $project->id) {
+public function update(UpdateTaskRequest $request, Project $project, Task $task): JsonResponse
+{
+    if ($task->project_id !== $project->id) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Task does not belong to this project',
+        ], 404);
+    }
+
+    $userId = $request->user()->id;
+
+    $isOwner = $project->isOwner($userId);
+    $isTaskCreator = $task->created_by === $userId;
+
+    if (!$isOwner && !$isTaskCreator) {
+        return response()->json([
+            'success' => false,
+            'message' => 'You do not have permission to update this task. Only the project owner or task creator can edit.',
+        ], 403);
+    }
+
+    try {
+        DB::beginTransaction();
+
+        $task->update($request->only([
+            'title',
+            'description',
+            'priority',
+            'due_date',
+            'assigned_to',
+            'position'
+        ]));
+
+        if ($request->has('assignees') && $isOwner) {
+            $task->assignments()->sync($request->assignees);
+        } elseif ($request->has('assignees') && !$isOwner) {
             return response()->json([
                 'success' => false,
-                'message' => 'Task does not belong to this project',
-            ], 404);
-        }
-
-        $userId = $request->user()->id;
-        $userRole = $project->getUserRole($userId);
-        $isOwner = $project->isOwner($userId);
-        $isManager = $userRole === 'manager';
-        $isUser = $userRole === 'user';
-        $isTaskAssignee = ($task->assigned_to === $userId) || $task->assignees()->where('user_id', $userId)->exists();
-
-        if ($isOwner || $isManager) {
-        } elseif ($isUser && $isTaskAssignee) {
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'You do not have permission to update this task',
+                'message' => 'Only project owner can update task assignments',
             ], 403);
         }
 
-        try {
-            DB::beginTransaction();
+        DB::commit();
 
-            if ($isUser && !$isOwner && !$isManager) {
-                $task->update($request->only([
-                    'title',
-                    'description'
-                ]));
-            } else {
-                $task->update($request->only([
-                    'title',
-                    'description',
-                    'priority',
-                    'due_date',
-                    'assigned_to',
-                    'position'
-                ]));
-            }
+        $task->load(['status', 'creator', 'assignee', 'assignments']);
 
-            if ($request->has('assignees') && ($isOwner || $isManager)) {
-                $task->assignments()->sync($request->assignees);
-            }
+        return response()->json([
+            'success' => true,
+            'message' => 'Task updated successfully',
+            'data' => new TaskResource($task),
+        ]);
 
-            DB::commit();
+    } catch (\Exception $e) {
+        DB::rollBack();
 
-            $task->load(['status', 'creator', 'assignee', 'assignments']);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Task updated successfully',
-                'data' => new TaskResource($task),
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update task',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update task',
+            'error' => $e->getMessage(),
+        ], 500);
     }
-
+}
     public function updateStatus(UpdateTaskStatusRequest $request, Project $project, Task $task): JsonResponse
     {
         if ($task->project_id !== $project->id) {
@@ -216,7 +209,7 @@ class TaskController extends Controller
         $isOwner = $project->isOwner($userId);
         $isManager = $userRole === 'manager';
         $isUser = $userRole === 'user';
-        $isTaskAssignee = ($task->assigned_to === $userId) || $task->assignees()->where('user_id', $userId)->exists();
+        $isTaskAssignee = ($task->assigned_to === $userId) || $task->assignments()->where('user_id', $userId)->exists();
 
         if ($isOwner || $isManager) {
         } elseif ($isUser && $isTaskAssignee) {
@@ -239,9 +232,15 @@ class TaskController extends Controller
                 ->decrement('position');
 
             $newPosition = $request->position ??
-                Task::where('project_id', $project->id)
+
+            Task::where('project_id', $project->id)
+                    ->where('status_id', $newStatusId)
+                    ->max('position') + 1;
+
+            Task::where('project_id', $project->id)
                 ->where('status_id', $newStatusId)
-                ->max('position') + 1;
+                ->where('position', '>=', $newPosition)
+                ->increment('position');
 
             $task->update([
                 'status_id' => $newStatusId,
