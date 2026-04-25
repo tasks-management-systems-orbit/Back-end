@@ -3,8 +3,8 @@
 namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use app\Http\Requests\Note\UpdateNoteRequest;
 use App\Http\Requests\StoreNoteRequest;
-use App\Http\Requests\UpdateNoteRequest;
 use App\Http\Resources\NoteResource;
 use App\Models\Note;
 use Illuminate\Http\JsonResponse;
