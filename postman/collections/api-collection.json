@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "951a352e-4aa1-4fbe-b759-40b1cd325422",
+    "_postman_id": "9c502116-c5a6-4748-897c-f265acd20370",
     "name": "Tasks Management",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "34117760"
@@ -11,16 +11,38 @@
       "item": [
         {
           "name": "register",
-          "protocolProfileBehavior": { "disabledSystemHeaders": { "accept": true } },
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {
+              "accept": true
+            }
+          },
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"osama\",\n    \"name\": \"osamad al-doajie\",\n    \"email\": \"osamadoage0@gmail.com\",\n    \"password\": \"12345678a#B\",\n    \"password_confirmation\": \"12345678a#B\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"username\": \"amjad\",\n    \"name\": \"amjad al-zaree\",\n    \"email\": \"osamadoage8@gmail.com\",\n    \"password\": \"12345678a#B\",\n    \"password_confirmation\": \"12345678a#B\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/register", "host": ["{{baseURL}}"], "path": ["register"] }
+            "url": {
+              "raw": "{{baseURL}}/register",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "register"
+              ]
+            }
           },
           "response": []
         },
@@ -28,13 +50,31 @@
           "name": "login",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"osamadoage0@gmail.com\",\n    \"password\": \"12345678a#B\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"login\": \"osamadoage0@gmail.com\",\n    \"password\": \"12345678a#B\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/login", "host": ["{{baseURL}}"], "path": ["login"] }
+            "url": {
+              "raw": "{{baseURL}}/login",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "login"
+              ]
+            }
           },
           "response": []
         },
@@ -42,13 +82,31 @@
           "name": "verify-email",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"verification_code\": \"123456\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"email\": \"osamadoage8@gmail.com\",\n    \"code\": \"103619\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/verify-email", "host": ["{{baseURL}}"], "path": ["verify-email"] }
+            "url": {
+              "raw": "{{baseURL}}/verify-email",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "verify-email"
+              ]
+            }
           },
           "response": []
         },
@@ -56,13 +114,31 @@
           "name": "resend-verification",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"email\": \"osamadoage0@gmail.com\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/resend-verification", "host": ["{{baseURL}}"], "path": ["resend-verification"] }
+            "url": {
+              "raw": "{{baseURL}}/resend-verification",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "resend-verification"
+              ]
+            }
           },
           "response": []
         },
@@ -70,13 +146,31 @@
           "name": "forgot-password",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"email\": \"osamadoage0@gmail.com\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/forgot-password", "host": ["{{baseURL}}"], "path": ["forgot-password"] }
+            "url": {
+              "raw": "{{baseURL}}/forgot-password",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "forgot-password"
+              ]
+            }
           },
           "response": []
         },
@@ -84,13 +178,31 @@
           "name": "reset-password",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"email\": \"osamadoage0@gmail.com\",\n    \"password\": \"newpassword123#\",\n    \"password_confirmation\": \"newpassword123#\",\n    \"reset_code\": \"123456\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/reset-password", "host": ["{{baseURL}}"], "path": ["reset-password"] }
+            "url": {
+              "raw": "{{baseURL}}/reset-password",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "reset-password"
+              ]
+            }
           },
           "response": []
         },
@@ -98,8 +210,22 @@
           "name": "logout",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/logout", "host": ["{{baseURL}}"], "path": ["logout"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/logout",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "logout"
+              ]
+            }
           },
           "response": []
         },
@@ -107,8 +233,22 @@
           "name": "me",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/me", "host": ["{{baseURL}}"], "path": ["me"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/me",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "me"
+              ]
+            }
           },
           "response": []
         },
@@ -116,8 +256,22 @@
           "name": "email-status",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/email-status", "host": ["{{baseURL}}"], "path": ["email-status"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/email-status",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "email-status"
+              ]
+            }
           },
           "response": []
         }
@@ -130,8 +284,22 @@
           "name": "my-profile",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/my-profile", "host": ["{{baseURL}}"], "path": ["my-profile"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-profile",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-profile"
+              ]
+            }
           },
           "response": []
         },
@@ -139,8 +307,22 @@
           "name": "get-profiles",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/profiles", "host": ["{{baseURL}}"], "path": ["profiles"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/profiles",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles"
+              ]
+            }
           },
           "response": []
         },
@@ -148,13 +330,31 @@
           "name": "create-profile",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"John Doe\",\n    \"bio\": \"Software engineer\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/profiles", "host": ["{{baseURL}}"], "path": ["profiles"] }
+            "url": {
+              "raw": "{{baseURL}}/profiles",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles"
+              ]
+            }
           },
           "response": []
         },
@@ -162,8 +362,23 @@
           "name": "get-profile",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/profiles/{profile}", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/profiles/{profile}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "{profile}"
+              ]
+            }
           },
           "response": []
         },
@@ -171,13 +386,32 @@
           "name": "update-profile",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"John Doe Updated\",\n    \"bio\": \"Updated bio\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/profiles/{profile}", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}"] }
+            "url": {
+              "raw": "{{baseURL}}/profiles/{profile}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "{profile}"
+              ]
+            }
           },
           "response": []
         },
@@ -185,8 +419,23 @@
           "name": "delete-profile",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/profiles/{profile}", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/profiles/{profile}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "{profile}"
+              ]
+            }
           },
           "response": []
         },
@@ -194,8 +443,24 @@
           "name": "get-skills",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/profiles/{profile}/skills", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}", "skills"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/profiles/{profile}/skills",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "{profile}",
+                "skills"
+              ]
+            }
           },
           "response": []
         },
@@ -203,13 +468,33 @@
           "name": "add-skill",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"skill_name\": \"PHP\",\n    \"rating\": 4\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/profiles/{profile}/skills", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}", "skills"] }
+            "url": {
+              "raw": "{{baseURL}}/profiles/{profile}/skills",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "{profile}",
+                "skills"
+              ]
+            }
           },
           "response": []
         },
@@ -217,13 +502,34 @@
           "name": "update-skill-rating",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"rating\": 5\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/profiles/{profile}/skills/{skill}", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}", "skills", "{skill}"] }
+            "url": {
+              "raw": "{{baseURL}}/profiles/{profile}/skills/{skill}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "{profile}",
+                "skills",
+                "{skill}"
+              ]
+            }
           },
           "response": []
         },
@@ -231,8 +537,25 @@
           "name": "remove-skill",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/profiles/{profile}/skills/{skill}", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}", "skills", "{skill}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/profiles/{profile}/skills/{skill}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "{profile}",
+                "skills",
+                "{skill}"
+              ]
+            }
           },
           "response": []
         },
@@ -240,8 +563,24 @@
           "name": "block-user",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/profiles/block/{userId}", "host": ["{{baseURL}}"], "path": ["profiles", "block", "{userId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/profiles/block/{userId}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "block",
+                "{userId}"
+              ]
+            }
           },
           "response": []
         },
@@ -249,8 +588,24 @@
           "name": "unblock-user",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/profiles/unblock/{userId}", "host": ["{{baseURL}}"], "path": ["profiles", "unblock", "{userId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/profiles/unblock/{userId}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "unblock",
+                "{userId}"
+              ]
+            }
           },
           "response": []
         },
@@ -258,8 +613,23 @@
           "name": "blocked-users",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/profiles/blocked-users", "host": ["{{baseURL}}"], "path": ["profiles", "blocked-users"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/profiles/blocked-users",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "blocked-users"
+              ]
+            }
           },
           "response": []
         },
@@ -267,8 +637,24 @@
           "name": "can-message",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/profiles/{profile}/can-message", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}", "can-message"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/profiles/{profile}/can-message",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "{profile}",
+                "can-message"
+              ]
+            }
           },
           "response": []
         },
@@ -276,8 +662,24 @@
           "name": "can-invite",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/profiles/{profile}/can-invite", "host": ["{{baseURL}}"], "path": ["profiles", "{profile}", "can-invite"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/profiles/{profile}/can-invite",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "{profile}",
+                "can-invite"
+              ]
+            }
           },
           "response": []
         }
@@ -290,8 +692,22 @@
           "name": "get-note",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/my-note", "host": ["{{baseURL}}"], "path": ["my-note"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-note",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-note"
+              ]
+            }
           },
           "response": []
         },
@@ -299,13 +715,31 @@
           "name": "write-note",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"content\": \"This is my note content\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/note", "host": ["{{baseURL}}"], "path": ["note"] }
+            "url": {
+              "raw": "{{baseURL}}/note",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "note"
+              ]
+            }
           },
           "response": []
         },
@@ -313,8 +747,22 @@
           "name": "clear-note",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/note", "host": ["{{baseURL}}"], "path": ["note"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/note",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "note"
+              ]
+            }
           },
           "response": []
         }
@@ -327,8 +775,22 @@
           "name": "my-projects",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/my-projects", "host": ["{{baseURL}}"], "path": ["my-projects"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-projects",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-projects"
+              ]
+            }
           },
           "response": []
         },
@@ -336,13 +798,31 @@
           "name": "create-project",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"My New Project\",\n    \"description\": \"Project description\",\n    \"visibility\": \"private\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects", "host": ["{{baseURL}}"], "path": ["projects"] }
+            "url": {
+              "raw": "{{baseURL}}/projects",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects"
+              ]
+            }
           },
           "response": []
         },
@@ -350,8 +830,23 @@
           "name": "get-project",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}", "host": ["{{baseURL}}"], "path": ["projects", "{project}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}"
+              ]
+            }
           },
           "response": []
         },
@@ -359,13 +854,32 @@
           "name": "update-project",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"Updated Project Name\",\n    \"description\": \"Updated description\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}", "host": ["{{baseURL}}"], "path": ["projects", "{project}"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}"
+              ]
+            }
           },
           "response": []
         },
@@ -373,8 +887,23 @@
           "name": "delete-project",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}", "host": ["{{baseURL}}"], "path": ["projects", "{project}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}"
+              ]
+            }
           },
           "response": []
         },
@@ -382,13 +911,33 @@
           "name": "update-status",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"status\": \"active\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/status", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "status"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/status",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "status"
+              ]
+            }
           },
           "response": []
         },
@@ -396,13 +945,33 @@
           "name": "update-visibility",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"visibility\": \"public\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/visibility", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "visibility"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/visibility",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "visibility"
+              ]
+            }
           },
           "response": []
         },
@@ -410,8 +979,24 @@
           "name": "restore-project",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/restore", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "restore"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/restore",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "restore"
+              ]
+            }
           },
           "response": []
         }
@@ -424,8 +1009,30 @@
           "name": "get-users",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/users", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "users"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/:id/users",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                ":id",
+                "users"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -433,13 +1040,39 @@
           "name": "add-user",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"user_id\": 1,\n    \"role\": \"member\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"user_id\": 2,\n    \"role\": \"member\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/users", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "users"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/:id/users",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                ":id",
+                "users"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -447,8 +1080,25 @@
           "name": "leave-project",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/users/leave", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "users", "leave"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/users/leave",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "users",
+                "leave"
+              ]
+            }
           },
           "response": []
         },
@@ -456,13 +1106,35 @@
           "name": "update-role",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"role\": \"admin\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/users/{userId}/role", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "users", "{userId}", "role"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/users/{userId}/role",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "users",
+                "{userId}",
+                "role"
+              ]
+            }
           },
           "response": []
         },
@@ -470,8 +1142,25 @@
           "name": "remove-user",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/users/{userId}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "users", "{userId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/users/{userId}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "users",
+                "{userId}"
+              ]
+            }
           },
           "response": []
         },
@@ -479,8 +1168,26 @@
           "name": "transfer-ownership",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/users/transfer-ownership/{userId}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "users", "transfer-ownership", "{userId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/users/transfer-ownership/{userId}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "users",
+                "transfer-ownership",
+                "{userId}"
+              ]
+            }
           },
           "response": []
         }
@@ -493,8 +1200,30 @@
           "name": "get-tasks",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/:id/tasks",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                ":id",
+                "tasks"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -502,13 +1231,39 @@
           "name": "create-task",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"title\": \"New Task\",\n    \"description\": \"Task description\",\n    \"status_id\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/:id/tasks",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                ":id",
+                "tasks"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -516,8 +1271,25 @@
           "name": "get-task",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}"
+              ]
+            }
           },
           "response": []
         },
@@ -525,13 +1297,34 @@
           "name": "update-task",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"title\": \"Updated Task\",\n    \"description\": \"Updated description\",\n    \"status_id\": 2\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}"
+              ]
+            }
           },
           "response": []
         },
@@ -539,13 +1332,35 @@
           "name": "update-task-status",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"status_id\": 3\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/status", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "status"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}/status",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}",
+                "status"
+              ]
+            }
           },
           "response": []
         },
@@ -553,8 +1368,25 @@
           "name": "delete-task",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}"
+              ]
+            }
           },
           "response": []
         },
@@ -562,13 +1394,34 @@
           "name": "reorder-tasks",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"task_ids\": [1, 2, 3]\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/reorder", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "reorder"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/reorder",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "reorder"
+              ]
+            }
           },
           "response": []
         },
@@ -576,13 +1429,35 @@
           "name": "create-manager-task",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"title\": \"Manager Task\",\n    \"description\": \"Task for group manager\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/manager-tasks", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "manager-tasks"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/groups/{group}/manager-tasks",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "groups",
+                "{group}",
+                "manager-tasks"
+              ]
+            }
           },
           "response": []
         },
@@ -590,13 +1465,37 @@
           "name": "create-subtask",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"title\": \"Subtask\",\n    \"description\": \"Subtask of parent task\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/tasks/{parentTask}/subtasks", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "tasks", "{parentTask}", "subtasks"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/groups/{group}/tasks/{parentTask}/subtasks",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "groups",
+                "{group}",
+                "tasks",
+                "{parentTask}",
+                "subtasks"
+              ]
+            }
           },
           "response": []
         }
@@ -609,8 +1508,26 @@
           "name": "get-assignments",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/assignments", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "assignments"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}/assignments",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}",
+                "assignments"
+              ]
+            }
           },
           "response": []
         },
@@ -618,13 +1535,35 @@
           "name": "assign-user",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"user_id\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/assignments", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "assignments"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}/assignments",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}",
+                "assignments"
+              ]
+            }
           },
           "response": []
         },
@@ -632,8 +1571,27 @@
           "name": "unassign-user",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/assignments/{userId}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "assignments", "{userId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}/assignments/{userId}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}",
+                "assignments",
+                "{userId}"
+              ]
+            }
           },
           "response": []
         },
@@ -641,8 +1599,22 @@
           "name": "my-assigned-tasks",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/my-assigned-tasks", "host": ["{{baseURL}}"], "path": ["my-assigned-tasks"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-assigned-tasks",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-assigned-tasks"
+              ]
+            }
           },
           "response": []
         },
@@ -650,13 +1622,35 @@
           "name": "update-assignment-status",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"status\": \"completed\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/tasks/{task}/assignments/{assignmentId}/status", "host": ["{{baseURL}}"], "path": ["tasks", "{task}", "assignments", "{assignmentId}", "status"] }
+            "url": {
+              "raw": "{{baseURL}}/tasks/{task}/assignments/{assignmentId}/status",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "tasks",
+                "{task}",
+                "assignments",
+                "{assignmentId}",
+                "status"
+              ]
+            }
           },
           "response": []
         }
@@ -669,8 +1663,26 @@
           "name": "get-dependencies",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/dependencies", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "dependencies"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}/dependencies",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}",
+                "dependencies"
+              ]
+            }
           },
           "response": []
         },
@@ -678,13 +1690,35 @@
           "name": "add-dependency",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"depends_on_task_id\": 2,\n    \"type\": \"blocks\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/dependencies", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "dependencies"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}/dependencies",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}",
+                "dependencies"
+              ]
+            }
           },
           "response": []
         },
@@ -692,8 +1726,27 @@
           "name": "remove-dependency",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/dependencies/{dependsOnTaskId}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "dependencies", "{dependsOnTaskId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}/dependencies/{dependsOnTaskId}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}",
+                "dependencies",
+                "{dependsOnTaskId}"
+              ]
+            }
           },
           "response": []
         },
@@ -701,13 +1754,37 @@
           "name": "update-dependency-type",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"type\": \"blocks\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/tasks/{task}/dependencies/{dependsOnTaskId}/type", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "{task}", "dependencies", "{dependsOnTaskId}", "type"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}/dependencies/{dependsOnTaskId}/type",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}",
+                "dependencies",
+                "{dependsOnTaskId}",
+                "type"
+              ]
+            }
           },
           "response": []
         }
@@ -720,13 +1797,39 @@
           "name": "create-status",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"In Progress\",\n    \"color\": \"#FF5733\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/statuses", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "statuses"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/:id/statuses",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                ":id",
+                "statuses"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -734,8 +1837,25 @@
           "name": "default-statuses",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/statuses/default", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "statuses", "default"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/statuses/default",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "statuses",
+                "default"
+              ]
+            }
           },
           "response": []
         },
@@ -743,13 +1863,34 @@
           "name": "reorder-statuses",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"status_ids\": [1, 2, 3]\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/statuses/reorder", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "statuses", "reorder"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/statuses/reorder",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "statuses",
+                "reorder"
+              ]
+            }
           },
           "response": []
         },
@@ -757,13 +1898,34 @@
           "name": "update-status",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"Updated Status\",\n    \"color\": \"#00FF00\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/statuses/{taskStatus}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "statuses", "{taskStatus}"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/statuses/{taskStatus}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "statuses",
+                "{taskStatus}"
+              ]
+            }
           },
           "response": []
         },
@@ -771,8 +1933,25 @@
           "name": "delete-status",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/statuses/{taskStatus}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "statuses", "{taskStatus}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/statuses/{taskStatus}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "statuses",
+                "{taskStatus}"
+              ]
+            }
           },
           "response": []
         }
@@ -785,8 +1964,24 @@
           "name": "get-comments",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/tasks/{task}/comments", "host": ["{{baseURL}}"], "path": ["tasks", "{task}", "comments"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/tasks/{task}/comments",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "tasks",
+                "{task}",
+                "comments"
+              ]
+            }
           },
           "response": []
         },
@@ -794,8 +1989,25 @@
           "name": "get-comment",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/tasks/{task}/comments/{comment}", "host": ["{{baseURL}}"], "path": ["tasks", "{task}", "comments", "{comment}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/tasks/{task}/comments/{comment}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "tasks",
+                "{task}",
+                "comments",
+                "{comment}"
+              ]
+            }
           },
           "response": []
         },
@@ -803,13 +2015,33 @@
           "name": "create-comment",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"content\": \"This is a comment\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/tasks/{task}/comments", "host": ["{{baseURL}}"], "path": ["tasks", "{task}", "comments"] }
+            "url": {
+              "raw": "{{baseURL}}/tasks/{task}/comments",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "tasks",
+                "{task}",
+                "comments"
+              ]
+            }
           },
           "response": []
         },
@@ -817,13 +2049,34 @@
           "name": "update-comment",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"content\": \"Updated comment content\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/tasks/{task}/comments/{comment}", "host": ["{{baseURL}}"], "path": ["tasks", "{task}", "comments", "{comment}"] }
+            "url": {
+              "raw": "{{baseURL}}/tasks/{task}/comments/{comment}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "tasks",
+                "{task}",
+                "comments",
+                "{comment}"
+              ]
+            }
           },
           "response": []
         },
@@ -831,8 +2084,25 @@
           "name": "delete-comment",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/tasks/{task}/comments/{comment}", "host": ["{{baseURL}}"], "path": ["tasks", "{task}", "comments", "{comment}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/tasks/{task}/comments/{comment}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "tasks",
+                "{task}",
+                "comments",
+                "{comment}"
+              ]
+            }
           },
           "response": []
         }
@@ -845,13 +2115,32 @@
           "name": "test-notification",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"title\": \"Test\",\n    \"message\": \"Test message\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/notifications/test", "host": ["{{baseURL}}"], "path": ["notifications", "test"] }
+            "url": {
+              "raw": "{{baseURL}}/notifications/test",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "notifications",
+                "test"
+              ]
+            }
           },
           "response": []
         },
@@ -859,8 +2148,22 @@
           "name": "get-notifications",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/notifications", "host": ["{{baseURL}}"], "path": ["notifications"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/notifications",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "notifications"
+              ]
+            }
           },
           "response": []
         },
@@ -868,8 +2171,30 @@
           "name": "mark-as-read",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/notifications/{id}/read", "host": ["{{baseURL}}"], "path": ["notifications", "{id}", "read"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/notifications/:id/read",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "notifications",
+                ":id",
+                "read"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -877,8 +2202,23 @@
           "name": "mark-all-as-read",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/notifications/read-all", "host": ["{{baseURL}}"], "path": ["notifications", "read-all"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/notifications/read-all",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ]
+            }
           },
           "response": []
         },
@@ -886,8 +2226,29 @@
           "name": "delete-notification",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/notifications/{id}", "host": ["{{baseURL}}"], "path": ["notifications", "{id}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/notifications/:id",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "notifications",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
           },
           "response": []
         }
@@ -900,13 +2261,31 @@
           "name": "create-report",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"reported_user_id\": 1,\n    \"reason\": \"Inappropriate behavior\",\n    \"description\": \"Description of the issue\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/reports", "host": ["{{baseURL}}"], "path": ["reports"] }
+            "url": {
+              "raw": "{{baseURL}}/reports",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "reports"
+              ]
+            }
           },
           "response": []
         },
@@ -914,8 +2293,22 @@
           "name": "get-all-reports",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/reports", "host": ["{{baseURL}}"], "path": ["reports"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/reports",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "reports"
+              ]
+            }
           },
           "response": []
         },
@@ -923,8 +2316,30 @@
           "name": "get-user-reports",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/reports/user/{userId}", "host": ["{{baseURL}}"], "path": ["reports", "user", "{userId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/reports/user/:id",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "reports",
+                "user",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "2"
+                }
+              ]
+            }
           },
           "response": []
         }
@@ -937,8 +2352,28 @@
           "name": "search",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/search?q=keyword", "host": ["{{baseURL}}"], "path": ["search"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/search?q=8@",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "8@"
+                }
+              ]
+            }
           },
           "response": []
         }
@@ -951,8 +2386,22 @@
           "name": "get-favorites",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/my-favorites", "host": ["{{baseURL}}"], "path": ["my-favorites"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-favorites",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-favorites"
+              ]
+            }
           },
           "response": []
         },
@@ -960,13 +2409,31 @@
           "name": "add-favorite",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"user_id\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"user_id\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/my-favorites", "host": ["{{baseURL}}"], "path": ["my-favorites"] }
+            "url": {
+              "raw": "{{baseURL}}/my-favorites",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-favorites"
+              ]
+            }
           },
           "response": []
         },
@@ -974,8 +2441,23 @@
           "name": "remove-favorite",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/my-favorites/{userId}", "host": ["{{baseURL}}"], "path": ["my-favorites", "{userId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-favorites/{userId}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-favorites",
+                "{userId}"
+              ]
+            }
           },
           "response": []
         },
@@ -983,8 +2465,30 @@
           "name": "toggle-favorite",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/my-favorites/toggle/{userId}", "host": ["{{baseURL}}"], "path": ["my-favorites", "toggle", "{userId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-favorites/toggle/:id",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-favorites",
+                "toggle",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "2"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -992,8 +2496,30 @@
           "name": "check-favorite",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/my-favorites/check/{userId}", "host": ["{{baseURL}}"], "path": ["my-favorites", "check", "{userId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-favorites/check/:id",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-favorites",
+                "check",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
           },
           "response": []
         }
@@ -1006,8 +2532,22 @@
           "name": "get-favorite-projects",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/my-favorite-projects", "host": ["{{baseURL}}"], "path": ["my-favorite-projects"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-favorite-projects",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-favorite-projects"
+              ]
+            }
           },
           "response": []
         },
@@ -1015,13 +2555,31 @@
           "name": "add-favorite-project",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"project_id\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/my-favorite-projects", "host": ["{{baseURL}}"], "path": ["my-favorite-projects"] }
+            "url": {
+              "raw": "{{baseURL}}/my-favorite-projects",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-favorite-projects"
+              ]
+            }
           },
           "response": []
         },
@@ -1029,8 +2587,29 @@
           "name": "remove-favorite-project",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/my-favorite-projects/{projectId}", "host": ["{{baseURL}}"], "path": ["my-favorite-projects", "{projectId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-favorite-projects/:id",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-favorite-projects",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -1038,8 +2617,30 @@
           "name": "toggle-favorite-project",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/my-favorite-projects/toggle/{projectId}", "host": ["{{baseURL}}"], "path": ["my-favorite-projects", "toggle", "{projectId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-favorite-projects/toggle/:id",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-favorite-projects",
+                "toggle",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -1047,8 +2648,30 @@
           "name": "check-favorite-project",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/my-favorite-projects/check/{projectId}", "host": ["{{baseURL}}"], "path": ["my-favorite-projects", "check", "{projectId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-favorite-projects/check/:id",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-favorite-projects",
+                "check",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
           },
           "response": []
         }
@@ -1061,8 +2684,24 @@
           "name": "get-groups",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/groups", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/1/groups",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "1",
+                "groups"
+              ]
+            }
           },
           "response": []
         },
@@ -1070,8 +2709,25 @@
           "name": "get-group",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/groups/{group}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "groups",
+                "{group}"
+              ]
+            }
           },
           "response": []
         },
@@ -1079,8 +2735,26 @@
           "name": "get-group-members",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/members", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "members"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/groups/{group}/members",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "groups",
+                "{group}",
+                "members"
+              ]
+            }
           },
           "response": []
         },
@@ -1088,8 +2762,26 @@
           "name": "leave-group",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/leave", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "leave"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/groups/{group}/leave",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "groups",
+                "{group}",
+                "leave"
+              ]
+            }
           },
           "response": []
         },
@@ -1097,13 +2789,39 @@
           "name": "create-group",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"New Group\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"manager_id\": \"1\",\n    \"member_ids\": [\"2\"],\n    \"name\": \"New Group\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/groups", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/:id/groups",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                ":id",
+                "groups"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
           },
           "response": []
         },
@@ -1111,13 +2829,34 @@
           "name": "update-group",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"Updated Group\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/groups/{group}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "groups",
+                "{group}"
+              ]
+            }
           },
           "response": []
         },
@@ -1125,8 +2864,25 @@
           "name": "delete-group",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/groups/{group}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "groups",
+                "{group}"
+              ]
+            }
           },
           "response": []
         },
@@ -1134,13 +2890,35 @@
           "name": "add-group-member",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"user_id\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/members", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "members"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/groups/{group}/members",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "groups",
+                "{group}",
+                "members"
+              ]
+            }
           },
           "response": []
         },
@@ -1148,8 +2926,27 @@
           "name": "remove-group-member",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
-            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/members/{userId}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "members", "{userId}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/groups/{group}/members/{userId}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "groups",
+                "{group}",
+                "members",
+                "{userId}"
+              ]
+            }
           },
           "response": []
         },
@@ -1157,24 +2954,79 @@
           "name": "transfer-group-manager",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"new_manager_id\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
-            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/transfer-manager", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "transfer-manager"] }
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/groups/{group}/transfer-manager",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "groups",
+                "{group}",
+                "transfer-manager"
+              ]
+            }
           },
           "response": []
         }
       ]
     }
   ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
   "variable": [
     {
       "key": "baseURL",
-      "value": "http://localhost:8000/api",
-      "type": "string"
+      "value": "http://localhost:8000/api"
     }
   ]
 }
