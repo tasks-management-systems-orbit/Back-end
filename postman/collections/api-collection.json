@@ -571,6 +571,34 @@
             "url": { "raw": "{{baseURL}}/projects/{project}/tasks/reorder", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "tasks", "reorder"] }
           },
           "response": []
+        },
+        {
+          "name": "create-manager-task",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Manager Task\",\n    \"description\": \"Task for group manager\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/manager-tasks", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "manager-tasks"] }
+          },
+          "response": []
+        },
+        {
+          "name": "create-subtask",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Subtask\",\n    \"description\": \"Subtask of parent task\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/tasks/{parentTask}/subtasks", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "tasks", "{parentTask}", "subtasks"] }
+          },
+          "response": []
         }
       ]
     },
@@ -615,6 +643,20 @@
             "method": "GET",
             "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
             "url": { "raw": "{{baseURL}}/my-assigned-tasks", "host": ["{{baseURL}}"], "path": ["my-assigned-tasks"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-assignment-status",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"completed\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/tasks/{task}/assignments/{assignmentId}/status", "host": ["{{baseURL}}"], "path": ["tasks", "{task}", "assignments", "{assignmentId}", "status"] }
           },
           "response": []
         }
@@ -1007,6 +1049,121 @@
             "method": "GET",
             "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
             "url": { "raw": "{{baseURL}}/my-favorite-projects/check/{projectId}", "host": ["{{baseURL}}"], "path": ["my-favorite-projects", "check", "{projectId}"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "groups",
+      "item": [
+        {
+          "name": "get-groups",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/groups", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups"] }
+          },
+          "response": []
+        },
+        {
+          "name": "get-group",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "get-group-members",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/members", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "members"] }
+          },
+          "response": []
+        },
+        {
+          "name": "leave-group",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/leave", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "leave"] }
+          },
+          "response": []
+        },
+        {
+          "name": "create-group",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"New Group\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/groups", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups"] }
+          },
+          "response": []
+        },
+        {
+          "name": "update-group",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Group\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "delete-group",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "add-group-member",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/members", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "members"] }
+          },
+          "response": []
+        },
+        {
+          "name": "remove-group-member",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/members/{userId}", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "members", "{userId}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "transfer-group-manager",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"new_manager_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseURL}}/projects/{project}/groups/{group}/transfer-manager", "host": ["{{baseURL}}"], "path": ["projects", "{project}", "groups", "{group}", "transfer-manager"] }
           },
           "response": []
         }

@@ -1,5 +1,38 @@
 api testing:
 
-- get-profiles: returns empty data
+- get-profiles: returns error: "Method Illuminate\\Database\\Eloquent\\Collection::total does not exist"
 - delete-profile: has no validation
 - create-profile: i think returning an error if the user has a profile is better
+- add-skill: i think returning the created skill instead of the whole user is better
+- blocked-users: returns error: "SQLSTATE[22P02]: Invalid text representation: 7 ERROR:  invalid input syntax for type bigint: \"blocked-users\"\nCONTEXT:  unnamed portal parameter $1 = '...' (Connection: pgsql, Host: dpg-d7jnkg57vvec7391juc0-a, Port: 5432, Database: task_manager, SQL: select * from \"profiles\" where \"id\" = blocked-users limit 1)"
+- unblock-user: the user can unblock himself, also the user can unblock users that aren't even blocked
+- can-message: the user can't see if can message or not, because the validation just checks for is private or not
+- can-invite: same as can-message
+- get-projects: same as get-profiles
+- get-project: in ProjectResource class, you change the response depends if the user is a member of the project or not, but you actually prevent users that are not members from seeing it in the controller
+- restore-project: how could the user restore a project if he doesn't access to access it
+- projects/get-users : returns error: "Attempt to read property \"id\" on null "
+- projects/add-user:
+    - returns error: "SQLSTATE[23514]: Check violation: 7 ERROR:  new row for relation \"project_users\" violates check constraint \"project_users_role_check\"\nDETAIL:  Failing row contains (3, 2, 2, member, 2026-04-25 20:58:16, 2026-04-25 20:58:16). (Connection: pgsql, Host: 127.0.0.1, Port: 5432, Database: task_manager, SQL: insert into \"project_users\" (\"created_at\", \"project_id\", \"role\", \"updated_at\", \"user_id\") values (2026-04-25 20:58:16, 2, member, 2026-04-25 20:58:16, 2))"
+    - in addUser method in project model, you check if user exist in project users before, this is already handled in controller
+    - why you reassign the role with "$newUser->role = $request->role;", it's already handled in project model addUser method
+- create-task: returns error: "Call to undefined relationship [assignments] on model [app\\Models\\Task]."
+- check-favorite: if the user checks himself, that doesn't return an error
+- add-favorite: why don't you make user_id as request param not in the body like check-favorite
+- add-favorite-project: same as add-favorite
+- get favorite-projects: returns error: "Attempt to read property \"id\" on null"
+- search:
+    - projects filtering didn't work, users filtering is good
+    - you allow filtering by email for users, but you don't return it in the resopnse
+
+general:
+- could you please enhance "Not Found" error messages
+
+
+questions:
+- why there is a specific endpoint for clear-note?
+
+notes:
+- routes to test:
+    - groups
+    - rest of tasks

@@ -73,7 +73,7 @@ class ProjectUserController extends Controller
         if ($project->hasUser($newUserId)) {
             return response()->json([
                 'success' => false,
-                'message' => 'User is already a user of this project'
+                'message' => 'User is already a member of this project'
             ], 409);
         }
 

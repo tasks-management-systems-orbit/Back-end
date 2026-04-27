@@ -3,7 +3,7 @@
 namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\AddFavoriteProjectRequest;
+use app\Http\Requests\FavoriteProject\AddFavoriteProjectRequest;
 use App\Http\Resources\FavoriteProjectResource;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
