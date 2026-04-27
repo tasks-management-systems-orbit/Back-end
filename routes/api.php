@@ -20,6 +20,8 @@ use App\Http\Controllers\api\TaskController;
 use App\Http\Controllers\api\TaskDependencyController;
 use App\Http\Controllers\api\TaskStatusController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\GroupController;
+use App\Http\Controllers\Api\GroupMemberController;
 
 // PUBLIC ROUTES (No authentication required)
 Route::post('/register', [RegisterController::class, 'register']);
@@ -103,6 +105,24 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
         Route::get('/', [ProjectUserController::class, 'index']);
         Route::post('/leave', [ProjectUserController::class, 'leaveProject']);
     });
+});
+
+// ============= GROUPS ROUTES - Read only =============
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::get('/projects/{project}/groups', [GroupController::class, 'index']);
+    Route::get('/projects/{project}/groups/{group}', [GroupController::class, 'show']);
+    Route::get('/projects/{project}/groups/{group}/members', [GroupMemberController::class, 'index']);
+    Route::post('/projects/{project}/groups/{group}/leave', [GroupMemberController::class, 'leaveGroup']);
+});
+
+// ============= GROUPS ROUTES - Write operations =============
+Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'])->group(function () {
+    Route::post('/projects/{project}/groups', [GroupController::class, 'store']);
+    Route::put('/projects/{project}/groups/{group}', [GroupController::class, 'update']);
+    Route::delete('/projects/{project}/groups/{group}', [GroupController::class, 'destroy']);
+    Route::post('/projects/{project}/groups/{group}/members', [GroupMemberController::class, 'addMember']);
+    Route::delete('/projects/{project}/groups/{group}/members/{userId}', [GroupMemberController::class, 'removeMember']);
+    Route::post('/projects/{project}/groups/{group}/transfer-manager', [GroupMemberController::class, 'transferManager']);
 });
 
 // TASKS ROUTES - Read only (always accessible)
@@ -209,6 +229,10 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'
         Route::put('/{task}', [TaskController::class, 'update']);
         Route::put('/{task}/status', [TaskController::class, 'updateStatus']);
         Route::delete('/{task}', [TaskController::class, 'destroy']);
+
+        Route::post('/projects/{project}/groups/{group}/manager-tasks', [TaskController::class, 'storeManagerTask']);
+        Route::post('/projects/{project}/groups/{group}/tasks/{parentTask}/subtasks', [TaskController::class, 'storeSubTask']);
+        Route::put('/tasks/{task}/assignments/{assignmentId}/status', [TaskController::class, 'updateTaskAssignmentStatus']);
     });
 });
 

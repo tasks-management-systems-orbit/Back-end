@@ -2,12 +2,14 @@
 
 namespace app\Models;
 
+use app\Events\ManagerTaskCompleted;
+use app\Events\TaskCompleted;
+use app\Models\TaskAssignment;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Events\TaskCompleted;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 class Task extends Model
@@ -28,6 +30,12 @@ class Task extends Model
         'assigned_to',
         'completed_at',
         'started_at',
+        'group_id',
+        'parent_task_id',
+        'allow_subtasks',
+        'auto_status',
+        'can_be_assigned',
+        'assigned_group_id',
     ];
 
     protected $casts = [
@@ -37,6 +45,9 @@ class Task extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
+        'allow_subtasks' => 'boolean',
+        'auto_status' => 'boolean',
+        'can_be_assigned' => 'boolean',
     ];
 
     protected $attributes = [
@@ -96,6 +107,75 @@ class Task extends Model
         )->withPivot('type')
             ->withTimestamps();
     }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(Group::class, 'group_id');
+    }
+
+    public function parentTask(): BelongsTo
+    {
+        return $this->belongsTo(Task::class, 'parent_task_id');
+    }
+
+    public function subTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'parent_task_id');
+    }
+
+    public function assignedGroup(): BelongsTo
+    {
+        return $this->belongsTo(Group::class, 'assigned_group_id');
+    }
+
+    public function taskAssignments(): HasMany
+    {
+        return $this->hasMany(TaskAssignment::class, 'task_id');
+    }
+
+    public function isProjectTask(): bool
+    {
+        return is_null($this->group_id) && is_null($this->parent_task_id) && is_null($this->assigned_group_id);
+    }
+
+    public function isGroupTask(): bool
+    {
+        return !is_null($this->assigned_group_id) && is_null($this->parent_task_id);
+    }
+
+    public function isManagerTask(): bool
+    {
+        return !is_null($this->group_id) && !$this->can_be_assigned && $this->allow_subtasks;
+    }
+
+    public function isSubTask(): bool
+    {
+        return !is_null($this->parent_task_id);
+    }
+
+    public function canAutoComplete(): bool
+    {
+        if (!$this->auto_status) {
+            return false;
+        }
+
+        $incompleteSubtasks = $this->subTasks()
+            ->whereHas('taskAssignments', function ($q) {
+                $q->whereNull('completed_at');
+            })
+            ->count();
+
+        return $incompleteSubtasks === 0 && $this->subTasks()->count() > 0;
+    }
+
+    public function updateAutoStatus(): void
+    {
+        if ($this->canAutoComplete()) {
+            $this->update(['completed_at' => now()]);
+            event(new ManagerTaskCompleted($this));
+        }
+    }
+
 
     public function isStarted(): bool
     {
@@ -305,7 +385,7 @@ class Task extends Model
                 ->orWhereHas('assignees', function ($sub) use ($userId) {
                     $sub->where('user_id', $userId);
                 });
-        })->distinct();  
+        })->distinct();
     }
 
     public function scopeOverdue($query)
@@ -348,5 +428,39 @@ class Task extends Model
     public function scopeDueThisWeek($query)
     {
         return $query->whereBetween('due_date', [now()->startOfWeek(), now()->endOfWeek()]);
+    }
+
+    public function scopeProjectTasks($query, ?int $userId = null)
+{
+    $query->whereNull('group_id')
+        ->whereNull('parent_task_id')
+        ->whereNull('assigned_group_id');
+
+    if ($userId) {
+        $query->where(function ($q) use ($userId) {
+            $q->whereHas('taskAssignments', function ($sub) use ($userId) {
+                $sub->where('user_id', $userId);
+            })->orWhere('created_by', $userId);
+        });
+    }
+
+    return $query;
+}
+
+    public function scopeGroupTasks($query)
+    {
+        return $query->whereNotNull('assigned_group_id')->whereNull('parent_task_id');
+    }
+
+    public function scopeManagerTasks($query)
+    {
+        return $query->whereNotNull('group_id')
+            ->where('can_be_assigned', false)
+            ->where('allow_subtasks', true);
+    }
+
+    public function scopeSubTasks($query)
+    {
+        return $query->whereNotNull('parent_task_id');
     }
 }

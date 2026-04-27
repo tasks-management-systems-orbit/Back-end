@@ -16,6 +16,9 @@ class EventServiceProvider extends ServiceProvider
         \app\Events\UserJoinedProject::class => [
             \app\Listeners\UpdateUserProjectsCountOnJoin::class,
         ],
+        \app\Events\ManagerTaskCompleted::class => [
+            \app\Listeners\UpdateManagerTaskStatus::class,
+        ],
     ];
 
     public function boot(): void
