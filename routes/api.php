@@ -229,11 +229,11 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'
         Route::put('/{task}', [TaskController::class, 'update']);
         Route::put('/{task}/status', [TaskController::class, 'updateStatus']);
         Route::delete('/{task}', [TaskController::class, 'destroy']);
-
-        Route::post('/projects/{project}/groups/{group}/manager-tasks', [TaskController::class, 'storeManagerTask']);
-        Route::post('/projects/{project}/groups/{group}/tasks/{parentTask}/subtasks', [TaskController::class, 'storeSubTask']);
-        Route::put('/tasks/{task}/assignments/{assignmentId}/status', [TaskController::class, 'updateTaskAssignmentStatus']);
     });
+
+    // Manager tasks & subtasks (separate from tasks prefix to avoid variable duplication)
+    Route::post('/projects/{project}/groups/{group}/manager-tasks', [TaskController::class, 'storeManagerTask']);
+    Route::post('/projects/{project}/groups/{group}/tasks/{parentTask}/subtasks', [TaskController::class, 'storeSubTask']);
 });
 
 // TASK ASSIGNMENTS ROUTES - Write operations
@@ -241,6 +241,7 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'
     Route::prefix('projects/{project}/tasks/{task}/assignments')->group(function () {
         Route::post('/', [TaskAssignmentController::class, 'assign']);
         Route::delete('/{userId}', [TaskAssignmentController::class, 'unassign']);
+        Route::put('/{assignmentId}/status', [TaskController::class, 'updateTaskAssignmentStatus']);
     });
 });
 

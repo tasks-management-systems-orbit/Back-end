@@ -1639,11 +1639,13 @@
               }
             },
             "url": {
-              "raw": "{{baseURL}}/tasks/{task}/assignments/{assignmentId}/status",
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}/assignments/{assignmentId}/status",
               "host": [
                 "{{baseURL}}"
               ],
               "path": [
+                "projects",
+                "{project}",
                 "tasks",
                 "{task}",
                 "assignments",
