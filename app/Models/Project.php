@@ -2,6 +2,7 @@
 
 namespace app\Models;
 
+use App\Models\ProjectComment;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -41,6 +42,11 @@ class Project extends Model
     ];
 
     // ============== Relationships ==============
+
+    public function projectComments(): HasMany
+    {
+        return $this->hasMany(ProjectComment::class);
+    }
 
     public function favoritedBy()
     {

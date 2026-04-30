@@ -3,7 +3,7 @@
 namespace app\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreProjectReportRequest;
+use App\Http\Requests\ProjectReport\StoreProjectReportRequest;
 use App\Models\Project;
 use App\Models\ProjectReport;
 use Illuminate\Http\JsonResponse;

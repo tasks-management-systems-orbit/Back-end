@@ -61,6 +61,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
 
+// PROJECT COMMENTS ROUTES (only for public projects)
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::prefix('projects/{project}/comments')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\ProjectCommentController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\Api\ProjectCommentController::class, 'store']);
+        Route::get('/{comment}', [App\Http\Controllers\Api\ProjectCommentController::class, 'show']);
+        Route::put('/{comment}', [App\Http\Controllers\Api\ProjectCommentController::class, 'update']);
+        Route::delete('/{comment}', [App\Http\Controllers\Api\ProjectCommentController::class, 'destroy']);
+    });
+});
+
 // PROJECT REPORT ROUTES
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('project-reports')->group(function () {
