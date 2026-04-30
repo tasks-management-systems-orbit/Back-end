@@ -92,6 +92,16 @@ class Project extends Model
             'id'
         );
     }
+    public function projectReports()
+    {
+        return $this->hasMany(ProjectReport::class);
+    }
+
+    public function groups()
+    {
+        return $this->hasMany(Group::class);
+    }
+
 
     // ============== Helper Methods ==============
 

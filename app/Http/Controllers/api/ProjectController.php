@@ -284,24 +284,53 @@ class ProjectController extends Controller
         $project = Project::onlyTrashed()->find($projectId);
 
         if (!$project) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Project not found or not deleted',
-            ], 404);
+            return response()->json(['message' => 'Project not found'], 404);
         }
 
         if ($project->created_by !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only the project owner can permanently delete this project',
-            ], 403);
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
+
+        $project->load([
+            'tasks.taskAssignments',
+            'tasks.comments',
+            'groups.groupTasks',
+            'projectComments',
+            'projectReports'
+        ]);
+
+
+        foreach ($project->tasks as $task) {
+            $task->taskAssignments()->forceDelete();
+            $task->comments()->forceDelete();
+            $task->dependencies()->detach();
+            $task->forceDelete();
+        }
+
+        foreach ($project->groups as $group) {
+            $group->members()->detach();
+            foreach ($group->groupTasks as $task) {
+                $task->taskAssignments()->forceDelete();
+                $task->forceDelete();
+            }
+            $group->forceDelete();
+        }
+
+        $project->users()->detach();
+
+        $project->favoritedBy()->detach();
+
+        $project->joinRequests()->forceDelete();
+
+        $project->projectComments()->forceDelete();
+
+        $project->projectReports()->forceDelete();
 
         $project->forceDelete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Project permanently deleted',
+            'message' => 'Project and all related data permanently deleted'
         ]);
     }
 
