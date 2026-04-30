@@ -144,6 +144,16 @@ class User extends Authenticatable
         return $this->hasOne(Note::class);
     }
 
+    public function projectReports()
+    {
+        return $this->hasMany(ProjectReport::class, 'reporter_id');
+    }
+
+    public function projectComments()
+    {
+        return $this->hasMany(ProjectComment::class, 'user_id');
+    }
+
     public function hasReported(User $user): bool
     {
         return Report::where('reporter_id', $this->id)

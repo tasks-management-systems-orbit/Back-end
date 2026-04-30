@@ -22,6 +22,8 @@ use App\Http\Controllers\api\TaskStatusController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\GroupController;
 use App\Http\Controllers\Api\GroupMemberController;
+use App\Http\Controllers\Api\ProjectCommentController;
+use App\Http\Controllers\Api\ProjectReportController;
 
 // PUBLIC ROUTES (No authentication required)
 Route::post('/register', [RegisterController::class, 'register']);
@@ -64,20 +66,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // PROJECT COMMENTS ROUTES (only for public projects)
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/comments')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\ProjectCommentController::class, 'index']);
-        Route::post('/', [App\Http\Controllers\Api\ProjectCommentController::class, 'store']);
-        Route::get('/{comment}', [App\Http\Controllers\Api\ProjectCommentController::class, 'show']);
-        Route::put('/{comment}', [App\Http\Controllers\Api\ProjectCommentController::class, 'update']);
-        Route::delete('/{comment}', [App\Http\Controllers\Api\ProjectCommentController::class, 'destroy']);
+        Route::get('/', [ProjectCommentController::class, 'index']);
+        Route::post('/', [ProjectCommentController::class, 'store']);
+        Route::get('/{comment}', [ProjectCommentController::class, 'show']);
+        Route::put('/{comment}', [ProjectCommentController::class, 'update']);
+        Route::delete('/{comment}', [ProjectCommentController::class, 'destroy']);
     });
 });
 
 // PROJECT REPORT ROUTES
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('project-reports')->group(function () {
-        Route::post('/', [App\Http\Controllers\Api\ProjectReportController::class, 'store']);
-        Route::get('/', [App\Http\Controllers\Api\ProjectReportController::class, 'getAllReports']);
-        Route::get('/project/{projectId}', [App\Http\Controllers\Api\ProjectReportController::class, 'getProjectReports']);
+        Route::post('/', [ProjectReportController::class, 'store']);
+        Route::get('/', [ProjectReportController::class, 'getAllReports']);
+        Route::get('/project/{projectId}', [ProjectReportController::class, 'getProjectReports']);
     });
 });
 
