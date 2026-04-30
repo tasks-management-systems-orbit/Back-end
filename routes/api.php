@@ -61,6 +61,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
 
+// PROJECT REPORT ROUTES
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::prefix('project-reports')->group(function () {
+        Route::post('/', [App\Http\Controllers\Api\ProjectReportController::class, 'store']);
+        Route::get('/', [App\Http\Controllers\Api\ProjectReportController::class, 'getAllReports']);
+        Route::get('/project/{projectId}', [App\Http\Controllers\Api\ProjectReportController::class, 'getProjectReports']);
+    });
+});
+
 // SEARCH ROUTES
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::get('/search', [SearchController::class, 'search']);
