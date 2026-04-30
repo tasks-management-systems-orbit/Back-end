@@ -218,6 +218,23 @@ class ProjectController extends Controller
         ]);
     }
 
+    public function trashed(Request $request): JsonResponse
+    {
+        $userId = $request->user()->id;
+
+        $projects = Project::onlyTrashed()
+            ->where('created_by', $userId)
+            ->with(['creator'])
+            ->orderBy('deleted_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => ProjectResource::collection($projects),
+            'total' => $projects->count(),
+        ]);
+    }
+
     public function destroy(Request $request, Project $project): JsonResponse
     {
         if ($project->created_by !== $request->user()->id) {
@@ -235,14 +252,21 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function restore(Request $request, int $id): JsonResponse
+    public function restore(Request $request, int $projectId): JsonResponse
     {
-        $project = Project::withTrashed()->findOrFail($id);
+        $project = Project::onlyTrashed()->find($projectId);
+
+        if (!$project) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Project not found or not deleted',
+            ], 404);
+        }
 
         if ($project->created_by !== $request->user()->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Only project owner can restore the project'
+                'message' => 'Only the project owner can restore this project',
             ], 403);
         }
 
@@ -251,9 +275,51 @@ class ProjectController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Project restored successfully',
-            'data' => new ProjectResource($project->load('creator'))
+            'data' => new ProjectResource($project->load('creator')),
         ]);
     }
+
+    public function forceDelete(Request $request, int $projectId): JsonResponse
+    {
+        $project = Project::onlyTrashed()->find($projectId);
+
+        if (!$project) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Project not found or not deleted',
+            ], 404);
+        }
+
+        if ($project->created_by !== $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only the project owner can permanently delete this project',
+            ], 403);
+        }
+
+        $project->forceDelete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Project permanently deleted',
+        ]);
+    }
+
+    public function emptyTrash(Request $request): JsonResponse
+    {
+        $userId = $request->user()->id;
+
+        $deletedCount = Project::onlyTrashed()
+            ->where('created_by', $userId)
+            ->forceDelete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$deletedCount} project(s) permanently deleted",
+            'deleted_count' => $deletedCount,
+        ]);
+    }
+
 
     private function getUserRoleInProject(Project $project, int $userId): string
     {
