@@ -2,23 +2,25 @@
 
 namespace app\Http\Controllers\api\Auth;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\api\Auth\LoginRequest;
 use App\Http\Traits\ApiResponseTrait;
 use App\Services\AuthService;
+use app\Services\VerificationCodeService;
+use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
     use ApiResponseTrait;
 
-    public function __construct(protected AuthService $authService) {}
+    public function __construct(protected AuthService $authService, protected VerificationCodeService $verificationService)
+    {
+    }
 
     public function login(LoginRequest $request)
     {
         $field = $request->getLoginField();
         $value = $request->input('login');
-
 
         $user = $this->authService->login(
             $field,
@@ -28,8 +30,10 @@ class LoginController extends Controller
         );
 
         if (!$user->hasVerifiedEmail()) {
+            $this->verificationService->resendVerificationCode($user->email, $user->name);
+
             return $this->errorResponse(
-                'Email verification required.',
+                'Email not verified. A new verification code has been sent to your email.',
                 403
             );
         }

@@ -47,4 +47,19 @@ class VerificationCodeService
 
         return true;
     }
+    // Resend verification code only if last code was sent more than 1 minute ago.
+    public function resendVerificationCode(string $email, string $username): bool
+    {
+        $lastCode = VerificationCode::where('email', $email)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if ($lastCode && $lastCode->created_at->diffInSeconds(now()) < 60) {
+            return false;
+        }
+
+        $this->generateAndSend($email, $username);
+        return true;
+    }
+
 }
