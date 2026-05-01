@@ -17,7 +17,7 @@ class ProjectController extends Controller
     public function myProjects(Request $request): JsonResponse
     {
         $userId = $request->user()->id;
-        $search = $request->get('search', null);
+        $search = $request->input('search', null);
 
         $projects = Project::query()
             ->with(['creator', 'users'])
@@ -34,7 +34,7 @@ class ProjectController extends Controller
                         ->orWhere('description', 'LIKE', "%{$search}%");
                 });
             })
-            ->orderBy($request->get('sort_by', 'created_at'), $request->get('sort_direction', 'desc'))
+            ->orderBy($request->input('sort_by', 'created_at'), $request->input('sort_direction', 'desc'))
             ->get();
 
         foreach ($projects as $project) {
@@ -45,17 +45,7 @@ class ProjectController extends Controller
         return response()->json([
             'success' => true,
             'data' => ProjectResource::collection($projects),
-            'meta' => [
-                'total' => $projects->total(),
-                'per_page' => $projects->perPage(),
-                'current_page' => $projects->currentPage(),
-                'last_page' => $projects->lastPage(),
-            ],
-            'filters' => [
-                'search' => $search,
-                'sort_by' => $request->get('sort_by', 'created_at'),
-                'sort_direction' => $request->get('sort_direction', 'desc'),
-            ]
+            'total' => $projects->count(),
         ]);
     }
 
@@ -178,6 +168,8 @@ class ProjectController extends Controller
 
     public function update(UpdateProjectRequest $request, Project $project): JsonResponse
     {
+        $project->load('users');
+
         $userId = $request->user()->id;
         $role = $this->getUserRoleInProject($project, $userId);
 
@@ -356,10 +348,13 @@ class ProjectController extends Controller
             return 'owner';
         }
 
-        $member = $project->users->firstWhere('id', $userId);
-        return $member?->pivot->role ?? 'none';
-    }
+        $role = $project->users()
+            ->where('user_id', $userId)
+            ->select('project_users.role')
+            ->value('role');
 
+        return $role ?? 'none';
+    }
     public function updateStatus(Request $request, Project $project): JsonResponse
     {
         $request->validate([

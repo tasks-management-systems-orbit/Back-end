@@ -57,10 +57,11 @@ class ProjectCommentController extends Controller
         try {
             DB::beginTransaction();
 
+            $validated = $request->validated();
             $comment = $project->projectComments()->create([
                 'user_id' => $request->user()->id,
-                'content' => $request->input('content'),
-                'parent_id' => $request->input('parent_id'),
+                'content' => $validated['content'],
+                'parent_id' => $validated['parent_id'] ?? null,
             ]);
 
             DB::commit();
