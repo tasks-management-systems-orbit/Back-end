@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Builder;
+
 
 class Project extends Model
 {
@@ -191,12 +193,12 @@ class Project extends Model
 
     // ============== Query Scopes ==============
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query)
     {
         return $query->whereNull('deleted_at');
     }
 
-    public function scopeForUser($query, int $userId)
+    public function scopeForUser(Builder $query, int $userId)
     {
         return $query->where('created_by', $userId)
             ->orWhereHas('users', function ($q) use ($userId) {

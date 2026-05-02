@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
+
 
 
 class Task extends Model
@@ -368,17 +370,17 @@ class Task extends Model
         return $this->dependents()->count();
     }
 
-    public function scopeByProject($query, int $projectId)
+    public function scopeByProject(Builder $query, int $projectId)
     {
         return $query->where('project_id', $projectId);
     }
 
-    public function scopeByStatus($query, int $statusId)
+    public function scopeByStatus(Builder $query, int $statusId)
     {
         return $query->where('status_id', $statusId);
     }
 
-    public function scopeByAssignee($query, int $userId)
+    public function scopeByAssignee(Builder $query, int $userId)
     {
         return $query->where(function ($q) use ($userId) {
             $q->where('assigned_to', $userId)
@@ -388,49 +390,49 @@ class Task extends Model
         })->distinct();
     }
 
-    public function scopeOverdue($query)
+    public function scopeOverdue(Builder $query)
     {
         return $query->whereNull('completed_at')
             ->whereNotNull('due_date')
             ->where('due_date', '<', now());
     }
 
-    public function scopeByPriority($query, string $priority)
+    public function scopeByPriority(Builder $query, string $priority)
     {
         return $query->where('priority', $priority);
     }
 
-    public function scopeIncomplete($query)
+    public function scopeIncomplete(Builder $query)
     {
         return $query->whereNull('completed_at');
     }
 
-    public function scopeCompleted($query)
+    public function scopeCompleted(Builder $query)
     {
         return $query->whereNotNull('completed_at');
     }
 
-    public function scopeNotStarted($query)
+    public function scopeNotStarted(Builder $query)
     {
         return $query->whereNull('started_at');
     }
 
-    public function scopeInProgress($query)
+    public function scopeInProgress(Builder $query)
     {
         return $query->whereNotNull('started_at')->whereNull('completed_at');
     }
 
-    public function scopeDueToday($query)
+    public function scopeDueToday(Builder $query)
     {
         return $query->whereDate('due_date', today());
     }
 
-    public function scopeDueThisWeek($query)
+    public function scopeDueThisWeek(Builder $query)
     {
         return $query->whereBetween('due_date', [now()->startOfWeek(), now()->endOfWeek()]);
     }
 
-    public function scopeProjectTasks($query, ?int $userId = null)
+    public function scopeProjectTasks(Builder $query, ?int $userId = null)
 {
     $query->whereNull('group_id')
         ->whereNull('parent_task_id')
@@ -447,19 +449,19 @@ class Task extends Model
     return $query;
 }
 
-    public function scopeGroupTasks($query)
+    public function scopeGroupTasks(Builder $query)
     {
         return $query->whereNotNull('assigned_group_id')->whereNull('parent_task_id');
     }
 
-    public function scopeManagerTasks($query)
+    public function scopeManagerTasks(Builder $query)
     {
         return $query->whereNotNull('group_id')
             ->where('can_be_assigned', false)
             ->where('allow_subtasks', true);
     }
 
-    public function scopeSubTasks($query)
+    public function scopeSubTasks(Builder $query)
     {
         return $query->whereNotNull('parent_task_id');
     }

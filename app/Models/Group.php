@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
+
 
 class Group extends Model
 {
@@ -120,12 +122,12 @@ class Group extends Model
 
     // ============== Scopes ==============
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query)
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeForProject($query, int $projectId)
+    public function scopeForProject(Builder $query, int $projectId)
     {
         return $query->where('project_id', $projectId);
     }
