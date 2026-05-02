@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Api/ProfileController.php
 
 namespace app\Http\Controllers\api;
 
@@ -162,10 +161,7 @@ class ProfileController extends Controller
     }
 
 
-
-
-
-    public function blockUser(Request $request, $userId): JsonResponse
+    public function blockUser(Request $request,int $userId): JsonResponse
     {
         try {
             $user = $request->user();
@@ -193,7 +189,7 @@ class ProfileController extends Controller
         }
     }
 
-    public function unblockUser(Request $request, $userId): JsonResponse
+    public function unblockUser(Request $request,int $userId): JsonResponse
     {
         try {
             $user = $request->user();

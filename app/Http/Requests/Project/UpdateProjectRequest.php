@@ -21,6 +21,8 @@ class UpdateProjectRequest extends FormRequest
             'visibility' => 'nullable|in:private,public',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
+            'allow_join_requests' => 'sometimes|boolean',
+
         ];
     }
 }

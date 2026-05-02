@@ -190,7 +190,8 @@ class ProjectController extends Controller
             'status',
             'visibility',
             'start_date',
-            'end_date'
+            'end_date',
+            'allow_join_requests'
         ]);
 
         if ($newStatus === 'completed' && $oldStatus !== 'completed') {

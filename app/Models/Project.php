@@ -26,6 +26,7 @@ class Project extends Model
         'start_date',
         'end_date',
         'created_by',
+        'allow_join_requests',
     ];
 
     protected $casts = [
@@ -34,6 +35,7 @@ class Project extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
+        'allow_join_requests' => 'boolean',
     ];
 
     protected $appends = [
@@ -42,6 +44,21 @@ class Project extends Model
     ];
 
     // ============== Relationships ==============
+
+    public function joinRequests()
+    {
+        return $this->hasMany(Request::class)->where('type', 'join_request');
+    }
+
+    public function invitations()
+    {
+        return $this->hasMany(Request::class)->where('type', 'invitation');
+    }
+
+    public function sentJoinRequests()
+    {
+        return $this->hasMany(Request::class, 'project_id')->where('type', 'join_request');
+    }
 
     public function projectComments(): HasMany
     {
@@ -76,10 +93,6 @@ class Project extends Model
         return $this->hasMany(TaskStatus::class);
     }
 
-    public function joinRequests(): HasMany
-    {
-        return $this->hasMany(Request::class);
-    }
 
     public function comments(): HasManyThrough
     {

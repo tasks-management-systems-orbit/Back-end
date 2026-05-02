@@ -24,6 +24,8 @@ use App\Http\Controllers\Api\GroupController;
 use App\Http\Controllers\Api\GroupMemberController;
 use App\Http\Controllers\Api\ProjectCommentController;
 use App\Http\Controllers\Api\ProjectReportController;
+use App\Http\Controllers\Api\RequestController;
+
 
 // PUBLIC ROUTES (No authentication required)
 Route::post('/register', [RegisterController::class, 'register']);
@@ -62,6 +64,25 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
+
+// Invitations
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::get('/my-invitations', [RequestController::class, 'myInvitations']);
+    Route::put('/invitations/{invitation}/accept', [RequestController::class, 'acceptInvitation']);
+    Route::put('/invitations/{invitation}/reject', [RequestController::class, 'rejectInvitation']);
+
+});
+
+
+//  join Requests
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::prefix('projects/{project}/join-requests')->group(function () {
+        Route::post('/', [RequestController::class, 'sendJoinRequest']);
+        Route::get('/', [RequestController::class, 'listJoinRequests']);
+        Route::put('/{joinRequest}', [RequestController::class, 'processJoinRequest']);
+    });
+});
+
 
 // PROJECT COMMENTS ROUTES (only for public projects)
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
@@ -207,6 +228,11 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
 
 
 // ============= ROUTES INSIDE project.not.locked (Blocked when project is paused/completed) =============
+
+//  Invitations
+Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'])->group(function () {
+    Route::post('/projects/{project}/invitations', [RequestController::class, 'sendInvitation']);
+});
 
 // COMMENTS ROUTES (always accessible)
 Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'])->group(function () {
