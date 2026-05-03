@@ -22,7 +22,7 @@ class RegisterController extends Controller
     {
         $user = $this->authService->register($request->validated());
 
-        $this->verificationService->generateAndSend($user->email, $user->name);
+        // $this->verificationService->generateAndSend($user->email, $user->name);
 
         return $this->successResponse([
             'email' => $user->email,

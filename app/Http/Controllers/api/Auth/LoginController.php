@@ -13,9 +13,7 @@ class LoginController extends Controller
 {
     use ApiResponseTrait;
 
-    public function __construct(protected AuthService $authService, protected VerificationCodeService $verificationService)
-    {
-    }
+    public function __construct(protected AuthService $authService, protected VerificationCodeService $verificationService) {}
 
     public function login(LoginRequest $request)
     {
@@ -29,14 +27,14 @@ class LoginController extends Controller
             $request->boolean('remember')
         );
 
-        if (!$user->hasVerifiedEmail()) {
-            $this->verificationService->resendVerificationCode($user->email, $user->name);
+        // if (!$user->hasVerifiedEmail()) {
+        //     $this->verificationService->resendVerificationCode($user->email, $user->name);
 
-            return $this->errorResponse(
-                'Email not verified. A new verification code has been sent to your email.',
-                403
-            );
-        }
+        //     return $this->errorResponse(
+        //         'Email not verified. A new verification code has been sent to your email.',
+        //         403
+        //     );
+        // }
 
         if (!$user->is_active) {
             return $this->errorResponse(
