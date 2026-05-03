@@ -627,4 +627,39 @@ class TaskController extends Controller
             'deleted_count' => $deletedCount,
         ]);
     }
+
+    public function myPendingTasks(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $userId = $user->id;
+
+        $sortBy = $request->input('sort_by', 'due_date');
+        $sortDir = $request->input('sort_direction', 'asc');
+
+        $allowedSorts = ['due_date', 'created_at', 'priority', 'title'];
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'due_date';
+        }
+
+        if (!in_array($sortDir, ['asc', 'desc'])) {
+            $sortDir = 'asc';
+        }
+
+        $tasks = Task::with(['project', 'status', 'creator', 'assignee'])
+            ->whereNull('completed_at')
+            ->where(function ($query) use ($userId) {
+                $query->where('assigned_to', $userId)
+                    ->orWhereHas('assignees', function ($q) use ($userId) {
+                        $q->where('user_id', $userId);
+                    });
+            })
+            ->orderBy($sortBy, $sortDir)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => TaskResource::collection($tasks),
+            'total' => $tasks->count(),
+        ]);
+    }
 }

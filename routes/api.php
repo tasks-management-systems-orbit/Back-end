@@ -65,6 +65,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
 
+Route::get('/my-tasks', [TaskController::class, 'myPendingTasks'])->
+    middleware(['auth:sanctum', 'is.active', 'verified']);
+
 // Project Reactions
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/reactions')->group(function () {
@@ -113,9 +116,8 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
 });
 
 // SEARCH ROUTES
-Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
-    Route::get('/search', [SearchController::class, 'search']);
-});
+Route::get('/search', [SearchController::class, 'search'])->
+    middleware(['auth:sanctum', 'is.active', 'verified']);
 
 // FAVORITE PROJECTS ROUTES
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
@@ -222,8 +224,8 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('reports')->group(function () {
         Route::post('/', [ReportController::class, 'store']);
-        Route::get('/', [ReportController::class, 'getAllReports']);
-        Route::get('/user/{userId}', [ReportController::class, 'getUserReports']);
+        Route::get('/', [ReportController::class, 'getAllReports']);     //   Admin only
+        Route::get('/user/{userId}', [ReportController::class, 'getUserReports']);       //  Admin only
     });
 });
 
