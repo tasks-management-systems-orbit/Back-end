@@ -179,6 +179,7 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
     Route::prefix('projects/{project}/tasks')->group(function () {
         Route::get('/', [TaskController::class, 'index']);
         Route::get('/{task}', [TaskController::class, 'show']);
+        Route::get('/trashed', [TaskController::class, 'trashed']);
     });
 });
 
@@ -279,6 +280,10 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'
         Route::put('/{task}', [TaskController::class, 'update']);
         Route::put('/{task}/status', [TaskController::class, 'updateStatus']);
         Route::delete('/{task}', [TaskController::class, 'destroy']);
+
+        Route::post('/{task}/restore', [TaskController::class, 'restoreTask']);
+        Route::delete('/{task}/force-delete', [TaskController::class, 'forceDeleteTask']);
+        Route::delete('/empty-trash', [TaskController::class, 'emptyTrash']);
     });
 
     // Manager tasks & subtasks (separate from tasks prefix to avoid variable duplication)

@@ -4,9 +4,11 @@ namespace app\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TaskAssignment extends Model
 {
+    use SoftDeletes;
     protected $table = 'task_assignments';
 
     protected $fillable = [
@@ -20,6 +22,7 @@ class TaskAssignment extends Model
     protected $casts = [
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     public function task(): BelongsTo

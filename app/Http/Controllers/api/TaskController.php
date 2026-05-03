@@ -2,21 +2,22 @@
 
 namespace app\Http\Controllers\Api;
 
-use App\Http\Requests\Task\StoreTaskRequest;
-use App\Http\Requests\Task\UpdateTaskRequest;
-use App\Http\Requests\Task\UpdateTaskStatusRequest;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Task\ReorderTasksRequest;
 use App\Http\Requests\Task\StoreManagerTaskRequest;
 use App\Http\Requests\Task\StoreSubTaskRequest;
+use App\Http\Requests\Task\StoreTaskRequest;
+use App\Http\Requests\Task\UpdateTaskRequest;
+use App\Http\Requests\Task\UpdateTaskStatusRequest;
 use App\Http\Resources\TaskResource;
-use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskAssignment;
 use App\Models\TaskStatus;
-use Illuminate\Http\Request;
+use app\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
@@ -25,9 +26,9 @@ class TaskController extends Controller
     {
         $this->checkProjectAccess($project);
 
-        $statusId = $request->get('status_id');
-        $assigneeId = $request->get('assignee_id');
-        $priority = $request->get('priority');
+        $statusId = $request->input('status_id');
+        $assigneeId = $request->input('assignee_id');
+        $priority = $request->input('priority');
 
         $tasks = Task::with(['status', 'creator', 'assignee', 'assignments'])
             ->where('project_id', $project->id)
@@ -542,5 +543,88 @@ class TaskController extends Controller
         if (!$project->isOwner($userId) && !$project->isManager($userId)) {
             abort(403, 'You do not have permission to manage tasks');
         }
+    }
+
+    private function checkTaskManagePermission(Project $project, User $user): void
+    {
+        $isOwner = $project->isOwner($user->id);
+        if (!$isOwner) {
+            abort(403, 'You do not have permission to manage tasks.');
+        }
+    }
+
+    public function trashed(Project $project, Request $request): JsonResponse
+    {
+        $this->checkProjectAccess($project);
+
+        $tasks = Task::onlyTrashed()
+            ->where('project_id', $project->id)
+            ->with(['status', 'creator', 'assignee'])
+            ->orderBy('deleted_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => TaskResource::collection($tasks),
+            'total' => $tasks->count(),
+        ]);
+    }
+
+    public function restoreTask(Project $project, Task $task, Request $request): JsonResponse
+    {
+        if (!$task->trashed() || $task->project_id !== $project->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task not found or not deleted.',
+            ], 404);
+        }
+
+        $this->checkTaskManagePermission($project, $request->user());
+
+        $task->restore();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Task restored successfully.',
+            'data' => new TaskResource($task->load(['status', 'creator', 'assignee'])),
+        ]);
+    }
+
+    public function forceDeleteTask(Project $project, Task $task, Request $request): JsonResponse
+    {
+        if (!$task->trashed() || $task->project_id !== $project->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task not found or not deleted.',
+            ], 404);
+        }
+
+        $this->checkTaskManagePermission($project, $request->user());
+
+        $task->taskAssignments()->forceDelete();
+        $task->comments()->forceDelete();
+        $task->dependencies()->detach();
+        $task->dependents()->detach();
+        $task->forceDelete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Task permanently deleted.',
+        ]);
+    }
+
+    public function emptyTrash(Project $project, Request $request): JsonResponse
+    {
+        $this->checkProjectManager($project);
+
+        $deletedCount = Task::onlyTrashed()
+            ->where('project_id', $project->id)
+            ->forceDelete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$deletedCount} task(s) permanently deleted from trash.",
+            'deleted_count' => $deletedCount,
+        ]);
     }
 }

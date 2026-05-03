@@ -174,17 +174,17 @@ class Profile extends Model
         return false;
     }
 
-    public function getAverageSkillRatingAttribute(): float
-    {
-        $skills = $this->skills;
+    // public function getAverageSkillRatingAttribute(): float
+    // {
+    //     $skills = $this->skills;
 
-        if (empty($skills)) {
-            return 0;
-        }
+    //     if (empty($skills)) {
+    //         return 0;
+    //     }
 
-        $total = array_sum(array_column($skills, 'rating'));
-        return round($total / count($skills), 1);
-    }
+    //     $total = array_sum(array_column($skills, 'rating'));
+    //     return round($total / count($skills), 1);
+    // }
 
     public function getTopSkillsAttribute(?int $limit = null): array
     {

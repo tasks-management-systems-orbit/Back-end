@@ -57,6 +57,28 @@ class Task extends Model
         'position' => 0,
     ];
 
+protected static function booted()
+{
+    static::deleting(function ($task) {
+        if ($task->isForceDeleting()) {
+            $task->taskAssignments()->forceDelete();
+            $task->comments()->forceDelete();
+            $task->subTasks()->forceDelete();
+            $task->dependencies()->detach();
+        } else {
+            $task->taskAssignments()->delete();
+            $task->comments()->delete();
+            $task->subTasks()->delete();
+        }
+    });
+
+    static::restoring(function ($task) {
+        $task->taskAssignments()->withTrashed()->restore();
+        $task->comments()->withTrashed()->restore();
+        $task->subTasks()->withTrashed()->restore();
+    });
+}
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
