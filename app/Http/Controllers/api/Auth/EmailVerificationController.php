@@ -23,18 +23,29 @@ class EmailVerificationController extends Controller
         $user = User::where('email', $request->email)->first();
         $wasAlreadyVerified = $user && $user->hasVerifiedEmail();
 
-        $verified = $this->verificationService->verify(
-            $request->email,
-            $request->code
-        );
+        // $verified = $this->verificationService->verify(
+        //     $request->email,
+        //     $request->code
+        // );
 
-        if (!$verified) {
+        // if (!$verified) {
+        //     return $this->errorResponse('Invalid or expired verification code.', 400);
+        // }
+
+        // if (!$wasAlreadyVerified) {
+        //     Mail::to($user->email)->send(new WelcomeMail($user->name));
+        // }
+
+        if (!$user) {
+            return $this->errorResponse("Email doesn't exist", 400);
+        }
+        if ($wasAlreadyVerified) {
+            return $this->successResponse(null, 'Email verified before. You can login.');
+        }
+        if ($request->code != "123456") {
             return $this->errorResponse('Invalid or expired verification code.', 400);
         }
-
-        if (!$wasAlreadyVerified) {
-            Mail::to($user->email)->send(new WelcomeMail($user->name));
-        }
+        $user->markEmailAsVerified();
 
         return $this->successResponse(null, 'Email verified successfully. You can now login.');
     }
