@@ -20,7 +20,7 @@ class ProjectController extends Controller
         $search = $request->input('search', null);
 
         $projects = Project::query()
-            ->with(['creator', 'users'])
+            ->with(['reactions', 'creator', 'users'])
             ->withCount(['users', 'tasks'])
             ->where(function ($query) use ($userId) {
                 $query->where('created_by', $userId)
@@ -52,9 +52,9 @@ class ProjectController extends Controller
     public function index(Request $request): JsonResponse
     {
         $userId = $request->user()->id;
-        $role = $request->get('role');
-        $status = $request->get('status');
-        $visibility = $request->get('visibility');
+        $role = $request->input('role');
+        $status = $request->input('status');
+        $visibility = $request->input('visibility');
 
         $query = Project::query()
             ->with(['creator', 'users'])
@@ -112,6 +112,7 @@ class ProjectController extends Controller
         }
 
         $project->load([
+            'reactions',
             'creator',
             'users.profile',
             'taskStatuses' => function ($query) {

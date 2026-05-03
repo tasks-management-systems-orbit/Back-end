@@ -2,6 +2,7 @@
 
 namespace app\Models;
 
+use App\Models\ProjectReaction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -50,6 +51,11 @@ class User extends Authenticatable
                 'color' => '#ffffff',
             ]);
         });
+    }
+
+    public function projectReactions()
+    {
+        return $this->hasMany(ProjectReaction::class);
     }
 
     public function hasVerifiedEmail(): bool

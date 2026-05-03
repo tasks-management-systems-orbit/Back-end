@@ -18,11 +18,11 @@ class ProjectResource extends JsonResource
                 'name' => $this->name,
                 'image' => $this->image,
                 'status' => $this->status,
-                'status_label' => $this->status_label,
                 'visibility' => $this->visibility,
-                'visibility_label' => $this->visibility_label,
                 'is_private' => true,
-                'message' => 'This project is private. You do not have access to its details.'
+                'message' => 'This project is private. You do not have access to its details.',
+                'reaction_counts' => $this->reaction_counts,
+                'user_reaction' => $this->when(auth()->check(), fn() => $this->user_reaction),
             ];
         }
 
@@ -32,9 +32,7 @@ class ProjectResource extends JsonResource
             'description' => $this->description,
             'image' => $this->image,
             'status' => $this->status,
-            'status_label' => $this->status_label,
             'visibility' => $this->visibility,
-            'visibility_label' => $this->visibility_label,
             'start_date' => $this->start_date?->toISOString(),
             'end_date' => $this->end_date?->toISOString(),
             'created_by' => $this->created_by,
@@ -51,6 +49,9 @@ class ProjectResource extends JsonResource
             'is_owner' => $this->is_owner ?? false,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
+
+            'reaction_counts' => $this->reaction_counts,
+            'user_reaction' => $this->when(auth()->check(), fn() => $this->user_reaction),
         ];
     }
 }

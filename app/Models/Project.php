@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\ProjectReaction;
+
 
 
 class Project extends Model
@@ -190,6 +192,39 @@ class Project extends Model
             ->wherePivotIn('role', ['owner', 'manager'])
             ->get();
     }
+
+    public function reactions()
+    {
+        return $this->hasMany(ProjectReaction::class);
+    }
+
+    public function reactedBy(User $user): bool
+    {
+        return $this->reactions()->where('user_id', $user->id)->exists();
+    }
+
+    public function getUserReactionAttribute(): ?string
+    {
+        if (!auth()->check())
+            return null;
+        return $this->reactions->where('user_id', auth()->id())->first()?->reaction_type;
+    }
+
+    public function getReactionCountsAttribute(): array
+    {
+        $counts = $this->reactions()
+            ->select('reaction_type', \DB::raw('count(*) as total'))
+            ->groupBy('reaction_type')
+            ->pluck('total', 'reaction_type')
+            ->toArray();
+
+        return [
+            'like' => $counts['like'] ?? 0,
+            'love' => $counts['love'] ?? 0,
+            'dislike' => $counts['dislike'] ?? 0,
+        ];
+    }
+
 
     // ============== Query Scopes ==============
 

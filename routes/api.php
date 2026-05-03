@@ -65,6 +65,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
 
+// Project Reactions
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::prefix('projects/{project}/reactions')->group(function () {
+        Route::post('/toggle', [App\Http\Controllers\Api\ProjectReactionController::class, 'toggleReaction']);
+        Route::get('/', [App\Http\Controllers\Api\ProjectReactionController::class, 'getProjectReactions']);
+    });
+});
+
 // Invitations
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::get('/my-invitations', [RequestController::class, 'myInvitations']);
