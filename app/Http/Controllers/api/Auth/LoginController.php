@@ -13,9 +13,7 @@ class LoginController extends Controller
 {
     use ApiResponseTrait;
 
-    public function __construct(protected AuthService $authService, protected VerificationCodeService $verificationService)
-    {
-    }
+    public function __construct(protected AuthService $authService, protected VerificationCodeService $verificationService) {}
 
     public function login(LoginRequest $request)
     {
