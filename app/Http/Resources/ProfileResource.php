@@ -19,6 +19,7 @@ class ProfileResource extends JsonResource
                     'email' => $this->when(
                         request()->user() && request()->user()->id === $this->user_id,
                         $this->user->email
+                        
                     ),
                 ];
             }),

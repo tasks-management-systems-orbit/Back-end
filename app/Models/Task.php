@@ -4,13 +4,14 @@ namespace app\Models;
 
 use app\Events\ManagerTaskCompleted;
 use app\Events\TaskCompleted;
+use App\Models\Reminder;
 use app\Models\TaskAssignment;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Builder;
 
 
 
@@ -57,27 +58,27 @@ class Task extends Model
         'position' => 0,
     ];
 
-protected static function booted()
-{
-    static::deleting(function ($task) {
-        if ($task->isForceDeleting()) {
-            $task->taskAssignments()->forceDelete();
-            $task->comments()->forceDelete();
-            $task->subTasks()->forceDelete();
-            $task->dependencies()->detach();
-        } else {
-            $task->taskAssignments()->delete();
-            $task->comments()->delete();
-            $task->subTasks()->delete();
-        }
-    });
+    protected static function booted()
+    {
+        static::deleting(function ($task) {
+            if ($task->isForceDeleting()) {
+                $task->taskAssignments()->forceDelete();
+                $task->comments()->forceDelete();
+                $task->subTasks()->forceDelete();
+                $task->dependencies()->detach();
+            } else {
+                $task->taskAssignments()->delete();
+                $task->comments()->delete();
+                $task->subTasks()->delete();
+            }
+        });
 
-    static::restoring(function ($task) {
-        $task->taskAssignments()->withTrashed()->restore();
-        $task->comments()->withTrashed()->restore();
-        $task->subTasks()->withTrashed()->restore();
-    });
-}
+        static::restoring(function ($task) {
+            $task->taskAssignments()->withTrashed()->restore();
+            $task->comments()->withTrashed()->restore();
+            $task->subTasks()->withTrashed()->restore();
+        });
+    }
 
     public function project(): BelongsTo
     {
@@ -175,6 +176,11 @@ protected static function booted()
     public function isSubTask(): bool
     {
         return !is_null($this->parent_task_id);
+    }
+
+    public function reminders(): BelongsToMany
+    {
+        return $this->belongsToMany(Reminder::class, 'reminder_task');
     }
 
     public function canAutoComplete(): bool
@@ -455,21 +461,21 @@ protected static function booted()
     }
 
     public function scopeProjectTasks(Builder $query, ?int $userId = null)
-{
-    $query->whereNull('group_id')
-        ->whereNull('parent_task_id')
-        ->whereNull('assigned_group_id');
+    {
+        $query->whereNull('group_id')
+            ->whereNull('parent_task_id')
+            ->whereNull('assigned_group_id');
 
-    if ($userId) {
-        $query->where(function ($q) use ($userId) {
-            $q->whereHas('taskAssignments', function ($sub) use ($userId) {
-                $sub->where('user_id', $userId);
-            })->orWhere('created_by', $userId);
-        });
+        if ($userId) {
+            $query->where(function ($q) use ($userId) {
+                $q->whereHas('taskAssignments', function ($sub) use ($userId) {
+                    $sub->where('user_id', $userId);
+                })->orWhere('created_by', $userId);
+            });
+        }
+
+        return $query;
     }
-
-    return $query;
-}
 
     public function scopeGroupTasks(Builder $query)
     {
