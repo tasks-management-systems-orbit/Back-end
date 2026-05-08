@@ -16,7 +16,6 @@ class ProjectCommentController extends Controller
 {
     public function index(Request $request, Project $project): JsonResponse
     {
-        // Only public projects allow viewing comments
         if ($project->visibility !== 'public') {
             return response()->json([
                 'success' => false,
@@ -24,26 +23,18 @@ class ProjectCommentController extends Controller
             ], 403);
         }
 
-        $perPage = $request->input('per_page', 20);
-
         $comments = $project->projectComments()
             ->with(['user', 'user.profile', 'replies.user', 'replies.user.profile'])
-            ->whereNull('parent_id') // Only top-level comments
+            ->whereNull('parent_id') 
             ->latest()
-            ->paginate($perPage);
+            ->get();
 
         return response()->json([
             'success' => true,
             'data' => ProjectCommentResource::collection($comments),
-            'meta' => [
-                'total' => $comments->total(),
-                'per_page' => $comments->perPage(),
-                'current_page' => $comments->currentPage(),
-                'last_page' => $comments->lastPage(),
-            ],
+            'total' => $comments->count(),
         ]);
     }
-
     public function store(StoreProjectCommentRequest $request, Project $project): JsonResponse
     {
         // Only public projects allow comments

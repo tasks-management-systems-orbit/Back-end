@@ -39,7 +39,7 @@ Route::post('/reset-password', [PasswordResetController::class, 'reset']);
 
 // AUTHENTICATED ROUTES (Only requires valid token)
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/logout', [LogoutController::class, 'logout']);
+    // Route::post('/logout', [LogoutController::class, 'logout']);
     Route::get('/me', [LoginController::class, 'me']);
     Route::get('/email-status', [EmailVerificationController::class, 'checkStatus']);
 });
@@ -65,6 +65,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::patch('/profiles/{profile}', [ProfileController::class, 'update']);
 });
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/logout', [LogoutController::class, 'logout']);
+    Route::post('/logout-all', [LogoutController::class, 'logoutFromAllDevices']);
+    Route::get('/devices', [LogoutController::class, 'devices']);
+    Route::delete('/devices/{tokenId}', [LogoutController::class, 'logoutDevice']);
+    Route::post('/logout-other-devices', [LogoutController::class, 'logoutOtherDevices']);
+});
 
 Route::get('/my-tasks', [TaskController::class, 'myPendingTasks'])->
     middleware(['auth:sanctum', 'is.active', 'verified']);
