@@ -36,11 +36,11 @@ class User extends Authenticatable
         static::created(function ($user) {
             $user->profile()->create([
                 'user_id' => $user->id,
-                'language' => 'ar',
-                'theme' => 'light',
-                'is_public' => false,
-                'allow_messages' => false,
-                'allow_invitation_requests' => false,
+                'language' => 'en',
+                'theme' => 'dark',
+                'is_public' => true,
+                'allow_messages' => true,
+                'allow_invitation_requests' => true,
                 'projects_count' => 0,
                 'tasks_completed' => 0,
                 'report_count' => 0,
@@ -48,9 +48,15 @@ class User extends Authenticatable
             $user->note()->create([
                 'title' => 'My Note',
                 'content' => null,
-                'color' => '#ffffff',
+                'color' => '#1b1919',
             ]);
         });
+    }
+
+
+    public function ownedProjects()
+    {
+        return $this->hasMany(Project::class, 'created_by');
     }
 
     public function projectReactions()

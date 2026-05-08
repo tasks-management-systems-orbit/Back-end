@@ -9,51 +9,82 @@ class ProfileResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $currentUser = $request->user();
+        $isOwner = $currentUser && $currentUser->id === $this->user_id;
+        $viewingOwn = $request->attributes->get('profile_viewing_own', false);
+        $isPublic = $this->is_public;
+
+        if (!$isPublic && !$viewingOwn) {
+            return [
+                'id' => $this->id,
+                'avatar' => $this->avatar,
+                'job_title' => $this->job_title,
+                'user' => [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                    'username' => $this->user->username,
+                ],
+            ];
+        }
+
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
-            'user' => $this->whenLoaded('user', function () {
+            'user' => $this->whenLoaded('user', function () use ($viewingOwn, $isPublic, $isOwner) {
                 return [
                     'id' => $this->user->id,
                     'name' => $this->user->name,
-                    'email' => $this->when(
-                        request()->user() && request()->user()->id === $this->user_id,
-                        $this->user->email
-                        
-                    ),
+                    'username' => $this->user->username,
                 ];
             }),
-            'phone' => $this->phone,
-            'bio' => $this->bio,
+
+            'phone' => $this->when($viewingOwn || $isOwner || $isPublic, $this->phone),
+            'bio' => $this->when($viewingOwn || $isOwner || $isPublic, $this->bio),
             'job_title' => $this->job_title,
-            'skills' => $this->skills,
+            'skills' => $this->when($viewingOwn || $isOwner || $isPublic, function () {
+                $skills = $this->skills ?? [];
+                usort($skills, fn($a, $b) => ($b['rating'] ?? 0) <=> ($a['rating'] ?? 0));
+                return $skills;
+            }),
             'avatar' => $this->avatar,
-            'location' => $this->location,
-            'alternative_email' => $this->alternative_email,
+            'location' => $this->when($viewingOwn || $isOwner || $isPublic, $this->location),
+            'alternative_email' => $this->when($viewingOwn || $isOwner, $this->alternative_email),
 
-            // Social links
-            'twitter_url' => $this->twitter_url,
-            'facebook_url' => $this->facebook_url,
-            'instagram_url' => $this->instagram_url,
-            'youtube_url' => $this->youtube_url,
-            'github_url' => $this->github_url,
-            'portfolio_url' => $this->portfolio_url,
-            'linkedin_url' => $this->linkedin_url,
-            'cv_url' => $this->cv_url,
+            'twitter_url' => $this->when($viewingOwn || $isOwner || $isPublic, $this->twitter_url),
+            'facebook_url' => $this->when($viewingOwn || $isOwner || $isPublic, $this->facebook_url),
+            'instagram_url' => $this->when($viewingOwn || $isOwner || $isPublic, $this->instagram_url),
+            'youtube_url' => $this->when($viewingOwn || $isOwner || $isPublic, $this->youtube_url),
+            'github_url' => $this->when($viewingOwn || $isOwner || $isPublic, $this->github_url),
+            'portfolio_url' => $this->when($viewingOwn || $isOwner || $isPublic, $this->portfolio_url),
+            'linkedin_url' => $this->when($viewingOwn || $isOwner || $isPublic, $this->linkedin_url),
+            'cv_url' => $this->when($viewingOwn || $isOwner || $isPublic, $this->cv_url),
 
-            // Preferences
-            'language' => $this->language,
-            'theme' => $this->theme,
+            'language' => $this->when($viewingOwn || $isOwner || $isPublic, $this->language),
+            'theme' => $this->when($viewingOwn || $isOwner || $isPublic, $this->theme),
 
-            // Privacy settings
             'is_public' => $this->is_public,
-            'allow_messages' => $this->allow_messages,
-            'allow_invitation_requests' => $this->allow_invitation_requests,
+            'allow_messages' => $this->when($viewingOwn || $isOwner, $this->allow_messages),
+            'allow_invitation_requests' => $this->when($viewingOwn || $isOwner, $this->allow_invitation_requests),
 
-            // Stats
-            'projects_count' => $this->projects_count,
-            'tasks_completed' => $this->tasks_completed,
-            'report_count' => $this->report_count,
+            'projects' => $this->when($viewingOwn || $isOwner || $isPublic, function () {
+                $ownedProjects = $this->user->ownedProjects ?? collect();
+                $memberProjects = $this->user->projects ?? collect();
+
+                return $ownedProjects->merge($memberProjects)->unique('id')->map(function ($project) {
+                    return [
+                        'id' => $project->id,
+                        'name' => $project->name,
+                        'image' => $project->image,
+                        'role' => $project->created_by === $this->user->id
+                            ? 'owner'
+                            : ($project->pivot->role ?? 'member'),
+                    ];
+                })->values();
+            }),
+
+            'projects_count' => $this->when($viewingOwn || $isOwner || $isPublic, $this->projects_count),
+            'tasks_completed' => $this->when($viewingOwn || $isOwner || $isPublic, $this->tasks_completed),
+            'report_count' => $this->when($viewingOwn || $isOwner, $this->report_count),
 
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

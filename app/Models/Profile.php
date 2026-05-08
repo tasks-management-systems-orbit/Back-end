@@ -68,79 +68,23 @@ class Profile extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function getSkillsAttribute($value): array
-    {
-        $skills = json_decode($value ?? '[]', true);
-
-        if (!is_array($skills)) {
-            return [];
-        }
-
-        if (isset($skills[0]) && is_string($skills[0])) {
-            $converted = [];
-            foreach ($skills as $skill) {
-                $converted[] = ['name' => $skill, 'rating' => 5];
-            }
-            return $converted;
-        }
-
-        return $skills;
-    }
-
-    public function setSkillsAttribute($value): void
-    {
-        if (is_string($value)) {
-            $this->attributes['skills'] = $value;
-            return;
-        }
-
-        if (!is_array($value)) {
-            $this->attributes['skills'] = '[]';
-            return;
-        }
-
-        $validated = [];
-        foreach ($value as $skill) {
-            if (is_array($skill) && isset($skill['name'])) {
-                $validated[] = [
-                    'name' => trim($skill['name']),
-                    'rating' => isset($skill['rating']) ? min(10, max(1, (int)$skill['rating'])) : 5
-                ];
-            } elseif (is_string($skill)) {
-                // Handle old format
-                $validated[] = ['name' => $skill, 'rating' => 5];
-            }
-        }
-
-        $this->attributes['skills'] = json_encode($validated);
-    }
-
-    public function getSkillNamesAttribute(): array
-    {
-        return array_column($this->skills, 'name');
-    }
 
     public function addSkill(string $skillName, ?int $rating = null): bool
     {
-        $rating = $rating ?? 5;
-        $skills = $this->skills;
+        $rating = min(10, max(1, $rating ?? 5));
+        $skills = $this->skills;        
         $skillName = trim($skillName);
 
-        foreach ($skills as $index => $skill) {
+        foreach ($skills as $skill) {
             if (strcasecmp($skill['name'], $skillName) === 0) {
                 return false;
             }
         }
 
-        $skills[] = [
-            'name' => $skillName,
-            'rating' => min(10, max(1, $rating))
-        ];
+        $skills[] = ['name' => $skillName, 'rating' => $rating];
 
-        $this->skills = $skills;
-        return (bool) $this->save();
+        return (bool) $this->update(['skills' => $skills]);
     }
-
     public function updateSkillRating(string $skillName, int $rating): bool
     {
         $skills = $this->skills;
@@ -174,37 +118,5 @@ class Profile extends Model
         return false;
     }
 
-    // public function getAverageSkillRatingAttribute(): float
-    // {
-    //     $skills = $this->skills;
 
-    //     if (empty($skills)) {
-    //         return 0;
-    //     }
-
-    //     $total = array_sum(array_column($skills, 'rating'));
-    //     return round($total / count($skills), 1);
-    // }
-
-    public function getTopSkillsAttribute(?int $limit = null): array
-    {
-        $limit = $limit ?? 5;
-        $skills = $this->skills;
-
-        usort($skills, function ($a, $b) {
-            return $b['rating'] <=> $a['rating'];
-        });
-
-        return array_slice($skills, 0, $limit);
-    }
-
-    protected static function booted()
-    {
-        static::saving(function ($profile) {
-            if (!$profile->is_public) {
-                $profile->allow_messages = false;
-                $profile->allow_invitation_requests = false;
-            }
-        });
-    }
 }

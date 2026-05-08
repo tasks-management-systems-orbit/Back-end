@@ -48,21 +48,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/my-profile', [ProfileController::class, 'myProfile']);
 
+    Route::post('/profiles/block/{userId}', [ProfileController::class, 'blockUser']);
+    Route::delete('/profiles/unblock/{userId}', [ProfileController::class, 'unblockUser']);
+    Route::get('/profiles/blocked-users', [ProfileController::class, 'getBlockedUsers']);
+
     Route::get('/profiles/{profile}/skills', [ProfileController::class, 'getSkills']);
     Route::post('/profiles/{profile}/skills', [ProfileController::class, 'addSkill']);
     Route::put('/profiles/{profile}/skills/{skill}', [ProfileController::class, 'updateSkillRating']);
     Route::delete('/profiles/{profile}/skills/{skill}', [ProfileController::class, 'removeSkill']);
 
-    Route::apiResource('profiles', ProfileController::class);
-
-    Route::post('/profiles/block/{userId}', [ProfileController::class, 'blockUser']);
-    Route::delete('/profiles/unblock/{userId}', [ProfileController::class, 'unblockUser']);
-    Route::get('/profiles/blocked-users', [ProfileController::class, 'getBlockedUsers']);
-
     Route::get('/profiles/{profile}/can-message', [ProfileController::class, 'canSendMessage']);
     Route::get('/profiles/{profile}/can-invite', [ProfileController::class, 'canSendInvitation']);
-});
 
+    Route::get('/profiles/{profile}', [ProfileController::class, 'show']);
+    Route::put('/profiles/{profile}', [ProfileController::class, 'update']);
+    Route::patch('/profiles/{profile}', [ProfileController::class, 'update']);
+});
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
 
 Route::get('/my-tasks', [TaskController::class, 'myPendingTasks'])->
