@@ -1,16 +1,16 @@
 api testing:
 
-- get-profiles: returns error: "Method Illuminate\\Database\\Eloquent\\Collection::total does not exist"
-- delete-profile: has no validation
-- create-profile: i think returning an error if the user has a profile is better
-- add-skill: i think returning the created skill instead of the whole user is better
+- get-profiles: returns error: "Method Illuminate\\Database\\Eloquent\\Collection::total does not exist"   // Done
+- delete-profile: has no validation                                                                         // Done
+- create-profile: i think returning an error if the user has a profile is better                            // Done
+- add-skill: i think returning the created skill instead of the whole user is better                        // Done
 - blocked-users: returns error: "SQLSTATE[22P02]: Invalid text representation: 7 ERROR:  invalid input syntax for type bigint: \"blocked-users\"\nCONTEXT:  unnamed portal parameter $1 = '...' (Connection: pgsql, Host: dpg-d7jnkg57vvec7391juc0-a, Port: 5432, Database: task_manager, SQL: select * from \"profiles\" where \"id\" = blocked-users limit 1)"
-- unblock-user: the user can unblock himself, also the user can unblock users that aren't even blocked
-- can-message: the user can't see if can message or not, because the validation just checks for is private or not
-- can-invite: same as can-message
+- unblock-user: the user can unblock himself, also the user can unblock users that aren't even blocked      // Done
+- can-message: the user can't see if can message or not, because the validation just checks for is private or not          // Done
+- can-invite: same as can-message                                                                                // Done
 - get-projects: same as get-profiles
 - get-project: in ProjectResource class, you change the response depends if the user is a member of the project or not, but you actually prevent users that are not members from seeing it in the controller
-- restore-project: how could the user restore a project if he doesn't access to access it
+- restore-project: how could the user restore a project if he doesn't access to access it         // Done
 - projects/get-users : returns error: "Attempt to read property \"id\" on null "
 - projects/add-user:
     - returns error: "SQLSTATE[23514]: Check violation: 7 ERROR:  new row for relation \"project_users\" violates check constraint \"project_users_role_check\"\nDETAIL:  Failing row contains (3, 2, 2, member, 2026-04-25 20:58:16, 2026-04-25 20:58:16). (Connection: pgsql, Host: 127.0.0.1, Port: 5432, Database: task_manager, SQL: insert into \"project_users\" (\"created_at\", \"project_id\", \"role\", \"updated_at\", \"user_id\") values (2026-04-25 20:58:16, 2, member, 2026-04-25 20:58:16, 2))"

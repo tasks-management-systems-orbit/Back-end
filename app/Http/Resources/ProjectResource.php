@@ -40,7 +40,9 @@ class ProjectResource extends JsonResource
                 return [
                     'id' => $this->creator->id,
                     'name' => $this->creator->name,
-                    'email' => $this->creator->email,
+                    'username' => $this->user->username,
+                    'job_title'=> $this->creator->profile?->job_title,
+                    'avtar'=> $this->creator->profile?->avatar,
                 ];
             }),
             'users_count' => $this->whenCounted('users'),

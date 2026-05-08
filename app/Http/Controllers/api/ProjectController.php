@@ -257,13 +257,6 @@ class ProjectController extends Controller
             ], 404);
         }
 
-        if ($project->created_by !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only the project owner can restore this project',
-            ], 403);
-        }
-
         $project->restore();
 
         return response()->json([

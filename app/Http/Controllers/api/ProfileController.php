@@ -119,53 +119,75 @@ class ProfileController extends Controller
     }
     public function blockUser(Request $request, int $userId): JsonResponse
     {
-        try {
-            $user = $request->user();
-            $userToBlock = User::findOrFail($userId);
+        $user = $request->user();
+        $userToBlock = User::findOrFail($userId);
 
-            if ($user->id === $userToBlock->id) {
+        if ($user->id === $userToBlock->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot block yourself',
+            ], 400);
+        }
+
+        try {
+            $blocked = $user->blockUser($userToBlock, $request->input('reason'));
+
+            if (!$blocked) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You cannot block yourself'
-                ], 400);
+                    'message' => 'User is already blocked',
+                ], 409);
             }
-
-            $user->blockUser($userToBlock, $request->input('reason'));
 
             return response()->json([
                 'success' => true,
-                'message' => "User blocked successfully"
+                'message' => 'User blocked successfully',
             ]);
         } catch (\Exception $e) {
+            Log::error('Block user failed', [
+                'user_id' => $user->id,
+                'target_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while blocking the user',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
-
     public function unblockUser(Request $request, int $userId): JsonResponse
     {
-        try {
-            $user = $request->user();
-            $userToUnblock = User::findOrFail($userId);
+        $user = $request->user();
+        $userToUnblock = User::findOrFail($userId);
 
-            $user->unblockUser($userToUnblock);
+        try {
+            $unblocked = $user->unblockUser($userToUnblock);
+
+            if (!$unblocked) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User is not blocked',
+                ], 409);
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => "User unblocked successfully"
+                'message' => 'User unblocked successfully',
             ]);
         } catch (\Exception $e) {
+            Log::error('Unblock user failed', [
+                'user_id' => $user->id,
+                'target_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while unblocking the user',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
-
     public function getBlockedUsers(Request $request): JsonResponse
     {
         $blockedUsers = $request->user()
@@ -214,34 +236,49 @@ class ProfileController extends Controller
 
         return response()->json(['can_message' => true]);
     }
-
     public function canSendInvitation(Request $request, Profile $profile): JsonResponse
     {
         $currentUser = $request->user();
 
         if ($currentUser->id === $profile->user_id) {
-            return response()->json(['can_invite' => false, 'reason' => 'You cannot invite yourself.']);
+            return response()->json([
+                'can_invite' => false,
+                'reason' => 'You cannot invite yourself.',
+            ]);
         }
 
         if (!$profile->is_public) {
-            return response()->json(['can_invite' => false, 'reason' => 'Profile is private']);
+            return response()->json([
+                'can_invite' => false,
+                'reason' => 'Profile is private',
+            ]);
         }
 
         if (!$profile->allow_invitation_requests) {
-            return response()->json(['can_invite' => false, 'reason' => 'User has disabled invitation requests']);
+            return response()->json([
+                'can_invite' => false,
+                'reason' => 'User has disabled invitation requests',
+            ]);
         }
 
         if ($currentUser->isBlocking($profile->user)) {
-            return response()->json(['can_invite' => false, 'reason' => 'You have blocked this user']);
+            return response()->json([
+                'can_invite' => false,
+                'reason' => 'You have blocked this user',
+            ]);
         }
 
         if ($profile->user->isBlocking($currentUser)) {
-            return response()->json(['can_invite' => false, 'reason' => 'You are blocked by this user']);
+            return response()->json([
+                'can_invite' => false,
+                'reason' => 'You are blocked by this user',
+            ]);
         }
 
-        return response()->json(['can_invite' => true]);
+        return response()->json([
+            'can_invite' => true,
+        ]);
     }
-
 
 
     public function addSkill(Request $request, Profile $profile): JsonResponse
@@ -262,17 +299,16 @@ class ProfileController extends Controller
             return response()->json(['success' => false, 'message' => 'Skill already exists'], 409);
         }
 
-        $request->attributes->set('profile_viewing_own', true);
-        $profile->load('user.ownedProjects', 'user.projects');
+        $skills = $profile->fresh()->skills;
+        usort($skills, fn($a, $b) => ($b['rating'] ?? 0) <=> ($a['rating'] ?? 0));
 
         return response()->json([
             'success' => true,
             'message' => 'Skill added successfully',
-            'data' => new ProfileResource($profile)
-        ]);
+            'data' => ['skills' => $skills]
+        ], 201);
     }
 
-    // updateSkillRating
     public function updateSkillRating(Request $request, Profile $profile, string $skill): JsonResponse
     {
         if ($request->user()->id !== $profile->user_id) {
@@ -286,16 +322,15 @@ class ProfileController extends Controller
             return response()->json(['success' => false, 'message' => 'Skill not found'], 404);
         }
 
-        $request->attributes->set('profile_viewing_own', true);
-        $profile->load('user.ownedProjects', 'user.projects');
+        $skills = $profile->fresh()->skills;
+        usort($skills, fn($a, $b) => ($b['rating'] ?? 0) <=> ($a['rating'] ?? 0));
 
         return response()->json([
             'success' => true,
             'message' => 'Skill rating updated successfully',
-            'data' => new ProfileResource($profile)
+            'data' => ['skills' => $skills]
         ]);
     }
-
     public function removeSkill(Request $request, Profile $profile, string $skill): JsonResponse
     {
         if ($request->user()->id !== $profile->user_id) {
@@ -307,15 +342,16 @@ class ProfileController extends Controller
             return response()->json(['success' => false, 'message' => 'Skill not found'], 404);
         }
 
-        $request->attributes->set('profile_viewing_own', true);
-        $profile->load('user.ownedProjects', 'user.projects');
+        $skills = $profile->fresh()->skills;
+        usort($skills, fn($a, $b) => ($b['rating'] ?? 0) <=> ($a['rating'] ?? 0));
 
         return response()->json([
             'success' => true,
             'message' => 'Skill removed successfully',
-            'data' => new ProfileResource($profile)
+            'data' => ['skills' => $skills]
         ]);
     }
+
     public function getSkills(Request $request, Profile $profile): JsonResponse
     {
         $user = $request->user();
