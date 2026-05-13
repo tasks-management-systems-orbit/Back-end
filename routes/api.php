@@ -119,8 +119,8 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('project-reports')->group(function () {
         Route::post('/', [ProjectReportController::class, 'store']);
-        Route::get('/', [ProjectReportController::class, 'getAllReports']);
-        Route::get('/project/{projectId}', [ProjectReportController::class, 'getProjectReports']);
+        Route::get('/', [ProjectReportController::class, 'getAllReports']);                   //TODO   DELETE
+        Route::get('/project/{projectId}', [ProjectReportController::class, 'getProjectReports']);     //TODO   DELETE
     });
 });
 

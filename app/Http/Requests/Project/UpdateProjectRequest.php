@@ -14,15 +14,12 @@ class UpdateProjectRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|string|max:255',
-            'description' => 'nullable|string|max:5000',
-            'image' => 'nullable|string|max:255|url',
-            'status' => 'nullable|in:active,paused,completed',
-            'visibility' => 'nullable|in:private,public',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'allow_join_requests' => 'sometimes|boolean',
-
-        ];
+        'name' => 'sometimes|string|max:255',
+        'description' => 'nullable|string|max:5000',
+        'image' => 'nullable|string|max:255|url',
+        'visibility' => 'nullable|in:private,public',
+        'allow_join_requests' => 'sometimes|boolean',
+        'status' => 'nullable|in:active,paused,completed', // still allowed
+    ];
     }
 }

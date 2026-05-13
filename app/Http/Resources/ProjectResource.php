@@ -7,25 +7,35 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProjectResource extends JsonResource
 {
+    protected bool $showFullDetails = true;
+
+    public function setFullDetails(bool $value): self
+    {
+        $this->showFullDetails = $value;
+        return $this;
+    }
+
     public function toArray(Request $request): array
     {
         $user = $request->user();
-        $isMember = $this->created_by === $user?->id || $this->users->contains('id', $user?->id);
+        $isOwnerOrMember = ($this->created_by === $user?->id) || $this->users->contains('id', $user?->id);
 
-        if ($this->visibility === 'private' && !$isMember) {
+        // Private project and visitor without full details permission
+        if ($this->visibility === 'private' && !$this->showFullDetails) {
             return [
                 'id' => $this->id,
                 'name' => $this->name,
                 'image' => $this->image,
                 'status' => $this->status,
                 'visibility' => $this->visibility,
-                'is_private' => true,
-                'message' => 'This project is private. You do not have access to its details.',
                 'reaction_counts' => $this->reaction_counts,
                 'user_reaction' => $this->when(auth()->check(), fn() => $this->user_reaction),
+                'comments' => ProjectCommentResource::collection($this->whenLoaded('projectComments')),
+                // No other fields
             ];
         }
 
+        // Full details (for owner, member, or public project)
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -40,9 +50,9 @@ class ProjectResource extends JsonResource
                 return [
                     'id' => $this->creator->id,
                     'name' => $this->creator->name,
-                    'username' => $this->user->username,
-                    'job_title'=> $this->creator->profile?->job_title,
-                    'avtar'=> $this->creator->profile?->avatar,
+                    'username' => $this->creator->username,
+                    'job_title' => $this->creator->profile?->job_title,
+                    'avatar' => $this->creator->profile?->avatar,
                 ];
             }),
             'users_count' => $this->whenCounted('users'),
@@ -51,9 +61,21 @@ class ProjectResource extends JsonResource
             'is_owner' => $this->is_owner ?? false,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
-
             'reaction_counts' => $this->reaction_counts,
             'user_reaction' => $this->when(auth()->check(), fn() => $this->user_reaction),
+            'comments' => ProjectCommentResource::collection($this->whenLoaded('projectComments')),
+            'members' => $this->when($this->showFullDetails, function () {
+                return $this->users->map(fn($user) => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'username' => $user->username,
+                    'avatar' => $user->profile?->avatar,
+                    'role' => $user->pivot?->role,
+                ]);
+            }),
+            'task_statuses' => $this->when($this->showFullDetails, function () {
+                return TaskStatusResource::collection($this->whenLoaded('taskStatuses'));
+            }),
         ];
     }
 }

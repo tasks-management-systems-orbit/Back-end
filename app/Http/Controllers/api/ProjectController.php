@@ -17,138 +17,159 @@ class ProjectController extends Controller
     public function myProjects(Request $request): JsonResponse
     {
         $userId = $request->user()->id;
-        $search = $request->input('search', null);
+        $search = $request->input('search');
+        $role = $request->input('role');           // 'owner', 'manager', 'user', 'observer'
+        $status = $request->input('status');       // 'active', 'paused', 'completed'
+        $visibility = $request->input('visibility'); // 'private', 'public'
 
-        $projects = Project::query()
-            ->with(['reactions', 'creator', 'users'])
-            ->withCount(['users', 'tasks'])
-            ->where(function ($query) use ($userId) {
-                $query->where('created_by', $userId)
-                    ->orWhereHas('users', function ($q) use ($userId) {
-                        $q->where('user_id', $userId);
-                    });
-            })
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'LIKE', "%{$search}%")
-                        ->orWhere('description', 'LIKE', "%{$search}%");
-                });
-            })
-            ->orderBy($request->input('sort_by', 'created_at'), $request->input('sort_direction', 'desc'))
-            ->get();
-
-        foreach ($projects as $project) {
-            $project->user_role = $project->users->firstWhere('id', $userId)?->pivot->role ?? 'none';
-            $project->is_owner = $project->created_by === $userId;
+        //  1. Validate sort parameters
+        $allowedSorts = ['created_at', 'name', 'updated_at', 'status'];
+        $sortBy = $request->input('sort_by', 'created_at');
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'created_at';
         }
+        $sortDirection = $request->input('sort_direction', 'desc');
+        $sortDirection = $sortDirection === 'asc' ? 'asc' : 'desc';
 
-        return response()->json([
-            'success' => true,
-            'data' => ProjectResource::collection($projects),
-            'total' => $projects->count(),
-        ]);
-    }
-
-    public function index(Request $request): JsonResponse
-    {
-        $userId = $request->user()->id;
-        $role = $request->input('role');
-        $status = $request->input('status');
-        $visibility = $request->input('visibility');
-
+        //  2. Build base query
         $query = Project::query()
-            ->with(['creator', 'users'])
-            ->withCount(['users as users_count', 'tasks as tasks_count'])
+            ->with(['reactions', 'creator']) // only needed relations
+            ->withCount(['users', 'tasks'])
             ->where(function ($q) use ($userId) {
+                // Projects where user is owner or member
                 $q->where('created_by', $userId)
-                    ->orWhereHas('users', function ($sub) use ($userId) {
-                        $sub->where('user_id', $userId);
-                    });
+                    ->orWhereHas('users', fn($sub) => $sub->where('user_id', $userId));
             });
 
+        //  3. Apply filters
+        // Filter by role
         if ($role) {
             if ($role === 'owner') {
                 $query->where('created_by', $userId);
             } else {
+                // manager, user, observer
                 $query->whereHas('users', function ($q) use ($userId, $role) {
                     $q->where('user_id', $userId)->where('role', $role);
                 });
             }
         }
 
+        // Filter by project status
         if ($status && in_array($status, ['active', 'paused', 'completed'])) {
             $query->where('status', $status);
         }
 
+        // Filter by visibility
         if ($visibility && in_array($visibility, ['private', 'public'])) {
             $query->where('visibility', $visibility);
         }
 
-        $projects = $query->get();
+        // Search filter (name or description)
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%");
+            });
+        }
 
+        //  4. Apply sorting
+        $query->orderBy($sortBy, $sortDirection);
+
+        //  5. Execute query with eager loading of current user's role
+        // Load only the current user's pivot data for each project (one extra query)
+        $projects = $query->with([
+            'users' => function ($q) use ($userId) {
+                $q->where('user_id', $userId)->select('users.id', 'project_users.role');
+            }
+        ])->get();
+
+        //  6. Add computed properties
         foreach ($projects as $project) {
-            $project->user_role = $project->users->firstWhere('id', $userId)?->pivot->role ?? 'none';
+            $pivot = $project->users->first();
+            $project->user_role = $pivot?->pivot->role ?? 'none';
             $project->is_owner = $project->created_by === $userId;
         }
 
+        //  7. Return response
         return response()->json([
             'success' => true,
             'data' => ProjectResource::collection($projects),
-            'total' => $projects->count()
+            'total' => $projects->count(),
         ]);
     }
     public function show(Request $request, Project $project): JsonResponse
     {
         $userId = $request->user()->id;
 
-        $hasAccess = $project->created_by === $userId ||
-            $project->users()->where('user_id', $userId)->exists();
+        // 1. Determine access level
+        $isOwner = $project->created_by === $userId;
+        $isMember = $project->hasUser($userId);
+        $isPublic = $project->visibility === 'public';
 
-        if (!$hasAccess) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You do not have access to this project'
-            ], 403);
+        // Full details allowed for: owner, member, or public project
+        $canViewFullDetails = $isOwner || $isMember || $isPublic;
+
+        // 2. Load always-visible relations (comments & reactions)
+        $project->load([
+            'projectComments' => function ($q) {
+                $q->with(['user', 'user.profile'])->whereNull('parent_id')->latest();
+            },
+            'reactions',
+        ]);
+
+        // 3. Load conditional relations (without loading all members)
+        if ($canViewFullDetails) {
+            $project->load([
+                'creator',
+                'taskStatuses' => fn($q) => $q->orderBy('position'),
+            ]);
         }
 
-        $project->load([
-            'reactions',
-            'creator',
-            'users.profile',
-            'taskStatuses' => function ($query) {
-                $query->orderBy('position');
-            },
-        ]);
+        // Always load counts (lightweight)
+        $project->loadCount(['users', 'tasks']);
 
-        $project->loadCount(['users as users_count', 'tasks as tasks_count']);
+        // 4. Compute user-specific info
+        if ($isOwner || $isMember) {
+            $role = $project->users()
+                ->where('user_id', $userId)
+                ->value('role') ?? 'none';
+            $project->user_role = $role;
+            $project->is_owner = $isOwner;
+        } else {
+            $project->user_role = null;
+            $project->is_owner = false;
+        }
 
-        $project->user_role = $project->users->firstWhere('id', $userId)?->pivot->role ?? 'none';
-        $project->is_owner = $project->created_by === $userId;
-
+        // 5. Return response with appropriate resource
         return response()->json([
             'success' => true,
-            'data' => new ProjectResource($project)
+            'data' => (new ProjectResource($project))->setFullDetails($canViewFullDetails)
         ]);
     }
-
     public function store(StoreProjectRequest $request): JsonResponse
     {
         try {
             DB::beginTransaction();
 
-            $project = Project::create([
+            // Prepare data - user does NOT provide start_date or end_date
+            $data = [
                 'name' => $request->name,
                 'description' => $request->description,
                 'image' => $request->image,
-                'status' => $request->status ?? 'active',
+                'status' => 'active',
                 'visibility' => $request->visibility ?? 'private',
-                'start_date' => $request->start_date ?? now(),
-                'end_date' => $request->end_date,
+                'start_date' => now(),
+                'end_date' => null,
                 'created_by' => $request->user()->id,
-            ]);
+                'allow_join_requests' => $request->allow_join_requests ?? false,
+            ];
+
+            $project = Project::create($data);
 
             $project->users()->attach($request->user()->id, ['role' => 'owner']);
+
             event(new ProjectCreated($project));
+
             DB::commit();
 
             return response()->json([
@@ -156,266 +177,433 @@ class ProjectController extends Controller
                 'message' => 'Project created successfully',
                 'data' => new ProjectResource($project->load('creator'))
             ], 201);
+
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Project creation failed: ' . $e->getMessage(), [
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create project',
-                'error' => $e->getMessage()
+                'message' => 'An error occurred while creating the project. Please try again later.'
             ], 500);
         }
     }
-
     public function update(UpdateProjectRequest $request, Project $project): JsonResponse
     {
-        $project->load('users');
-
         $userId = $request->user()->id;
-        $role = $this->getUserRoleInProject($project, $userId);
 
-        if ($project->created_by !== $userId && !in_array($role, ['owner', 'manager'])) {
+        // 1. Authorization check
+        $isOwner = $project->created_by === $userId;
+        $isManager = $project->isManager($userId);
+        if (!$isOwner && !$isManager) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to update this project'
             ], 403);
         }
 
-        $oldStatus = $project->status;
-        $newStatus = $request->status ?? $oldStatus;
-
+        // 2. Prepare data (only allowed fields)
         $data = $request->only([
             'name',
             'description',
             'image',
-            'status',
             'visibility',
-            'start_date',
-            'end_date',
             'allow_join_requests'
         ]);
 
+        // 3. Handle status change separately
+        $oldStatus = $project->status;
+        $newStatus = $request->input('status', $oldStatus);
+
+        // Validate status transition (optional but recommended)
+        if ($request->has('status') && !in_array($newStatus, ['active', 'paused', 'completed'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid status value'
+            ], 422);
+        }
+
+        // Prevent changing status if project is completed and not owner? (optional)
+        // إذا كان المشروع مكتملاً ولا يريد المالك تغييره، يمكن إضافة تحقق هنا.
+
+        // 4. Auto-set end_date when completing project
         if ($newStatus === 'completed' && $oldStatus !== 'completed') {
             $data['end_date'] = now();
+            $data['status'] = 'completed';
         }
-
-        if ($oldStatus === 'completed' && $newStatus !== 'completed') {
+        // Clear end_date when moving out of completed
+        elseif ($oldStatus === 'completed' && $newStatus !== 'completed') {
             $data['end_date'] = null;
+            $data['status'] = $newStatus;
+        }
+        // Normal status change without completion logic
+        elseif ($request->has('status')) {
+            $data['status'] = $newStatus;
         }
 
-        $project->update($data);
+        // 5. Remove start_date and end_date from data (never allow manual update)
+        unset($data['start_date'], $data['end_date']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Project updated successfully',
-            'data' => new ProjectResource($project->load('creator'))
-        ]);
+        try {
+            DB::beginTransaction();
+
+            $project->update($data);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Project updated successfully',
+                'data' => new ProjectResource($project->load('creator'))
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Project update failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $userId,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating the project. Please try again later.'
+            ], 500);
+        }
     }
 
     public function trashed(Request $request): JsonResponse
     {
         $userId = $request->user()->id;
 
-        $projects = Project::onlyTrashed()
-            ->where('created_by', $userId)
-            ->with(['creator'])
-            ->orderBy('deleted_at', 'desc')
-            ->get();
+        try {
+            $projects = Project::onlyTrashed()
+                ->where('created_by', $userId)
+                ->with(['creator'])
+                ->orderBy('deleted_at', 'desc')
+                ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => ProjectResource::collection($projects),
-            'total' => $projects->count(),
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => ProjectResource::collection($projects),
+                'total' => $projects->count(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Fetching trashed projects failed: ' . $e->getMessage(), [
+                'user_id' => $userId
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load trashed projects. Please try again later.'
+            ], 500);
+        }
     }
-
     public function destroy(Request $request, Project $project): JsonResponse
     {
-        if ($project->created_by !== $request->user()->id) {
+        $userId = $request->user()->id;
+
+        // Only project owner can delete
+        if ($project->created_by !== $userId) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only project owner can delete the project'
             ], 403);
         }
 
-        $project->delete();
+        try {
+            DB::beginTransaction();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Project deleted successfully'
-        ]);
-    }
+            $project->delete();
 
-    public function restore(Request $request, int $projectId): JsonResponse
-    {
-        $project = Project::onlyTrashed()->find($projectId);
+            DB::commit();
 
-        if (!$project) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Project deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Project deletion failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $userId,
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Project not found or not deleted',
-            ], 404);
+                'message' => 'An error occurred while deleting the project. Please try again later.'
+            ], 500);
         }
-
-        $project->restore();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Project restored successfully',
-            'data' => new ProjectResource($project->load('creator')),
-        ]);
     }
+    public function restore(Request $request, int $projectId): JsonResponse
+    {
+        try {
+            $userId = $request->user()->id;
+            $project = Project::onlyTrashed()->find($projectId);
 
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Project not found in trash'
+                ], 404);
+            }
+
+            // Security: only the owner can restore
+            if ($project->created_by !== $userId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to restore this project'
+                ], 403);
+            }
+
+            DB::beginTransaction();
+            $project->restore();
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Project restored successfully',
+                'data' => new ProjectResource($project->load('creator'))
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Project restore failed: ' . $e->getMessage(), [
+                'project_id' => $projectId,
+                'user_id' => $userId ?? null
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to restore project. Please try again later.'
+            ], 500);
+        }
+    }
     public function forceDelete(Request $request, int $projectId): JsonResponse
     {
+        $userId = $request->user()->id;
         $project = Project::onlyTrashed()->find($projectId);
 
         if (!$project) {
-            return response()->json(['message' => 'Project not found'], 404);
+            return response()->json(['success' => false, 'message' => 'Project not found in trash'], 404);
         }
 
-        if ($project->created_by !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if ($project->created_by !== $userId) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $project->load([
-            'tasks.taskAssignments',
-            'tasks.comments',
-            'groups.groupTasks',
-            'projectComments',
-            'projectReports'
-        ]);
+        try {
+            DB::beginTransaction();
 
+            // 1. Delete reactions (if not already handled by cascade)
+            $project->reactions()->forceDelete();
 
-        foreach ($project->tasks as $task) {
-            $task->taskAssignments()->forceDelete();
-            $task->comments()->forceDelete();
-            $task->dependencies()->detach();
-            $task->forceDelete();
-        }
-
-        foreach ($project->groups as $group) {
-            $group->members()->detach();
-            foreach ($group->groupTasks as $task) {
+            // 2. Delete tasks and related data
+            foreach ($project->tasks()->withTrashed()->get() as $task) {
                 $task->taskAssignments()->forceDelete();
+                $task->comments()->forceDelete();
+                $task->dependencies()->detach();
+                $task->dependents()->detach();
                 $task->forceDelete();
             }
-            $group->forceDelete();
+
+            // 3. Delete groups and their tasks
+            foreach ($project->groups()->withTrashed()->get() as $group) {
+                foreach ($group->groupTasks()->withTrashed()->get() as $groupTask) {
+                    $groupTask->taskAssignments()->forceDelete();
+                    $groupTask->forceDelete();
+                }
+                $group->members()->detach();
+                $group->forceDelete();
+            }
+
+            // 4. Detach users and favorites
+            $project->users()->detach();
+            $project->favoritedBy()->detach();
+
+            // 5. Delete requests (join & invitations)
+            $project->joinRequests()->forceDelete();
+            $project->invitations()->forceDelete();
+
+            // 6. Delete comments and reports
+            $project->projectComments()->forceDelete();
+            $project->projectReports()->forceDelete();
+
+            // 7. Finally, force delete the project itself
+            $project->forceDelete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Project and all related data permanently deleted'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Force delete project failed: ' . $e->getMessage(), [
+                'project_id' => $projectId,
+                'user_id' => $userId
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to permanently delete project. Please try again later.'
+            ], 500);
         }
-
-        $project->users()->detach();
-
-        $project->favoritedBy()->detach();
-
-        $project->joinRequests()->forceDelete();
-
-        $project->projectComments()->forceDelete();
-
-        $project->projectReports()->forceDelete();
-
-        $project->forceDelete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Project and all related data permanently deleted'
-        ]);
     }
-
     public function emptyTrash(Request $request): JsonResponse
     {
         $userId = $request->user()->id;
 
-        $deletedCount = Project::onlyTrashed()
-            ->where('created_by', $userId)
-            ->forceDelete();
+        // Get all trashed projects owned by the user
+        $projects = Project::onlyTrashed()->where('created_by', $userId)->get();
+
+        if ($projects->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No projects in trash',
+                'deleted_count' => 0
+            ]);
+        }
+
+        $deletedCount = 0;
+        $errors = [];
+
+        foreach ($projects as $project) {
+            // Call forceDelete for each project, reusing the existing method
+            $response = $this->forceDelete($request, $project->id);
+
+            // Check if deletion was successful
+            $responseData = $response->getData();
+            if ($responseData->success === true) {
+                $deletedCount++;
+            } else {
+                $errors[] = [
+                    'project_id' => $project->id,
+                    'message' => $responseData->message ?? 'Unknown error'
+                ];
+            }
+        }
+
+        if ($deletedCount === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete any projects',
+                'errors' => $errors
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,
             'message' => "{$deletedCount} project(s) permanently deleted",
             'deleted_count' => $deletedCount,
+            'errors' => $errors
         ]);
     }
 
-
-    private function getUserRoleInProject(Project $project, int $userId): string
-    {
-        if ($project->created_by === $userId) {
-            return 'owner';
-        }
-
-        $role = $project->users()
-            ->where('user_id', $userId)
-            ->select('project_users.role')
-            ->value('role');
-
-        return $role ?? 'none';
-    }
+    //   Update project status (active/paused/completed).
     public function updateStatus(Request $request, Project $project): JsonResponse
     {
-        $request->validate([
-            'status' => 'required|in:active,paused,completed'
-        ]);
-
         $userId = $request->user()->id;
-        $role = $this->getUserRoleInProject($project, $userId);
 
-        if ($project->created_by !== $userId && !in_array($role, ['owner', 'manager'])) {
+        // 1. Authorization
+        if (!$project->isOwner($userId) && !$project->isManager($userId)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to change project status'
             ], 403);
         }
 
+        // 2. Validate request
+        $request->validate([
+            'status' => 'required|in:active,paused,completed'
+        ]);
+
         $oldStatus = $project->status;
         $newStatus = $request->status;
 
+        // 3. Prepare data
         $data = ['status' => $newStatus];
 
         if ($newStatus === 'completed' && $oldStatus !== 'completed') {
             $data['end_date'] = now();
-        }
-
-        if ($oldStatus === 'completed' && $newStatus !== 'completed') {
+        } elseif ($oldStatus === 'completed' && $newStatus !== 'completed') {
             $data['end_date'] = null;
         }
 
-        $project->update($data);
+        try {
+            DB::beginTransaction();
+            $project->update($data);
+            DB::commit();
 
-        return response()->json([
-            'success' => true,
-            'message' => "Project status updated to {$newStatus}",
-            'data' => [
-                'status' => $project->status,
-                'status_label' => $project->status_label,
-                'end_date' => $project->end_date?->toISOString()
-            ]
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => "Project status updated to {$newStatus}",
+                'data' => [
+                    'status' => $project->status,
+                    'status_label' => $project->status_label,
+                    'end_date' => $project->end_date?->toISOString()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Project status update failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $userId,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update project status. Please try again later.'
+            ], 500);
+        }
     }
+
+    //  Update project visibility (private/public).
     public function updateVisibility(Request $request, Project $project): JsonResponse
     {
-        $request->validate([
-            'visibility' => 'required|in:private,public'
-        ]);
-
         $userId = $request->user()->id;
-        $role = $this->getUserRoleInProject($project, $userId);
 
-        if ($project->created_by !== $userId && !in_array($role, ['owner', 'manager'])) {
+        // 1. Authorization
+        if (!$project->isOwner($userId)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to change project visibility'
             ], 403);
         }
 
-        $project->update(['visibility' => $request->visibility]);
-
-        return response()->json([
-            'success' => true,
-            'message' => "Project visibility updated to {$request->visibility}",
-            'data' => [
-                'visibility' => $project->visibility,
-                'visibility_label' => $project->visibility_label
-            ]
+        // 2. Validate request
+        $request->validate([
+            'visibility' => 'required|in:private,public'
         ]);
+
+        try {
+            DB::beginTransaction();
+            $project->update(['visibility' => $request->visibility]);
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Project visibility updated to {$request->visibility}",
+                'data' => [
+                    'visibility' => $project->visibility,
+                    'visibility_label' => $project->visibility_label
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Project visibility update failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $userId,
+                'new_visibility' => $request->visibility
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update project visibility. Please try again later.'
+            ], 500);
+        }
     }
+
 }
