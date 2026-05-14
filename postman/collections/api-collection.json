@@ -274,6 +274,99 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "logout-all",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/logout-all",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "logout-all"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "devices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/devices",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "devices"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "logout-device",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/devices/{tokenId}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "devices",
+                "{tokenId}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "logout-other-devices",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/logout-other-devices",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "logout-other-devices"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -298,61 +391,6 @@
               ],
               "path": [
                 "my-profile"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "get-profiles",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseURL}}/profiles",
-              "host": [
-                "{{baseURL}}"
-              ],
-              "path": [
-                "profiles"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "create-profile",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"John Doe\",\n    \"bio\": \"Software engineer\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseURL}}/profiles",
-              "host": [
-                "{{baseURL}}"
-              ],
-              "path": [
-                "profiles"
               ]
             }
           },
@@ -402,30 +440,6 @@
                 }
               }
             },
-            "url": {
-              "raw": "{{baseURL}}/profiles/{profile}",
-              "host": [
-                "{{baseURL}}"
-              ],
-              "path": [
-                "profiles",
-                "{profile}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "delete-profile",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
             "url": {
               "raw": "{{baseURL}}/profiles/{profile}",
               "host": [
@@ -678,6 +692,537 @@
                 "profiles",
                 "{profile}",
                 "can-invite"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "my-tasks",
+      "item": [
+        {
+          "name": "my-tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-tasks",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-tasks"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "project-reactions",
+      "item": [
+        {
+          "name": "toggle-reaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/reactions/toggle",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "reactions",
+                "toggle"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get-project-reactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/reactions",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "reactions"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "invitations",
+      "item": [
+        {
+          "name": "my-invitations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-invitations",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-invitations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "accept-invitation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/invitations/{invitation}/accept",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "invitations",
+                "{invitation}",
+                "accept"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "reject-invitation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/invitations/{invitation}/reject",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "invitations",
+                "{invitation}",
+                "reject"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "send-invitation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/invitations",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "invitations"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "join-requests",
+      "item": [
+        {
+          "name": "send-join-request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"message\": \"I want to join this project\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/join-requests",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "join-requests"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "list-join-requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/join-requests",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "join-requests"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "process-join-request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"approved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/join-requests/{joinRequest}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "join-requests",
+                "{joinRequest}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "project-comments",
+      "item": [
+        {
+          "name": "get-project-comments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/comments",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "comments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create-project-comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"This is a project comment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/comments",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "comments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get-project-comment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/comments/{comment}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "comments",
+                "{comment}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update-project-comment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"Updated project comment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/comments/{comment}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "comments",
+                "{comment}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "delete-project-comment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/comments/{comment}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "comments",
+                "{comment}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "project-reports",
+      "item": [
+        {
+          "name": "create-project-report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"reason\": \"spam\",\n    \"description\": \"This project is spam\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/project-reports",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "project-reports"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get-all-project-reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/project-reports",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "project-reports"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get-project-reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/project-reports/project/{projectId}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "project-reports",
+                "project",
+                "{projectId}"
               ]
             }
           },
@@ -995,6 +1540,79 @@
                 "projects",
                 "{project}",
                 "restore"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "trashed-projects",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-projects/trash",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-projects",
+                "trash"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "force-delete-project",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/force-delete",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "force-delete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "empty-trash",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-projects/empty-trash",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-projects",
+                "empty-trash"
               ]
             }
           },
@@ -1494,6 +2112,112 @@
                 "tasks",
                 "{parentTask}",
                 "subtasks"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "trashed-tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/trashed",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "trashed"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "restore-task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}/restore",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}",
+                "restore"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "force-delete-task",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/{task}/force-delete",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "{task}",
+                "force-delete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "empty-tasks-trash",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/empty-trash",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "empty-trash"
               ]
             }
           },

@@ -1,9 +1,9 @@
 api testing:
 
-- get-profiles: returns error: "Method Illuminate\\Database\\Eloquent\\Collection::total does not exist"   // Done
 - delete-profile: has no validation                                                                         // Done
 - create-profile: i think returning an error if the user has a profile is better                            // Done
 - add-skill: i think returning the created skill instead of the whole user is better                        // Done
+- block-user: you can block unactivated users
 - blocked-users: returns error: "SQLSTATE[22P02]: Invalid text representation: 7 ERROR:  invalid input syntax for type bigint: \"blocked-users\"\nCONTEXT:  unnamed portal parameter $1 = '...' (Connection: pgsql, Host: dpg-d7jnkg57vvec7391juc0-a, Port: 5432, Database: task_manager, SQL: select * from \"profiles\" where \"id\" = blocked-users limit 1)"
 - unblock-user: the user can unblock himself, also the user can unblock users that aren't even blocked      // Done
 - can-message: the user can't see if can message or not, because the validation just checks for is private or not          // Done
