@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminProjectController;
+use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
 use Illuminate\Support\Facades\Route;
@@ -41,7 +42,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('/{id}', [AdminProjectController::class, 'destroy'])->name('destroy');
         });
 
-        // Placeholder route — will be replaced by real controller in later phase
-        Route::get('/reports', fn () => view('admin.dashboard'))->name('reports.index');
+        // Report management
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/', [AdminReportController::class, 'index'])->name('index');
+            Route::get('/{type}/{id}', [AdminReportController::class, 'show'])->name('show');
+            Route::patch('/{type}/{id}/dismiss', [AdminReportController::class, 'dismiss'])->name('dismiss');
+            Route::delete('/{type}/{id}/content', [AdminReportController::class, 'deleteContent'])->name('content.delete');
+        });
     });
 });

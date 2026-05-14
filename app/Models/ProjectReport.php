@@ -17,6 +17,7 @@ class ProjectReport extends Model
         'reported_project_id',
         'reason',
         'details',
+        'status',
     ];
 
     protected $casts = [
@@ -32,5 +33,20 @@ class ProjectReport extends Model
     public function reportedProject(): BelongsTo
     {
         return $this->belongsTo(Project::class, 'reported_project_id');
+    }
+
+    public function scopeOpen($query)
+    {
+        return $query->where('status', 'open');
+    }
+
+    public function scopeReviewed($query)
+    {
+        return $query->where('status', 'reviewed');
+    }
+
+    public function scopeDismissed($query)
+    {
+        return $query->where('status', 'dismissed');
     }
 }

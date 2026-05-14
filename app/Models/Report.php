@@ -17,6 +17,7 @@ class Report extends Model
         'reported_user_id',
         'reason',
         'details',
+        'status',
     ];
 
     protected $casts = [
@@ -32,5 +33,20 @@ class Report extends Model
     public function reportedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reported_user_id');
+    }
+
+    public function scopeOpen($query)
+    {
+        return $query->where('status', 'open');
+    }
+
+    public function scopeReviewed($query)
+    {
+        return $query->where('status', 'reviewed');
+    }
+
+    public function scopeDismissed($query)
+    {
+        return $query->where('status', 'dismissed');
     }
 }
