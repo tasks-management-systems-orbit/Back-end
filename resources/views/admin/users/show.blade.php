@@ -109,6 +109,28 @@
                     <p><strong>Member of:</strong> {{ $user->projects->count() }} projects</p>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Send Warning</h3>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('admin.users.warn', $user->id) }}" method="POST">
+                        @csrf
+                        <div class="form-group">
+                            <textarea name="message" class="form-control @error('message') is-invalid @enderror"
+                                rows="3" placeholder="Enter warning message..." required></textarea>
+                            @error('message')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-block">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Send Warning
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
