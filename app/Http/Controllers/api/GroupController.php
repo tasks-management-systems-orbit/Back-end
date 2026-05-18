@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Group\StoreGroupRequest;
@@ -94,7 +94,6 @@ class GroupController extends Controller
                 'message' => 'Group created successfully',
                 'data' => new GroupResource($group)
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

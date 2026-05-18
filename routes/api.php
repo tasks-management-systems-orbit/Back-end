@@ -20,11 +20,11 @@ use App\Http\Controllers\api\TaskController;
 use App\Http\Controllers\api\TaskDependencyController;
 use App\Http\Controllers\api\TaskStatusController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\GroupController;
-use App\Http\Controllers\Api\GroupMemberController;
-use App\Http\Controllers\Api\ProjectCommentController;
-use App\Http\Controllers\Api\ProjectReportController;
-use App\Http\Controllers\Api\RequestController;
+use App\Http\Controllers\api\GroupController;
+use App\Http\Controllers\api\GroupMemberController;
+use App\Http\Controllers\api\ProjectCommentController;
+use App\Http\Controllers\api\ProjectReportController;
+use App\Http\Controllers\api\RequestController;
 
 
 // PUBLIC ROUTES (No authentication required)
@@ -74,14 +74,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout-other-devices', [LogoutController::class, 'logoutOtherDevices']);
 });
 
-Route::get('/my-tasks', [TaskController::class, 'myPendingTasks'])->
-    middleware(['auth:sanctum', 'is.active', 'verified']);
+Route::get('/my-tasks', [TaskController::class, 'myPendingTasks'])->middleware(['auth:sanctum', 'is.active', 'verified']);
 
 // Project Reactions
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/reactions')->group(function () {
-        Route::post('/toggle', [App\Http\Controllers\Api\ProjectReactionController::class, 'toggleReaction']);
-        Route::get('/', [App\Http\Controllers\Api\ProjectReactionController::class, 'getProjectReactions']);
+        Route::post('/toggle', [App\Http\Controllers\api\ProjectReactionController::class, 'toggleReaction']);
+        Route::get('/', [App\Http\Controllers\api\ProjectReactionController::class, 'getProjectReactions']);
     });
 });
 
@@ -90,7 +89,6 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
     Route::get('/my-invitations', [RequestController::class, 'myInvitations']);
     Route::put('/invitations/{invitation}/accept', [RequestController::class, 'acceptInvitation']);
     Route::put('/invitations/{invitation}/reject', [RequestController::class, 'rejectInvitation']);
-
 });
 
 
@@ -125,8 +123,7 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
 });
 
 // SEARCH ROUTES
-Route::get('/search', [SearchController::class, 'search'])->
-    middleware(['auth:sanctum', 'is.active', 'verified']);
+Route::get('/search', [SearchController::class, 'search'])->middleware(['auth:sanctum', 'is.active', 'verified']);
 
 // FAVORITE PROJECTS ROUTES
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {

@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Task\ReorderTasksRequest;
@@ -189,7 +189,6 @@ class TaskController extends Controller
                 'message' => 'Task updated successfully',
                 'data' => new TaskResource($task),
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -239,8 +238,8 @@ class TaskController extends Controller
 
             $newPosition = $request->position ??
                 Task::where('project_id', $project->id)
-                    ->where('status_id', $newStatusId)
-                    ->max('position') + 1;
+                ->where('status_id', $newStatusId)
+                ->max('position') + 1;
 
             Task::where('project_id', $project->id)
                 ->where('status_id', $newStatusId)
@@ -392,7 +391,6 @@ class TaskController extends Controller
                 'message' => 'Manager task created successfully',
                 'data' => new TaskResource($task)
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -466,7 +464,6 @@ class TaskController extends Controller
                 'message' => 'Subtask created and assigned successfully',
                 'data' => new TaskResource($subTask)
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

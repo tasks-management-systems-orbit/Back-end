@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProjectComment\StoreProjectCommentRequest;
@@ -25,7 +25,7 @@ class ProjectCommentController extends Controller
 
         $comments = $project->projectComments()
             ->with(['user', 'user.profile', 'replies.user', 'replies.user.profile'])
-            ->whereNull('parent_id') 
+            ->whereNull('parent_id')
             ->latest()
             ->get();
 
@@ -64,7 +64,6 @@ class ProjectCommentController extends Controller
                 'message' => 'Comment added successfully',
                 'data' => new ProjectCommentResource($comment)
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -132,7 +131,6 @@ class ProjectCommentController extends Controller
                 'message' => 'Comment updated successfully',
                 'data' => new ProjectCommentResource($comment->load(['user', 'user.profile']))
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -176,7 +174,6 @@ class ProjectCommentController extends Controller
                 'success' => true,
                 'message' => 'Comment deleted successfully'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

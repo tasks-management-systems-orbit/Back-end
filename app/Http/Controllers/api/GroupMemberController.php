@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use app\Http\Controllers\Controller;
 use App\Http\Requests\Group\AddGroupMemberRequest;
@@ -83,7 +83,6 @@ class GroupMemberController extends Controller
                 'message' => 'Member added successfully',
                 'data' => new UserResource($newMember)
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -138,7 +137,6 @@ class GroupMemberController extends Controller
                 'success' => true,
                 'message' => 'Member removed successfully'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -179,7 +177,6 @@ class GroupMemberController extends Controller
                 'success' => true,
                 'message' => 'You have left the group successfully'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -220,7 +217,6 @@ class GroupMemberController extends Controller
                     'old_manager' => $request->user()->name
                 ]
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

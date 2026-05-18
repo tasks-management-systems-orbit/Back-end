@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\JoinRequest\SendJoinRequest;
@@ -165,7 +165,7 @@ class RequestController extends Controller
 
         $project = $invitation->project;
 
-        
+
         if ($project->status === 'completed') {
             return response()->json(['success' => false, 'message' => 'Cannot join a completed project.'], 403);
         }
