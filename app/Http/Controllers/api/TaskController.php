@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Task\ReorderTasksRequest;
@@ -1059,10 +1059,10 @@ class TaskController extends Controller
         }
     }
 
-    /**
+    /**  
      * Permanently delete all soft-deleted tasks in the project.
-     * Only project owner or manager can perform this action.
-     */
+     * Only project owner or manager can perform this action
+     */ 
     public function emptyTrash(Project $project, Request $request): JsonResponse
     {
         // 1. Authorization: owner or manager

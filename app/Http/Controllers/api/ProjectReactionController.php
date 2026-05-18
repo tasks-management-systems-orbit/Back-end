@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProjectReaction\StoreProjectReactionRequest;

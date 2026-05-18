@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Http\Controllers\Api;
+namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProjectReport\StoreProjectReportRequest;
@@ -45,7 +45,6 @@ class ProjectReportController extends Controller
                     'reason' => $report->reason,
                 ]
             ], 201);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
