@@ -4,6 +4,7 @@ namespace app\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Task\ReorderTasksRequest;
+use app\Http\Requests\Task\StoreGroupTaskRequest;
 use App\Http\Requests\Task\StoreManagerTaskRequest;
 use App\Http\Requests\Task\StoreSubTaskRequest;
 use App\Http\Requests\Task\StoreTaskRequest;
@@ -19,60 +20,100 @@ use app\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TaskController extends Controller
 {
+    /**
+     * Display a list of project tasks (only for project members).
+     */
     public function index(Project $project, Request $request): JsonResponse
     {
-        $this->checkProjectAccess($project);
+        try {
+            // Only project members/owners can view tasks
+            $this->checkProjectAccess($project);
 
-        $statusId = $request->input('status_id');
-        $assigneeId = $request->input('assignee_id');
-        $priority = $request->input('priority');
+            $assigneeId = $request->input('assignee_id');
+            $priority = $request->input('priority');
+            $search = $request->input('search');
+            $dueDateFrom = $request->input('due_date_from');
+            $dueDateTo = $request->input('due_date_to');
+            $dueDate = $request->input('due_date');
 
-        $tasks = Task::with(['status', 'creator', 'assignee', 'assignments'])
-            ->where('project_id', $project->id)
-            ->when($statusId, fn($q) => $q->where('status_id', $statusId))
-            ->when($assigneeId, fn($q) => $q->where('assigned_to', $assigneeId))
-            ->when($priority, fn($q) => $q->where('priority', $priority))
-            ->orderBy('position')
-            ->get();
+            $allowedSorts = ['id', 'title', 'priority', 'due_date', 'position', 'created_at', 'updated_at'];
+            $sortBy = $request->input('sort_by', 'position');
+            if (!in_array($sortBy, $allowedSorts)) {
+                $sortBy = 'position';
+            }
+            $sortDirection = $request->input('sort_direction', 'asc');
+            if (!in_array($sortDirection, ['asc', 'desc'])) {
+                $sortDirection = 'asc';
+            }
 
-        $grouped = $tasks->groupBy('status_id');
+            if ($assigneeId && !$project->hasUser($assigneeId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The specified assignee is not a member of this project'
+                ], 422);
+            }
 
-        $statuses = $project->taskStatuses()
-            ->withCount('tasks')
-            ->orderBy('position')
-            ->get();
+            $tasksQuery = $project->tasks()
+                ->with(['status', 'creator', 'assignee', 'assignments.user', 'subTasks'])
+                ->when($priority, fn($q) => $q->where('priority', $priority))
+                ->when($assigneeId, fn($q) => $q->byAssignee($assigneeId))
+                ->when($search, fn($q) => $q->where(function ($q) use ($search) {
+                    $q->where('title', 'LIKE', "%{$search}%")
+                        ->orWhere('description', 'LIKE', "%{$search}%");
+                }))
+                ->when($dueDate, fn($q) => $q->whereDate('due_date', $dueDate))
+                ->when($dueDateFrom, fn($q) => $q->whereDate('due_date', '>=', $dueDateFrom))
+                ->when($dueDateTo, fn($q) => $q->whereDate('due_date', '<=', $dueDateTo))
+                ->orderBy($sortBy, $sortDirection);
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'tasks' => TaskResource::collection($tasks),
-                'grouped_tasks' => $grouped,
-                'statuses' => $statuses->map(function ($status) use ($grouped) {
-                    return [
-                        'id' => $status->id,
-                        'name' => $status->name,
-                        'position' => $status->position,
-                        'tasks_count' => $status->tasks_count,
-                        'tasks' => TaskResource::collection($grouped->get($status->id, [])),
-                    ];
-                }),
-            ],
-        ]);
-    }
+            $tasks = $tasksQuery->limit(100)->get();
+            $tasks->loadMissing(['subTasks.status', 'subTasks.assignee', 'subTasks.taskAssignments']);
 
+            return response()->json([
+                'success' => true,
+                'data' => TaskResource::collection($tasks),
+                'total' => $tasks->count(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Fetching project tasks failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load tasks. Please try again later.'
+            ], 500);
+        }
+    }    /**
+         * Create a new project task.
+         * - If allow_subtasks = true → task becomes a parent task (cannot be assigned).
+         * - Otherwise, normal assignable task.
+         */
     public function store(StoreTaskRequest $request, Project $project): JsonResponse
     {
         $this->checkProjectManager($project);
 
         $statusId = $request->status_id ?? $project->taskStatuses()->first()?->id;
-
         if (!$statusId) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please create task statuses first',
+            ], 422);
+        }
+
+        $allowSubtasks = $request->input('allow_subtasks', false);
+        $canBeAssigned = !$allowSubtasks; // parent tasks cannot be assigned
+
+        // If it's a parent task, prevent assignment fields
+        if ($allowSubtasks && ($request->has('assigned_to') || $request->has('assignees'))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A parent task (with subtasks) cannot be assigned directly.',
             ], 422);
         }
 
@@ -91,16 +132,18 @@ class TaskController extends Controller
                 'priority' => $request->priority ?? 'medium',
                 'due_date' => $request->due_date,
                 'created_by' => $request->user()->id,
-                'assigned_to' => $request->assigned_to,
+                'assigned_to' => $canBeAssigned ? $request->assigned_to : null,
                 'position' => $maxPosition + 1,
+                'allow_subtasks' => $allowSubtasks,
+                'can_be_assigned' => $canBeAssigned,
+                'auto_status' => false, // project parent tasks do not auto-complete
             ]);
 
-            if ($request->has('assignees')) {
+            if ($canBeAssigned && $request->has('assignees')) {
                 $task->assignments()->sync($request->assignees);
             }
 
             DB::commit();
-
             $task->load(['status', 'creator', 'assignee', 'assignments']);
 
             return response()->json([
@@ -110,263 +153,119 @@ class TaskController extends Controller
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-
+            Log::error('Task creation failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create task',
-                'error' => $e->getMessage(),
+                'message' => 'Failed to create task. Please try again later.',
             ], 500);
         }
     }
 
-    public function show(Project $project, Task $task): JsonResponse
-    {
-        $this->checkProjectAccess($project);
-
-        if ($task->project_id !== $project->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Task does not belong to this project',
-            ], 404);
-        }
-
-        $task->load(['status', 'creator', 'assignee', 'assignments', 'dependencies', 'comments']);
-
-        return response()->json([
-            'success' => true,
-            'data' => new TaskResource($task),
-        ]);
-    }
-
-    public function update(UpdateTaskRequest $request, Project $project, Task $task): JsonResponse
-    {
-        if ($task->project_id !== $project->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Task does not belong to this project',
-            ], 404);
-        }
-
-        $userId = $request->user()->id;
-
-        $isOwner = $project->isOwner($userId);
-        $isTaskCreator = $task->created_by === $userId;
-
-        if (!$isOwner && !$isTaskCreator) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You do not have permission to update this task. Only the project owner or task creator can edit.',
-            ], 403);
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $task->update($request->only([
-                'title',
-                'description',
-                'priority',
-                'due_date',
-                'assigned_to',
-                'position'
-            ]));
-
-            if ($request->has('assignees') && $isOwner) {
-                $task->assignments()->sync($request->assignees);
-            } elseif ($request->has('assignees') && !$isOwner) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only project owner can update task assignments',
-                ], 403);
-            }
-
-            DB::commit();
-
-            $task->load(['status', 'creator', 'assignee', 'assignments']);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Task updated successfully',
-                'data' => new TaskResource($task),
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update task',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    public function updateStatus(UpdateTaskStatusRequest $request, Project $project, Task $task): JsonResponse
-    {
-        if ($task->project_id !== $project->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Task does not belong to this project',
-            ], 404);
-        }
-
-        $userId = $request->user()->id;
-        $userRole = $project->getUserRole($userId);
-        $isOwner = $project->isOwner($userId);
-        $isManager = $userRole === 'manager';
-        $isUser = $userRole === 'user';
-        $isTaskAssignee = ($task->assigned_to === $userId) || $task->assignments()->where('user_id', $userId)->exists();
-
-        if ($isOwner || $isManager) {
-        } elseif ($isUser && $isTaskAssignee) {
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'You do not have permission to change task status',
-            ], 403);
-        }
-
-        $oldStatusId = $task->status_id;
-        $newStatusId = $request->status_id;
-
-        try {
-            DB::beginTransaction();
-
-            Task::where('project_id', $project->id)
-                ->where('status_id', $oldStatusId)
-                ->where('position', '>', $task->position)
-                ->decrement('position');
-
-            $newPosition = $request->position ??
-                Task::where('project_id', $project->id)
-                    ->where('status_id', $newStatusId)
-                    ->max('position') + 1;
-
-            Task::where('project_id', $project->id)
-                ->where('status_id', $newStatusId)
-                ->where('position', '>=', $newPosition)
-                ->increment('position');
-
-            $task->update([
-                'status_id' => $newStatusId,
-                'position' => $newPosition,
-            ]);
-
-            $status = TaskStatus::find($newStatusId);
-            if ($status && strtolower($status->name) === 'done') {
-                $task->complete();
-            }
-
-            DB::commit();
-
-            $task->load(['status', 'creator', 'assignee', 'assignments']);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Task status updated successfully',
-                'data' => new TaskResource($task),
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update task status',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    public function reorder(ReorderTasksRequest $request, Project $project): JsonResponse
+    /**
+     * Create a task assigned to an entire group.
+     * (type: groupTask)
+     */
+    public function storeGroupTask(StoreGroupTaskRequest $request, Project $project): JsonResponse
     {
         $this->checkProjectManager($project);
 
-        try {
-            DB::beginTransaction();
-
-            foreach ($request->tasks as $taskData) {
-                Task::where('id', $taskData['id'])
-                    ->where('project_id', $project->id)
-                    ->update([
-                        'position' => $taskData['position'],
-                        'status_id' => $taskData['status_id'],
-                    ]);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Tasks reordered successfully',
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
+        $statusId = $request->status_id ?? $project->taskStatuses()->first()?->id;
+        if (!$statusId) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to reorder tasks',
-                'error' => $e->getMessage(),
-            ], 500);
+                'message' => 'Please create task statuses first',
+            ], 422);
         }
-    }
 
-    public function destroy(Project $project, Task $task): JsonResponse
-    {
-        $this->checkProjectManager($project);
+        $group = Group::where('id', $request->group_id)
+            ->where('project_id', $project->id)
+            ->first();
 
-        if ($task->project_id !== $project->id) {
+        if (!$group) {
             return response()->json([
                 'success' => false,
-                'message' => 'Task does not belong to this project',
+                'message' => 'Group not found or does not belong to this project',
             ], 404);
         }
 
+        $maxPosition = Task::where('project_id', $project->id)
+            ->max('position') ?? -1;
+
         try {
             DB::beginTransaction();
 
-            Task::where('project_id', $project->id)
-                ->where('status_id', $task->status_id)
-                ->where('position', '>', $task->position)
-                ->decrement('position');
-
-            $task->delete();
+            $task = Task::create([
+                'project_id' => $project->id,
+                'assigned_group_id' => $group->id,
+                'status_id' => $statusId,
+                'title' => $request->title,
+                'description' => $request->description,
+                'priority' => $request->priority ?? 'medium',
+                'due_date' => $request->due_date,
+                'created_by' => $request->user()->id,
+                'position' => $maxPosition + 1,
+                'allow_subtasks' => false,
+                'can_be_assigned' => true,
+            ]);
 
             DB::commit();
+            $task->load(['status', 'creator', 'assignedGroup']);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Task deleted successfully',
-            ]);
+                'message' => 'Group task created successfully',
+                'data' => new TaskResource($task),
+            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-
+            Log::error('Group task creation failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'group_id' => $group->id,
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete task',
-                'error' => $e->getMessage(),
+                'message' => 'Failed to create group task. Please try again later.',
             ], 500);
         }
     }
 
+    /**
+     * Create a manager task inside a group.
+     * - If allow_subtasks = true → parent manager task (cannot be assigned, auto_status = true).
+     * - Else → normal manager task (assignable).
+     */
     public function storeManagerTask(StoreManagerTaskRequest $request, Project $project, Group $group): JsonResponse
     {
         $userId = $request->user()->id;
 
         $statusId = $request->status_id ?? $project->taskStatuses()->first()?->id;
-
         if (!$statusId) {
             return response()->json([
                 'success' => false,
-                'message' => 'Please create task statuses first'
+                'message' => 'Please create task statuses first',
             ], 422);
         }
 
+        $allowSubtasks = $request->input('allow_subtasks', false);
+        $canBeAssigned = !$allowSubtasks;
+
+        // Prevent assignment if parent task
+        if ($allowSubtasks && ($request->has('assigned_to') || $request->has('assignees'))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A parent manager task (with subtasks) cannot be assigned directly.',
+            ], 422);
+        }
+
+        $maxPosition = Task::where('project_id', $project->id)
+            ->where('group_id', $group->id)
+            ->max('position') ?? -1;
+
         try {
             DB::beginTransaction();
-
-            $maxPosition = Task::where('project_id', $project->id)
-                ->where('group_id', $group->id)
-                ->max('position') ?? -1;
 
             $task = Task::create([
                 'project_id' => $project->id,
@@ -378,56 +277,78 @@ class TaskController extends Controller
                 'due_date' => $request->due_date,
                 'created_by' => $userId,
                 'position' => $maxPosition + 1,
-                'allow_subtasks' => true,
-                'auto_status' => true,
-                'can_be_assigned' => false,
+                'allow_subtasks' => $allowSubtasks,
+                'auto_status' => $allowSubtasks, // only auto-complete if has subtasks
+                'can_be_assigned' => $canBeAssigned,
+                'assigned_to' => ($canBeAssigned && $request->has('assigned_to')) ? $request->assigned_to : null,
             ]);
 
-            DB::commit();
+            if ($canBeAssigned && $request->has('assignees')) {
+                $task->assignments()->sync($request->assignees);
+            }
 
+            DB::commit();
             $task->load(['status', 'creator', 'group']);
+
+            $message = $allowSubtasks
+                ? 'Manager parent task created successfully (will auto-complete when all subtasks are done)'
+                : 'Manager task created and assigned successfully';
 
             return response()->json([
                 'success' => true,
-                'message' => 'Manager task created successfully',
-                'data' => new TaskResource($task)
+                'message' => $message,
+                'data' => new TaskResource($task),
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
-
+            Log::error('Manager task creation failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'group_id' => $group->id,
+                'user_id' => $userId,
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create manager task',
-                'error' => $e->getMessage()
+                'message' => 'Failed to create manager task. Please try again later.',
             ], 500);
         }
     }
 
+    /**
+     * Create a subtask under a parent task (either project parent or manager parent).
+     * Subtasks are always assignable and require at least one assignee.
+     */
     public function storeSubTask(StoreSubTaskRequest $request, Project $project, Group $group, Task $parentTask): JsonResponse
     {
         $userId = $request->user()->id;
 
+        // Validation: parent task must belong to the same project and group
         if ($parentTask->project_id !== $project->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Task does not belong to this project'
+                'message' => 'Parent task does not belong to this project',
             ], 404);
         }
 
         if ($parentTask->group_id !== $group->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Task does not belong to this group'
+                'message' => 'Parent task does not belong to this group',
             ], 404);
         }
 
-        $statusId = $request->status_id ?? $project->taskStatuses()->first()?->id;
+        // Check that parent task allows subtasks
+        if (!$parentTask->allow_subtasks) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The parent task does not allow subtasks.',
+            ], 422);
+        }
 
+        $statusId = $request->status_id ?? $project->taskStatuses()->first()?->id;
         if (!$statusId) {
             return response()->json([
                 'success' => false,
-                'message' => 'Please create task statuses first'
+                'message' => 'Please create task statuses first',
             ], 422);
         }
 
@@ -449,6 +370,7 @@ class TaskController extends Controller
                 'can_be_assigned' => true,
             ]);
 
+            // Assign the subtask to the specified users
             foreach ($request->assigned_to as $assignedUserId) {
                 TaskAssignment::create([
                     'task_id' => $subTask->id,
@@ -458,85 +380,452 @@ class TaskController extends Controller
             }
 
             DB::commit();
-
             $subTask->load(['status', 'creator', 'taskAssignments.user']);
+
+            if ($parentTask->auto_status) {
+                $parentTask->syncStatusFromSubtasks();
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Subtask created and assigned successfully',
-                'data' => new TaskResource($subTask)
+                'data' => new TaskResource($subTask),
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
-
+            Log::error('Subtask creation failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'parent_task_id' => $parentTask->id,
+                'user_id' => $userId,
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create subtask',
-                'error' => $e->getMessage()
+                'message' => 'Failed to create subtask. Please try again later.',
+            ], 500);
+        }
+    }
+    public function show(Request $request, Project $project, Task $task): JsonResponse
+    {
+        try {
+            // Allow access only to project members/owners
+            if (!$project->hasUser($request->user()->id) && !$project->isOwner($request->user()->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have access to this task'
+                ], 403);
+            }
+
+
+            if ($task->project_id !== $project->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Task does not belong to this project',
+                ], 404);
+            }
+
+            // Load all necessary relations for TaskResource
+            $task->load([
+                'status',
+                'creator',
+                'assignee',
+                'assignments.user',
+                'assignments.status',
+                'dependencies',
+                'comments.user',
+                'subTasks.status',
+                'subTasks.assignee',
+                'subTasks.taskAssignments',
+                'group',
+                'assignedGroup',
+                'parentTask',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => new TaskResource($task),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Fetching task details failed: ' . $e->getMessage(), [
+                'task_id' => $task->id,
+                'project_id' => $project->id,
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load task details. Please try again later.',
             ], 500);
         }
     }
 
-    public function updateTaskAssignmentStatus(Request $request, Task $task, int $assignmentId): JsonResponse
+
+    /**
+     * Update a task.
+     * Only the project owner or task creator can update basic fields.
+     * Assignment updates are allowed only for assignable tasks and by the project owner.
+     */
+    public function update(UpdateTaskRequest $request, Project $project, Task $task): JsonResponse
     {
-        $userId = $request->user()->id;
-
-        $assignment = TaskAssignment::where('id', $assignmentId)
-            ->where('task_id', $task->id)
-            ->first();
-
-        if (!$assignment) {
+        // 1. Verify the task belongs to the project
+        if ($task->project_id !== $project->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Assignment not found'
+                'message' => 'Task does not belong to this project',
             ], 404);
         }
 
-        if ($assignment->user_id !== $userId) {
-            $project = $task->project;
-            if (!$project->isOwner($userId) && !$task->group?->isManager($userId)) {
+        $userId = $request->user()->id;
+        $isOwner = $project->isOwner($userId);
+        $isTaskCreator = $task->created_by === $userId;
+
+        if (!$isOwner && !$isTaskCreator) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to update this task.',
+            ], 403);
+        }
+
+        // 2. Check if the task allows assignment (parent tasks cannot be assigned)
+        if (!$task->canBeAssigned() && ($request->has('assigned_to') || $request->has('assignees'))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This task cannot be assigned because it is a parent task (has subtasks).',
+            ], 422);
+        }
+
+        // 3. Ensure all assignees are members of the project
+        if ($request->has('assignees')) {
+            $assignees = $request->assignees;
+            $validMembers = $project->users()->whereIn('user_id', $assignees)->pluck('user_id')->toArray();
+            $invalid = array_diff($assignees, $validMembers);
+            if (!empty($invalid)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You do not have permission to update this assignment'
-                ], 403);
+                    'message' => 'Some users are not members of this project: ' . implode(', ', $invalid),
+                ], 422);
             }
         }
 
-        $request->validate([
-            'status_id' => 'required|exists:task_statuses,id',
-        ]);
-
-        $doneStatus = $task->project->taskStatuses()->where('name', 'Done')->first();
-
-        $assignment->update([
-            'status_id' => $request->status_id,
-            'completed_at' => ($doneStatus && $request->status_id === $doneStatus->id) ? now() : null
-        ]);
-
-        if ($task->auto_status && $assignment->completed_at) {
-            $task->updateAutoStatus();
+        // 4. Allowed fields for update (exclude group_id, allow_subtasks, auto_status, can_be_assigned, assigned_group_id)
+        $allowedFields = ['title', 'description', 'priority', 'due_date', 'assigned_to', 'position'];
+        if ($isOwner) {
+            $updateData = $request->only($allowedFields);
+        } else {
+            // Task creator cannot update assignment or position
+            $updateData = $request->only(['title', 'description', 'priority', 'due_date']);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Assignment status updated successfully',
-            'data' => [
-                'assignment_id' => $assignment->id,
-                'status_id' => $assignment->status_id,
-                'completed_at' => $assignment->completed_at
-            ]
-        ]);
+        // 5. Prevent direct position update (use reorder / updateStatus endpoints instead)
+        if (isset($updateData['position'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Position cannot be updated directly. Use reorder endpoint.',
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $task->update($updateData);
+
+            if ($isOwner && $request->has('assignees') && $task->canBeAssigned()) {
+                $task->assignments()->sync($request->assignees);
+            }
+
+            DB::commit();
+
+            $task->load(['status', 'creator', 'assignee', 'assignments']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task updated successfully',
+                'data' => new TaskResource($task),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Task update failed: ' . $e->getMessage(), [
+                'task_id' => $task->id,
+                'user_id' => $userId,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update task. Please try again later.',
+            ], 500);
+        }
     }
 
+
+    /**
+     * Change task status (move to another column) and reorder automatically.
+     */
+    public function updateStatus(UpdateTaskStatusRequest $request, Project $project, Task $task): JsonResponse
+    {
+        // 1. Verify task belongs to the project
+        if ($task->project_id !== $project->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task does not belong to this project',
+            ], 404);
+        }
+
+        $userId = $request->user()->id;
+        $userRole = $project->getUserRole($userId);
+        $isOwner = $project->isOwner($userId);
+        $isManager = $userRole === 'manager';
+        $isUser = $userRole === 'user';
+        $isTaskAssignee = ($task->assigned_to === $userId) || $task->assignments()->where('user_id', $userId)->exists();
+
+        if (!($isOwner || $isManager || ($isUser && $isTaskAssignee))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to change task status',
+            ], 403);
+        }
+
+        $oldStatusId = $task->status_id;
+        $newStatusId = $request->status_id;
+
+        // 2. Ensure the new status belongs to the same project
+        if (!$project->taskStatuses()->where('id', $newStatusId)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The selected status does not belong to this project',
+            ], 422);
+        }
+
+        // 3. Prevent changing status of a parent task that has subtasks (optional, but recommended)
+        if ($task->allow_subtasks && $task->subTasks()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot manually change status of a parent task that has subtasks. Its status is automatically managed.',
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Shift positions in old status (remove gap)
+            Task::where('project_id', $project->id)
+                ->where('status_id', $oldStatusId)
+                ->where('position', '>', $task->position)
+                ->decrement('position');
+
+            // Calculate new position (end of new status by default)
+            $newPosition = $request->position ??
+                Task::where('project_id', $project->id)
+                    ->where('status_id', $newStatusId)
+                    ->max('position') + 1;
+
+            // Shift positions in new status (make room)
+            Task::where('project_id', $project->id)
+                ->where('status_id', $newStatusId)
+                ->where('position', '>=', $newPosition)
+                ->increment('position');
+
+            // Update task
+            $task->update([
+                'status_id' => $newStatusId,
+                'position' => $newPosition,
+            ]);
+
+            // Auto-complete if the new status is "Done" (case-insensitive)
+            $status = TaskStatus::find($newStatusId);
+            if ($status && strtolower($status->name) === 'done') {
+                $task->complete();
+            }
+
+            DB::commit();
+
+            // If this task is a subtask, sync parent task status after status change
+            if ($task->parent_task_id) {
+                $parent = $task->parentTask;
+                if ($parent && $parent->auto_status) {
+                    $parent->syncStatusFromSubtasks();
+                }
+            }
+
+            $task->load(['status', 'creator', 'assignee', 'assignments']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task status updated successfully',
+                'data' => new TaskResource($task),
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Task status update failed: ' . $e->getMessage(), [
+                'task_id' => $task->id,
+                'project_id' => $project->id,
+                'user_id' => $userId,
+                'old_status_id' => $oldStatusId,
+                'new_status_id' => $newStatusId,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update task status. Please try again later.',
+            ], 500);
+        }
+    }
+    // public function updateTaskAssignmentStatus(Request $request, Task $task, int $assignmentId): JsonResponse
+    // {
+    //     $userId = $request->user()->id;
+
+    //     $assignment = TaskAssignment::where('id', $assignmentId)
+    //         ->where('task_id', $task->id)
+    //         ->first();
+
+    //     if (!$assignment) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Assignment not found'
+    //         ], 404);
+    //     }
+
+    //     if ($assignment->user_id !== $userId) {
+    //         $project = $task->project;
+    //         if (!$project->isOwner($userId) && !$task->group?->isManager($userId)) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'You do not have permission to update this assignment'
+    //             ], 403);
+    //         }
+    //     }
+
+    //     $request->validate([
+    //         'status_id' => 'required|exists:task_statuses,id',
+    //     ]);
+
+    //     $doneStatus = $task->project->taskStatuses()->where('name', 'Done')->first();
+
+    //     $assignment->update([
+    //         'status_id' => $request->status_id,
+    //         'completed_at' => ($doneStatus && $request->status_id === $doneStatus->id) ? now() : null
+    //     ]);
+
+    //     if ($task->auto_status && $assignment->completed_at) {
+    //         $task->updateAutoStatus();
+    //     }
+
+    //     // Sync parent task status if this task is a subtask
+    //     if ($task->parent_task_id) {
+    //         $parentTask = $task->parentTask;
+    //         if ($parentTask && $parentTask->auto_status) {
+    //             $parentTask->syncStatusFromSubtasks();
+    //         }
+    //     } elseif ($task->allow_subtasks && $task->auto_status) {
+    //         // If this task itself is a parent, sync its status based on its own subtasks
+    //         $task->syncStatusFromSubtasks();
+    //     }
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Assignment status updated successfully',
+    //         'data' => [
+    //             'assignment_id' => $assignment->id,
+    //             'status_id' => $assignment->status_id,
+    //             'completed_at' => $assignment->completed_at
+    //         ]
+    //     ]);
+    // }
+
+    /**
+     * Reorder multiple tasks (change position and/or status).
+     * Only project owner or manager can perform this action.
+     */
+    public function reorder(ReorderTasksRequest $request, Project $project): JsonResponse
+    {
+        $this->checkProjectManager($project);
+
+        $tasksData = $request->input('tasks');
+
+        // 1. Verify all tasks belong to the project
+        $taskIds = array_column($tasksData, 'id');
+        $validTaskIds = Task::where('project_id', $project->id)->whereIn('id', $taskIds)->pluck('id')->toArray();
+        $invalidIds = array_diff($taskIds, $validTaskIds);
+        if (!empty($invalidIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some tasks do not belong to this project: ' . implode(', ', $invalidIds),
+            ], 422);
+        }
+
+        // 2. Verify all status_ids belong to the project
+        $statusIds = array_unique(array_column($tasksData, 'status_id'));
+        $validStatusIds = $project->taskStatuses()->whereIn('id', $statusIds)->pluck('id')->toArray();
+        $invalidStatusIds = array_diff($statusIds, $validStatusIds);
+        if (!empty($invalidStatusIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some statuses do not belong to this project: ' . implode(', ', $invalidStatusIds),
+            ], 422);
+        }
+
+        // 3. Optional: Prevent reordering parent tasks that have subtasks (if desired)
+        // This depends on your business logic. If you want to allow manual override, skip this.
+        $parentTasks = Task::whereIn('id', $taskIds)
+            ->where('allow_subtasks', true)
+            ->whereHas('subTasks')
+            ->get();
+        if ($parentTasks->isNotEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot reorder parent tasks that have subtasks. Update their status via subtask completion instead.',
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($tasksData as $taskData) {
+                Task::where('id', $taskData['id'])
+                    ->where('project_id', $project->id)
+                    ->update([
+                        'position' => $taskData['position'],
+                        'status_id' => $taskData['status_id'],
+                    ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tasks reordered successfully',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Task reorder failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => request()->user()->id,
+                'tasks_data' => $tasksData,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reorder tasks. Please try again later.',
+            ], 500);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+    /**
+     * Ensure the authenticated user is a member or owner of the project.
+     */
     private function checkProjectAccess(Project $project): void
     {
         $userId = request()->user()->id;
         if (!$project->isOwner($userId) && !$project->hasUser($userId)) {
-            abort(403, 'You do not have access to this project');
+            abort(403, 'You must be a member of this project to access its tasks.');
         }
     }
-
     private function checkProjectManager(Project $project): void
     {
         $userId = request()->user()->id;
@@ -553,80 +842,295 @@ class TaskController extends Controller
         }
     }
 
-    public function trashed(Project $project, Request $request): JsonResponse
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * Soft delete a task.
+     * Adjusts positions of remaining tasks in the same status.
+     * Prevents deletion if the task has subtasks (parent task).
+     */
+    public function destroy(Project $project, Task $task): JsonResponse
     {
-        $this->checkProjectAccess($project);
-
-        $tasks = Task::onlyTrashed()
-            ->where('project_id', $project->id)
-            ->with(['status', 'creator', 'assignee'])
-            ->orderBy('deleted_at', 'desc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => TaskResource::collection($tasks),
-            'total' => $tasks->count(),
-        ]);
-    }
-
-    public function restoreTask(Project $project, Task $task, Request $request): JsonResponse
-    {
-        if (!$task->trashed() || $task->project_id !== $project->id) {
+        // Verify task belongs to the project
+        if ($task->project_id !== $project->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Task not found or not deleted.',
+                'message' => 'Task does not belong to this project',
             ], 404);
         }
 
-        $this->checkTaskManagePermission($project, $request->user());
-
-        $task->restore();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Task restored successfully.',
-            'data' => new TaskResource($task->load(['status', 'creator', 'assignee'])),
-        ]);
-    }
-
-    public function forceDeleteTask(Project $project, Task $task, Request $request): JsonResponse
-    {
-        if (!$task->trashed() || $task->project_id !== $project->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Task not found or not deleted.',
-            ], 404);
-        }
-
-        $this->checkTaskManagePermission($project, $request->user());
-
-        $task->taskAssignments()->forceDelete();
-        $task->comments()->forceDelete();
-        $task->dependencies()->detach();
-        $task->dependents()->detach();
-        $task->forceDelete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Task permanently deleted.',
-        ]);
-    }
-
-    public function emptyTrash(Project $project, Request $request): JsonResponse
-    {
+        // Only project owner or manager can delete tasks
         $this->checkProjectManager($project);
 
-        $deletedCount = Task::onlyTrashed()
-            ->where('project_id', $project->id)
-            ->forceDelete();
+        // Prevent deletion if task has subtasks
+        if ($task->subTasks()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete a parent task that has subtasks. Delete or reassign subtasks first.',
+            ], 422);
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => "{$deletedCount} task(s) permanently deleted from trash.",
-            'deleted_count' => $deletedCount,
-        ]);
+        try {
+            DB::beginTransaction();
+
+            // Reorder: shift up tasks that were after this one in the same status
+            Task::where('project_id', $project->id)
+                ->where('status_id', $task->status_id)
+                ->where('position', '>', $task->position)
+                ->decrement('position');
+
+            // Soft delete the task
+            $task->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task deleted successfully',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Task deletion failed: ' . $e->getMessage(), [
+                'task_id' => $task->id,
+                'project_id' => $project->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete task. Please try again later.',
+            ], 500);
+        }
     }
+
+    /**
+     * Display soft-deleted tasks (trash) of the project.
+     * Only project owner or manager can view trashed tasks.
+     */
+    public function trashed(Project $project, Request $request): JsonResponse
+    {
+        try {
+            // Only owner or manager can view trash (not regular members)
+            $this->checkProjectManager($project);
+
+            $tasks = Task::onlyTrashed()
+                ->where('project_id', $project->id)
+                ->with(['status', 'creator', 'assignee'])
+                ->orderBy('deleted_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => TaskResource::collection($tasks),
+                'total' => $tasks->count(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Fetching trashed tasks failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load trashed tasks. Please try again later.'
+            ], 500);
+        }
+    }
+
+    
+    /**
+     * Restore a soft-deleted task.
+     * Only the project owner can perform this action.
+     */
+    public function restoreTask(Project $project, Task $task, Request $request): JsonResponse
+    {
+        // 1. Verify task belongs to the project
+        if ($task->project_id !== $project->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task does not belong to this project',
+            ], 404);
+        }
+
+        // 2. Ensure the task is actually soft-deleted
+        if (!$task->trashed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task is not deleted. Nothing to restore.',
+            ], 422);
+        }
+
+        // 3. Authorization: only project owner
+        $this->checkTaskManagePermission($project, $request->user());
+
+        try {
+            DB::beginTransaction();
+
+            // Restore the task (also restores assignments, comments, subtasks via model event)
+            $task->restore();
+
+            DB::commit();
+
+            // Load necessary relations for response
+            $task->load(['status', 'creator', 'assignee']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task restored successfully.',
+                'data' => new TaskResource($task),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Task restore failed: ' . $e->getMessage(), [
+                'task_id' => $task->id,
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to restore task. Please try again later.',
+            ], 500);
+        }
+    }
+
+
+    /**
+     * Permanently delete a soft-deleted task (including all relations).
+     * Only the project owner can perform this action.
+     */
+    public function forceDeleteTask(Project $project, Task $task, Request $request): JsonResponse
+    {
+        // 1. Verify task belongs to the project
+        if ($task->project_id !== $project->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task does not belong to this project',
+            ], 404);
+        }
+
+        // 2. Ensure the task is soft-deleted
+        if (!$task->trashed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Task is not deleted. Use delete endpoint first.',
+            ], 422);
+        }
+
+        // 3. Authorization: only project owner
+        $this->checkTaskManagePermission($project, $request->user());
+
+        try {
+            DB::beginTransaction();
+
+            // Force delete the task (model booted will handle assignments, comments, subtasks, dependencies)
+            $task->forceDelete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task permanently deleted.',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Force delete task failed: ' . $e->getMessage(), [
+                'task_id' => $task->id,
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to permanently delete task. Please try again later.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Permanently delete all soft-deleted tasks in the project.
+     * Only project owner or manager can perform this action.
+     */
+    public function emptyTrash(Project $project, Request $request): JsonResponse
+    {
+        // 1. Authorization: owner or manager
+        $this->checkProjectManager($project);
+
+        // 2. Get all trashed tasks of this project (ensure they are Task models)
+        $trashedTasks = Task::onlyTrashed()
+            ->where('project_id', $project->id)
+            ->get();
+
+        if ($trashedTasks->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Trash is already empty.',
+                'deleted_count' => 0,
+            ]);
+        }
+
+        $deletedCount = 0;
+        $errors = [];
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($trashedTasks as $task) {
+                // Safety check: ensure it's a Task model
+                if (!$task instanceof Task) {
+                    $errors[] = [
+                        'task_id' => $task->id ?? 'unknown',
+                        'message' => 'Invalid task object, skipping.',
+                    ];
+                    continue;
+                }
+
+                try {
+                    $task->forceDelete(); // triggers model events (cleans up assignments, comments, subtasks)
+                    $deletedCount++;
+                } catch (\Exception $e) {
+                    // If any deletion fails, we roll back everything (atomicity)
+                    throw new \Exception("Failed to delete task ID {$task->id}: " . $e->getMessage());
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => $deletedCount === 1
+                    ? "{$deletedCount} task permanently deleted from trash."
+                    : "{$deletedCount} tasks permanently deleted from trash.",
+                'deleted_count' => $deletedCount,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Empty trash failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to empty trash. Please try again later.',
+                'errors' => $errors,
+            ], 500);
+        }
+    }
+
+
 
     public function myPendingTasks(Request $request): JsonResponse
     {

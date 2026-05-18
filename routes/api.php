@@ -308,6 +308,7 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'
     // Manager tasks & subtasks (separate from tasks prefix to avoid variable duplication)
     Route::post('/projects/{project}/groups/{group}/manager-tasks', [TaskController::class, 'storeManagerTask']);
     Route::post('/projects/{project}/groups/{group}/tasks/{parentTask}/subtasks', [TaskController::class, 'storeSubTask']);
+    Route::post('/projects/{project}/group-tasks', [TaskController::class, 'storeGroupTask']);
 });
 
 // TASK ASSIGNMENTS ROUTES - Write operations

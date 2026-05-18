@@ -27,17 +27,28 @@ class StoreManagerTaskRequest extends FormRequest
         return false;
     }
 
-    public function rules(): array
+    public function rules()
     {
-        return [
+        $rules = [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:5000',
             'priority' => 'nullable|in:low,medium,high,urgent',
             'due_date' => 'nullable|date|after_or_equal:today',
             'status_id' => 'nullable|exists:task_statuses,id',
+            'allow_subtasks' => 'nullable|boolean',
         ];
-    }
 
+        if ($this->input('allow_subtasks') == true) {
+            // Manager Task with subtasks: no assignment
+            $rules['assigned_to'] = 'prohibited';
+            $rules['assignees'] = 'prohibited';
+        } else {
+            $rules['assigned_to'] = 'nullable|exists:users,id';
+            $rules['assignees'] = 'nullable|array';
+        }
+
+        return $rules;
+    }
     public function messages(): array
     {
         return [

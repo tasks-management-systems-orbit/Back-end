@@ -33,7 +33,7 @@ class StoreSubTaskRequest extends FormRequest
         return false;
     }
 
-    public function rules(): array
+    public function rules()
     {
         return [
             'title' => 'required|string|max:255',
@@ -45,7 +45,6 @@ class StoreSubTaskRequest extends FormRequest
             'assigned_to.*' => 'exists:users,id',
         ];
     }
-
     public function messages(): array
     {
         return [

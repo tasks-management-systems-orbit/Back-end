@@ -2,7 +2,6 @@
 
 namespace app\Http\Resources;
 
-use app\Http\Resources\ProjectResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -13,10 +12,15 @@ class TaskResource extends JsonResource
         $userId = $request->user()?->id;
         $userAssignment = $this->taskAssignments?->firstWhere('user_id', $userId);
 
+        $displayType = $this->getDisplayType();
+
         return [
             'id' => $this->id,
             'project_id' => $this->project_id,
             'project' => new ProjectResource($this->whenLoaded('project')),
+
+            'type' => $displayType,
+            'type_label' => $this->getDisplayTypeLabel(),
 
             // Group relations
             'group_id' => $this->group_id,
@@ -34,7 +38,11 @@ class TaskResource extends JsonResource
                     'title' => $this->parentTask->title,
                 ];
             }),
-            'sub_tasks_count' => $this->subTasks->count(),
+
+            'subtasks' => $this->whenLoaded('subTasks', function () {
+                return TaskResource::collection($this->subTasks->load(['status', 'assignee', 'taskAssignments']));
+            }),
+            'subtasks_count' => $this->subTasks->count(),
 
             'allow_subtasks' => $this->allow_subtasks,
             'auto_status' => $this->auto_status,
@@ -129,5 +137,33 @@ class TaskResource extends JsonResource
             'dependents_count' => $this->dependents_count,
             'comments_count' => $this->whenCounted('comments', $this->comments_count ?? 0),
         ];
+    }
+
+    protected function getDisplayType(): string
+    {
+        if ($this->isSubTask()) {
+            return 'subtask';
+        }
+
+        if ($this->isGroupTask()) {
+            return 'groupTask';
+        }
+
+        if ($this->isManagerTask()) {
+            return 'managerTask';
+        }
+
+        return 'projectTask';
+    }
+
+    protected function getDisplayTypeLabel(): string
+    {
+        return match ($this->getDisplayType()) {
+            'projectTask' => 'Project Task',
+            'groupTask' => 'Group Task',
+            'managerTask' => 'Manager Task',
+            'subtask' => 'Subtask',
+            default => 'Task',
+        };
     }
 }

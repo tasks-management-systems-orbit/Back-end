@@ -168,11 +168,6 @@ class Task extends Model
         return !is_null($this->assigned_group_id) && is_null($this->parent_task_id);
     }
 
-    public function isManagerTask(): bool
-    {
-        return !is_null($this->group_id) && !$this->can_be_assigned && $this->allow_subtasks;
-    }
-
     public function isSubTask(): bool
     {
         return !is_null($this->parent_task_id);
@@ -204,8 +199,59 @@ class Task extends Model
             $this->update(['completed_at' => now()]);
             event(new ManagerTaskCompleted($this));
         }
+        $this->syncStatusFromSubtasks();
     }
 
+    /**
+     * Automatically sync the parent task's status based on its subtasks' statuses.
+     * Only applicable if task has subtasks and auto_status = true.
+     */
+    public function syncStatusFromSubtasks(): bool
+    {
+        // Only apply to tasks that allow subtasks and have auto_status enabled
+        if (!$this->auto_status || !$this->allow_subtasks) {
+            return false;
+        }
+
+        $subtasks = $this->subTasks()->with('status')->get();
+        if ($subtasks->isEmpty()) {
+            return false;
+        }
+
+        // Get all unique statuses from subtasks
+        $subtaskStatuses = $subtasks->pluck('status')->filter();
+
+        if ($subtaskStatuses->isEmpty()) {
+            return false;
+        }
+
+        // Check if all subtasks are completed
+        $allCompleted = $subtasks->every(fn($subtask) => $subtask->isCompleted());
+
+        if ($allCompleted) {
+            // Find the "Done" status in the project
+            $doneStatus = $this->project->taskStatuses()
+                ->whereIn('name', ['Done', 'Completed', 'done', 'completed'])
+                ->orderBy('position', 'desc')
+                ->first();
+
+            if ($doneStatus && $this->status_id !== $doneStatus->id) {
+                $this->update(['status_id' => $doneStatus->id]);
+                return true;
+            }
+            return false;
+        }
+
+        // Find the status with the highest position among subtasks
+        $highestStatus = $subtaskStatuses->sortByDesc('position')->first();
+
+        if ($highestStatus && $this->status_id !== $highestStatus->id) {
+            $this->update(['status_id' => $highestStatus->id]);
+            return true;
+        }
+
+        return false;
+    }
 
     public function isStarted(): bool
     {
@@ -493,4 +539,56 @@ class Task extends Model
     {
         return $query->whereNotNull('parent_task_id');
     }
+
+    public function isProjectParentTask(): bool
+    {
+        return $this->isProjectTask() && $this->allow_subtasks == true;
+    }
+
+    public function isManagerTask(): bool
+    {
+        return !is_null($this->group_id) && is_null($this->assigned_group_id) && is_null($this->parent_task_id);
+    }
+
+    public function isManagerParentTask(): bool
+    {
+        return $this->isManagerTask() && $this->allow_subtasks == true;
+    }
+
+    public function isManagerSubtask(): bool
+    {
+        return !is_null($this->parent_task_id) && !is_null($this->group_id);
+    }
+
+    public function canBeAssigned(): bool
+    {
+        // 1. Project Task with Subtask
+        if ($this->isProjectParentTask() && $this->subTasks()->exists()) {
+            return false;
+        }
+
+        // 2. Manager Task with Subtasks
+        if ($this->isManagerParentTask() && $this->subTasks()->exists()) {
+            return false;
+        }
+
+        // 3. Project Task
+        if ($this->isProjectTask() || $this->isGroupTask()) {
+            return $this->can_be_assigned;
+        }
+
+        // 4. Manager Task
+        if ($this->isManagerTask() && !$this->subTasks()->exists()) {
+            return true;
+        }
+
+        // 5. Manager Subtask
+        if ($this->isManagerSubtask()) {
+            return true;
+        }
+
+        return false;
+    }
+
+
 }
