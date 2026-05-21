@@ -205,9 +205,11 @@ class Project extends Model
 
     public function getUserReactionAttribute(): ?string
     {
-        if (!auth()->check())
+        $user = request()->user();
+        if (!$user) {
             return null;
-        return $this->reactions->where('user_id', auth()->id())->first()?->reaction_type;
+        }
+        return $this->reactions->where('user_id', $user->id)->first()?->reaction_type;
     }
 
     public function getReactionCountsAttribute(): array

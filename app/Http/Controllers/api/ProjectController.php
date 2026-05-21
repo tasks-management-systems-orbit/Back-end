@@ -227,7 +227,6 @@ class ProjectController extends Controller
         }
 
         // Prevent changing status if project is completed and not owner? (optional)
-        // إذا كان المشروع مكتملاً ولا يريد المالك تغييره، يمكن إضافة تحقق هنا.
 
         // 4. Auto-set end_date when completing project
         if ($newStatus === 'completed' && $oldStatus !== 'completed') {

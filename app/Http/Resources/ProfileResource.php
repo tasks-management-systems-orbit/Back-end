@@ -24,6 +24,11 @@ class ProfileResource extends JsonResource
                     'name' => $this->user->name,
                     'username' => $this->user->username,
                 ],
+                'is_public' => $this->is_public,
+                'allow_messages' => $this->allow_messages,
+                'allow_invitation_requests' => $this->allow_invitation_requests,
+                'created_at' => $this->created_at?->toISOString(),
+                'updated_at' => $this->updated_at?->toISOString(),
             ];
         }
 

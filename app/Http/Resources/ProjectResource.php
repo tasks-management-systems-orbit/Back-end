@@ -29,9 +29,10 @@ class ProjectResource extends JsonResource
                 'status' => $this->status,
                 'visibility' => $this->visibility,
                 'reaction_counts' => $this->reaction_counts,
-                'user_reaction' => $this->when(auth()->check(), fn() => $this->user_reaction),
+                'user_reaction' => $this->when(request()->user(), fn() => $this->user_reaction),
                 'comments' => ProjectCommentResource::collection($this->whenLoaded('projectComments')),
-                // No other fields
+                'created_at' => $this->created_at?->toISOString(),
+                'updated_at' => $this->updated_at?->toISOString(),
             ];
         }
 
@@ -62,7 +63,7 @@ class ProjectResource extends JsonResource
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
             'reaction_counts' => $this->reaction_counts,
-            'user_reaction' => $this->when(auth()->check(), fn() => $this->user_reaction),
+            'user_reaction' => $this->when(request()->user(), fn() => $this->user_reaction),
             'comments' => ProjectCommentResource::collection($this->whenLoaded('projectComments')),
             'members' => $this->when($this->showFullDetails, function () {
                 return $this->users->map(fn($user) => [
