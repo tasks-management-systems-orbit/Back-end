@@ -66,6 +66,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
 
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::get('/my-active-projects', [ProjectController::class, 'myActiveOwnedProjects']);
+});
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [LogoutController::class, 'logout']);
     Route::post('/logout-all', [LogoutController::class, 'logoutFromAllDevices']);
@@ -97,8 +101,10 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
     Route::prefix('projects/{project}/join-requests')->group(function () {
         Route::post('/', [RequestController::class, 'sendJoinRequest']);
         Route::get('/', [RequestController::class, 'listJoinRequests']);
-        Route::put('/{joinRequest}', [RequestController::class, 'processJoinRequest']);
+        Route::post('/{joinRequest}/approve', [RequestController::class, 'approveJoinRequest'])->middleware('project.not.locked');
+        Route::post('/{joinRequest}/reject', [RequestController::class, 'rejectJoinRequest'])->middleware('project.not.locked');
     });
+
 });
 
 

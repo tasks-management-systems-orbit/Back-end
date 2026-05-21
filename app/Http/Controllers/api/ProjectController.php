@@ -2,15 +2,16 @@
 
 namespace app\Http\Controllers\api;
 
+use App\Events\ProjectCreated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Events\ProjectCreated;
+use Illuminate\Support\Facades\Log;
 
 class ProjectController extends Controller
 {
@@ -601,6 +602,42 @@ class ProjectController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update project visibility. Please try again later.'
+            ], 500);
+        }
+    }
+
+
+
+
+    /**
+     * Get all active projects owned by the authenticated user.
+     * (Projects that are not paused and not completed).
+     */
+    public function myActiveOwnedProjects(Request $request): JsonResponse
+    {
+        $userId = $request->user()->id;
+
+        try {
+            $projects = Project::where('created_by', $userId)
+                ->where('status', 'active')
+                ->with(['creator', 'reactions'])
+                ->withCount(['users', 'tasks'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => ProjectResource::collection($projects),
+                'total' => $projects->count(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Fetching active owned projects failed: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load projects. Please try again later.'
             ], 500);
         }
     }
