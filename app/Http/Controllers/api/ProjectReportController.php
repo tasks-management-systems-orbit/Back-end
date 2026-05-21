@@ -6,15 +6,23 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ProjectReport\StoreProjectReportRequest;
 use App\Models\Project;
 use App\Models\ProjectReport;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProjectReportController extends Controller
 {
+    /**
+     * Store a report against a project.
+     */
     public function store(StoreProjectReportRequest $request): JsonResponse
     {
+        $user = $request->user();
+
         try {
-            $user = $request->user();
+            DB::beginTransaction();
+
             $reportedProject = Project::findOrFail($request->reported_project_id);
 
             // Check if user already reported this project
@@ -23,9 +31,10 @@ class ProjectReportController extends Controller
                 ->exists();
 
             if ($existingReport) {
+                DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'You have already reported this project'
+                    'message' => 'You have already reported this project.',
                 ], 409);
             }
 
@@ -34,7 +43,10 @@ class ProjectReportController extends Controller
                 'reported_project_id' => $reportedProject->id,
                 'reason' => $request->reason,
                 'details' => $request->details,
+                'status' => 'open', // Default status
             ]);
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -45,108 +57,29 @@ class ProjectReportController extends Controller
                     'reason' => $report->reason,
                 ]
             ], 201);
-        } catch (\Exception $e) {
+
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            Log::error('Project not found: ' . $e->getMessage(), [
+                'project_id' => $request->reported_project_id,
+                'user_id' => $user->id,
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while submitting the report',
-                'error' => $e->getMessage()
+                'message' => 'The reported project does not exist.',
+            ], 404);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Project report creation failed: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'reported_project_id' => $request->reported_project_id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while submitting the report. Please try again later.',
             ], 500);
         }
-    }
-    // @phpstan-ignore-next-line
-    public function getAllReports(Request $request): JsonResponse
-    {
-        $projectId = $request->input('project_id');
-
-        $reports = ProjectReport::with(['reporter', 'reportedProject.creator'])
-            ->when($projectId, function ($query, $projectId) {
-                $query->where('reported_project_id', $projectId);
-            })
-            ->latest()
-            ->get();
-
-        // Group reports by reported project
-        $groupedByProject = $reports->groupBy('reported_project_id')->map(function ($projectReports) {
-            $firstReport = $projectReports->first();
-            return [
-                'project_id' => $firstReport->reported_project_id,
-                'project_name' => $firstReport->reportedProject->name,
-                'project_owner' => $firstReport->reportedProject->creator->name ?? 'Unknown',
-                'total_reports' => $projectReports->count(),
-                'reasons' => $projectReports->pluck('reason')->unique()->values(),
-                'reports' => $projectReports->map(fn($report) => [
-                    'report_id' => $report->id,
-                    'reporter_name' => $report->reporter->name,
-                    'reporter_email' => $report->reporter->email,
-                    'reason' => $report->reason,
-                    'details' => $report->details,
-                    'created_at' => $report->created_at->toISOString(),
-                ]),
-            ];
-        })->values();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'all_reports' => $reports->map(fn($report) => [
-                    'report_id' => $report->id,
-                    'reporter' => [
-                        'id' => $report->reporter->id,
-                        'name' => $report->reporter->name,
-                        'email' => $report->reporter->email,
-                    ],
-                    'reported_project' => [
-                        'id' => $report->reportedProject->id,
-                        'name' => $report->reportedProject->name,
-                        'owner' => $report->reportedProject->creator->name ?? 'Unknown',
-                    ],
-                    'reason' => $report->reason,
-                    'details' => $report->details,
-                    'created_at' => $report->created_at->toISOString(),
-                ]),
-                'grouped_by_project' => $groupedByProject,
-                'summary' => [
-                    'total_reports' => $reports->count(),
-                    'total_projects_reported' => $reports->unique('reported_project_id')->count(),
-                    'total_reporters' => $reports->unique('reporter_id')->count(),
-                ],
-            ]
-        ]);
-    }
-
-    public function getProjectReports(Request $request, int $projectId): JsonResponse
-    {
-        $project = Project::findOrFail($projectId);
-
-        $reports = ProjectReport::with('reporter')
-            ->where('reported_project_id', $projectId)
-            ->latest()
-            ->get()
-            ->map(function ($report) {
-                return [
-                    'report_id' => $report->id,
-                    'reporter' => [
-                        'id' => $report->reporter->id,
-                        'name' => $report->reporter->name,
-                        'email' => $report->reporter->email,
-                    ],
-                    'reason' => $report->reason,
-                    'details' => $report->details,
-                    'created_at' => $report->created_at->toISOString(),
-                ];
-            });
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'project' => [
-                    'id' => $project->id,
-                    'name' => $project->name,
-                    'owner' => $project->creator->name ?? 'Unknown',
-                ],
-                'total_reports' => $reports->count(),
-                'reports' => $reports,
-            ]
-        ]);
     }
 }

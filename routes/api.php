@@ -117,8 +117,6 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('project-reports')->group(function () {
         Route::post('/', [ProjectReportController::class, 'store']);
-        Route::get('/', [ProjectReportController::class, 'getAllReports']);                   //TODO   DELETE
-        Route::get('/project/{projectId}', [ProjectReportController::class, 'getProjectReports']);     //TODO   DELETE
     });
 });
 
@@ -233,8 +231,6 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('reports')->group(function () {
         Route::post('/', [ReportController::class, 'store']);
-        Route::get('/', [ReportController::class, 'getAllReports']);     //   Admin only
-        Route::get('/user/{userId}', [ReportController::class, 'getUserReports']);       //  Admin only
     });
 });
 
