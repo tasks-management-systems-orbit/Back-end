@@ -14,28 +14,33 @@ class UpdateProfileRequest extends FormRequest
 
     public function rules(): array
     {
-        $profileId = $this->route('profile');
+        $profile = $this->route('profile');
 
         return [
-            'phone' => 'nullable|string|max:50|unique:profiles,phone,' . $profileId,
+            'phone' => [
+                'nullable',
+                'string',
+                'max:20',
+                Rule::unique('profiles', 'phone')->ignore($profile->id),
+            ],
             'bio' => 'nullable|string|max:1000',
             'job_title' => 'nullable|string|max:255',
             'skills' => 'nullable|array',
-            'skills.*.name' => 'required|string|max:100',
-            'skills.*.rating' => 'sometimes|integer|min:1|max:10',
+            'skills.*.name' => 'required_with:skills|string|max:100',
+            'skills.*.rating' => 'nullable|integer|min:1|max:10',
             'avatar' => 'nullable|string|max:255|url',
             'location' => 'nullable|string|max:255',
             'alternative_email' => 'nullable|string|email|max:255',
 
             // Social links
-            'twitter_url' => 'nullable|string|max:255|url',
-            'facebook_url' => 'nullable|string|max:255|url',
-            'instagram_url' => 'nullable|string|max:255|url',
-            'youtube_url' => 'nullable|string|max:255|url',
-            'github_url' => 'nullable|string|max:255|url',
-            'portfolio_url' => 'nullable|string|max:255|url',
-            'linkedin_url' => 'nullable|string|max:255|url',
-            'cv_url' => 'nullable|string|max:255|url',
+            'twitter_url' => 'nullable|url|max:255',
+            'facebook_url' => 'nullable|url|max:255',
+            'instagram_url' => 'nullable|url|max:255',
+            'youtube_url' => 'nullable|url|max:255',
+            'github_url' => 'nullable|url|max:255',
+            'portfolio_url' => 'nullable|url|max:255',
+            'linkedin_url' => 'nullable|url|max:255',
+            'cv_url' => 'nullable|max:255',
 
             // Preferences
             'language' => ['nullable', Rule::in(['ar', 'en'])],
@@ -46,12 +51,8 @@ class UpdateProfileRequest extends FormRequest
             'allow_messages' => 'nullable|boolean',
             'allow_invitation_requests' => 'nullable|boolean',
 
-            // Stats
-            'projects_count' => 'nullable|integer|min:0',
-            'tasks_completed' => 'nullable|integer|min:0',
         ];
     }
-
     public function messages(): array
     {
         return [

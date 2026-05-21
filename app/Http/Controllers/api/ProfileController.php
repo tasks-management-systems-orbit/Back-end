@@ -51,11 +51,22 @@ class ProfileController extends Controller
             ], 500);
         }
     }
-    public function show(Request $request, Profile $profile): ProfileResource
+    public function show(Request $request, Profile $profile): JsonResponse|ProfileResource
     {
-        $profile->load('user.ownedProjects', 'user.projects');
-        return new ProfileResource($profile);
+        try {
+            $profile->load('user.ownedProjects', 'user.projects');
+            return new ProfileResource($profile);
+        } catch (\Exception $e) {
+            Log::error('Profile show failed: ' . $e->getMessage(), [
+                'profile_id' => $profile->id,
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load profile. Please try again later.'
+            ], 500);
+        }
     }
+
     public function update(UpdateProfileRequest $request, Profile $profile): JsonResponse
     {
         if ($request->user()->id !== $profile->user_id) {
@@ -69,7 +80,6 @@ class ProfileController extends Controller
             DB::beginTransaction();
 
             $validated = $request->validated();
-
 
             $profile->update($validated);
 
@@ -88,7 +98,7 @@ class ProfileController extends Controller
             DB::rollBack();
 
             Log::error('Profile update failed', [
-                'user_id' => auth()->id(),
+                'user_id' => $request->user()->id,
                 'profile_id' => $profile->id,
                 'error' => $e->getMessage(),
             ]);
@@ -99,7 +109,6 @@ class ProfileController extends Controller
             ], 500);
         }
     }
-
     public function myProfile(Request $request): ProfileResource|JsonResponse
     {
         $profile = $request->user()->profile;
