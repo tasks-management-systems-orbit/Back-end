@@ -196,6 +196,9 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
         Route::get('/', [TaskController::class, 'index']);
         Route::get('/{task}', [TaskController::class, 'show']);
         Route::get('/trashed', [TaskController::class, 'trashed']);
+        Route::get('/completed', [TaskController::class, 'getCompletedTasks']);
+        Route::get('/assigned', [TaskController::class, 'getAssignedTasks']);
+        Route::get('/unassigned', [TaskController::class, 'getUnassignedTasks']);
     });
 });
 

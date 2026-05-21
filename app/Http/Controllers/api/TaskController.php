@@ -89,11 +89,13 @@ class TaskController extends Controller
                 'message' => 'Failed to load tasks. Please try again later.'
             ], 500);
         }
-    }    /**
-         * Create a new project task.
-         * - If allow_subtasks = true → task becomes a parent task (cannot be assigned).
-         * - Otherwise, normal assignable task.
-         */
+    }
+
+    /**
+     * Create a new project task.
+     * - If allow_subtasks = true → task becomes a parent task (cannot be assigned).
+     * - Otherwise, normal assignable task.
+     */
     public function store(StoreTaskRequest $request, Project $project): JsonResponse
     {
         $this->checkProjectManager($project);
@@ -816,6 +818,117 @@ class TaskController extends Controller
 
 
 
+
+
+
+    /**
+     * Get all completed tasks of the project.
+     */
+    public function getCompletedTasks(Project $project, Request $request): JsonResponse
+    {
+        try {
+            $this->checkProjectAccess($project);
+
+            $tasks = $project->tasks()
+                ->whereNotNull('completed_at')
+                ->with(['status', 'creator', 'assignee', 'assignments.user'])
+                ->orderBy('completed_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => TaskResource::collection($tasks),
+                'total' => $tasks->count(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Fetching completed tasks failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load completed tasks. Please try again later.'
+            ], 500);
+        }
+    }
+    /**
+     * Get all assigned tasks (tasks that have at least one assignee or assigned group).
+     */
+    public function getAssignedTasks(Project $project, Request $request): JsonResponse
+    {
+        try {
+            $this->checkProjectAccess($project);
+
+            $tasks = $project->tasks()
+                ->where(function ($q) {
+                    $q->whereNotNull('assigned_to')
+                        ->orWhereNotNull('assigned_group_id')
+                        ->orWhereHas('assignees');
+                })
+                ->with(['status', 'creator', 'assignee', 'assignments.user', 'assignedGroup'])
+                ->orderBy('due_date')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => TaskResource::collection($tasks),
+                'total' => $tasks->count(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Fetching assigned tasks failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load assigned tasks. Please try again later.'
+            ], 500);
+        }
+    }
+    /**
+     * Get all unassigned tasks (no assignee, no assignments, no assigned group).
+     */
+    public function getUnassignedTasks(Project $project, Request $request): JsonResponse
+    {
+        try {
+            $this->checkProjectAccess($project);
+
+            $tasks = $project->tasks()
+                ->whereNull('assigned_to')
+                ->whereNull('assigned_group_id')
+                ->whereDoesntHave('assignees')
+                ->with(['status', 'creator'])
+                ->orderBy('created_at')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => TaskResource::collection($tasks),
+                'total' => $tasks->count(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Fetching unassigned tasks failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load unassigned tasks. Please try again later.'
+            ], 500);
+        }
+    }
+
+
+
+
+
+
+
+
+
     /**
      * Ensure the authenticated user is a member or owner of the project.
      */
@@ -949,7 +1062,7 @@ class TaskController extends Controller
         }
     }
 
-    
+
     /**
      * Restore a soft-deleted task.
      * Only the project owner can perform this action.
@@ -1059,10 +1172,10 @@ class TaskController extends Controller
         }
     }
 
-    /**  
+    /**
      * Permanently delete all soft-deleted tasks in the project.
      * Only project owner or manager can perform this action
-     */ 
+     */
     public function emptyTrash(Project $project, Request $request): JsonResponse
     {
         // 1. Authorization: owner or manager
