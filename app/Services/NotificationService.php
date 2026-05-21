@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
-    public function send($userId, $title, $message, $type = 'info', $data = null, $actionUrl = null)
+    public function send($userId, $title, $message, $type = 'info', $data = null, $actionUrl = null , $icon = null)
     {
         try {
             $notification = Notification::create([
@@ -18,6 +18,7 @@ class NotificationService
                 'type' => $type,
                 'data' => $data,
                 'action_url' => $actionUrl,
+                'icon' => $icon,
             ]);
 
             broadcast(new NotificationSent($notification));
@@ -60,7 +61,7 @@ class NotificationService
         return $query->limit($limit)->get();
     }
 
-    public function markAsRead($notificationId, $userId)
+    public function markAsRead( $notificationId, $userId)
     {
         $notification = Notification::where('id', $notificationId)
             ->where('user_id', $userId)

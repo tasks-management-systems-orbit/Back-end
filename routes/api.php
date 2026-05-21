@@ -8,23 +8,24 @@ use App\Http\Controllers\api\Auth\RegisterController;
 use App\Http\Controllers\api\CommentController;
 use App\Http\Controllers\api\FavoriteController;
 use App\Http\Controllers\api\FavoriteProjectController;
+use App\Http\Controllers\api\GroupController;
+use App\Http\Controllers\api\GroupMemberController;
 use App\Http\Controllers\api\NoteController;
 use App\Http\Controllers\api\NotificationController;
 use App\Http\Controllers\api\ProfileController;
+use App\Http\Controllers\api\ProjectCommentController;
 use App\Http\Controllers\api\ProjectController;
+use App\Http\Controllers\api\ProjectReportController;
 use App\Http\Controllers\api\ProjectUserController;
+use App\Http\Controllers\api\ReminderController;
 use App\Http\Controllers\api\ReportController;
+use App\Http\Controllers\api\RequestController;
 use App\Http\Controllers\api\SearchController;
 use App\Http\Controllers\api\TaskAssignmentController;
 use App\Http\Controllers\api\TaskController;
 use App\Http\Controllers\api\TaskDependencyController;
 use App\Http\Controllers\api\TaskStatusController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\api\GroupController;
-use App\Http\Controllers\api\GroupMemberController;
-use App\Http\Controllers\api\ProjectCommentController;
-use App\Http\Controllers\api\ProjectReportController;
-use App\Http\Controllers\api\RequestController;
 
 
 // PUBLIC ROUTES (No authentication required)
@@ -65,6 +66,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::patch('/profiles/{profile}', [ProfileController::class, 'update']);
 });
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
+
+// ============= REMINDERS ROUTES =============
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::prefix('reminders')->group(function () {
+        Route::get('/', [ReminderController::class, 'index']);
+        Route::post('/', [ReminderController::class, 'store']);
+        Route::put('/{reminder}', [ReminderController::class, 'update']);
+        Route::delete('/{reminder}', [ReminderController::class, 'destroy']);
+        Route::post('/{reminder}/snooze', [ReminderController::class, 'snooze']); 
+        Route::post('/{reminder}/dismiss', [ReminderController::class, 'dismiss']);
+    });
+});
 
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::get('/my-active-projects', [ProjectController::class, 'myActiveOwnedProjects']);
