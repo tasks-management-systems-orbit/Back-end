@@ -7,7 +7,6 @@ use App\Models\Project;
 use App\Models\User;
 use Illuminate\Validation\Validator;
 
-
 class SendInvitationRequest extends FormRequest
 {
     public function authorize(): bool
@@ -15,14 +14,8 @@ class SendInvitationRequest extends FormRequest
         $project = Project::find($this->route('project'));
         if (!$project)
             return false;
-
         $user = $this->user();
-
-        if (!$project->isOwner($user->id) && !$project->isManager($user->id)) {
-            return false;
-        }
-
-        return true;
+        return $project->isOwner($user->id);
     }
 
     public function rules(): array
@@ -30,7 +23,7 @@ class SendInvitationRequest extends FormRequest
         return [
             'invitee_id' => 'required|exists:users,id',
             'message' => 'nullable|string|max:500',
-            'role' => 'nullable|in:user,manager,observer',
+            'role' => 'nullable|in:user,observer',
         ];
     }
 

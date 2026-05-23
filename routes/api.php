@@ -64,6 +64,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/profiles/{profile}', [ProfileController::class, 'show']);
     Route::put('/profiles/{profile}', [ProfileController::class, 'update']);
     Route::patch('/profiles/{profile}', [ProfileController::class, 'update']);
+
+    Route::post('/profiles/{profile}/invite', [RequestController::class, 'inviteUser']);
 });
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
 
@@ -74,7 +76,7 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
         Route::post('/', [ReminderController::class, 'store']);
         Route::put('/{reminder}', [ReminderController::class, 'update']);
         Route::delete('/{reminder}', [ReminderController::class, 'destroy']);
-        Route::post('/{reminder}/snooze', [ReminderController::class, 'snooze']); 
+        Route::post('/{reminder}/snooze', [ReminderController::class, 'snooze']);
         Route::post('/{reminder}/dismiss', [ReminderController::class, 'dismiss']);
     });
 });

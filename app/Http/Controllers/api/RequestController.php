@@ -13,6 +13,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use app\Http\Requests\Invitation\InviteUserRequest;
+use App\Models\Profile;
+
 
 class RequestController extends Controller
 {
@@ -65,7 +68,6 @@ class RequestController extends Controller
     public function sendJoinRequest(SendJoinRequest $request, Project $project): JsonResponse
     {
         try {
-            // Check if user already has a pending request
             $existing = Request::where('project_id', $project->id)
                 ->where('sender_id', $request->user()->id)
                 ->where('type', 'join_request')
@@ -185,6 +187,72 @@ class RequestController extends Controller
 
     // =============  (Invitations) =============
 
+/*Send an invitation from a user's profile page */
+    public function inviteUser(InviteUserRequest $request, Profile $profile): JsonResponse
+    {
+        try {
+            // Get the project and check its status
+            $project = Project::find($request->project_id);
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The selected project does not exist.'
+                ], 422);
+            }
+
+            if ($project->status !== 'active') {
+                $statusMessage = match ($project->status) {
+                    'completed' => 'This project is already completed.',
+                    'paused' => 'This project is currently paused.',
+                    default => 'This project is not active.',
+                };
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot send invitation. {$statusMessage} Only active projects can accept new members."
+                ], 422);
+            }
+
+            // Restrict role to only 'user' or 'observer' (default 'user')
+            $allowedRoles = ['user', 'observer'];
+            $role = $request->input('role', 'user');
+            if (!in_array($role, $allowedRoles)) {
+                $role = 'user'; // fallback to default if invalid role provided
+            }
+
+            DB::beginTransaction();
+
+            $invitation = JoinRequestModel::create([
+                'sender_id' => $request->user()->id,
+                'receiver_id' => $profile->user_id,
+                'project_id' => $request->project_id,
+                'type' => 'invitation',
+                'status' => 'pending',
+                'message' => $request->input('message'),
+                'role' => $role,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invitation sent successfully.',
+                'data' => $invitation
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Invite user failed: ' . $e->getMessage(), [
+                'sender_id' => $request->user()->id,
+                'receiver_id' => $profile->user_id,
+                'project_id' => $request->project_id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send invitation. Please try again later.'
+            ], 500);
+        }
+    }
+
     public function myInvitations(Request $request): JsonResponse
     {
         try {
@@ -211,9 +279,24 @@ class RequestController extends Controller
             ], 500);
         }
     }
+
+    /*Send an invitation from inside a project */
     public function sendInvitation(SendInvitationRequest $request, Project $project): JsonResponse
     {
         try {
+            // Check project status before proceeding
+            if ($project->status !== 'active') {
+                $statusMessage = match ($project->status) {
+                    'completed' => 'This project is already completed.',
+                    'paused' => 'This project is currently paused.',
+                    default => 'This project is not active.',
+                };
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot send invitation. {$statusMessage} Only active projects can accept new members."
+                ], 422);
+            }
+
             DB::beginTransaction();
 
             $inviteeId = $request->invitee_id;
@@ -233,6 +316,13 @@ class RequestController extends Controller
                 ], 409);
             }
 
+            // Restrict role to 'user' or 'observer' only (default 'user')
+            $allowedRoles = ['user', 'observer'];
+            $role = $request->input('role', 'user');
+            if (!in_array($role, $allowedRoles)) {
+                $role = 'user'; // fallback to default if invalid role provided
+            }
+
             $invitation = JoinRequestModel::create([
                 'sender_id' => $request->user()->id,
                 'receiver_id' => $inviteeId,
@@ -240,7 +330,7 @@ class RequestController extends Controller
                 'type' => 'invitation',
                 'status' => 'pending',
                 'message' => $request->input('message'),
-                'role' => $request->input('role', 'user'),
+                'role' => $role,
             ]);
 
             DB::commit();
