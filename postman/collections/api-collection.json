@@ -454,6 +454,39 @@
           "response": []
         },
         {
+          "name": "update-profile-patch",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/profiles/{profile}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "profiles",
+                "{profile}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Doe Updated\",\n    \"bio\": \"Updated bio\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
           "name": "get-skills",
           "request": {
             "method": "GET",
@@ -728,6 +761,173 @@
       ]
     },
     {
+      "name": "reminders",
+      "item": [
+        {
+          "name": "get-reminders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/reminders",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "reminders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create-reminder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/reminders",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "reminders"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"remind_at\": \"2026-05-24 10:00:00\",\n    \"title\": \"Reminder title\",\n    \"description\": \"Reminder description\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update-reminder",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/reminders/{reminder}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "reminders",
+                "{reminder}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Updated reminder\",\n    \"remind_at\": \"2026-05-25 10:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "delete-reminder",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/reminders/{reminder}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "reminders",
+                "{reminder}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "snooze-reminder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/reminders/{reminder}/snooze",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "reminders",
+                "{reminder}",
+                "snooze"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "dismiss-reminder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/reminders/{reminder}/dismiss",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "reminders",
+                "{reminder}",
+                "dismiss"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "project-reactions",
       "item": [
         {
@@ -958,9 +1158,9 @@
           "response": []
         },
         {
-          "name": "process-join-request",
+          "name": "approve-join-request",
           "request": {
-            "method": "PUT",
+            "method": "POST",
             "header": [
               {
                 "key": "Accept",
@@ -968,6 +1168,19 @@
                 "type": "text"
               }
             ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/join-requests/{joinRequest}/approve",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "join-requests",
+                "{joinRequest}",
+                "approve"
+              ]
+            },
             "body": {
               "mode": "raw",
               "raw": "{\n    \"status\": \"approved\"\n}",
@@ -976,9 +1189,23 @@
                   "language": "json"
                 }
               }
-            },
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "reject-join-request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "url": {
-              "raw": "{{baseURL}}/projects/{project}/join-requests/{joinRequest}",
+              "raw": "{{baseURL}}/projects/{project}/join-requests/{joinRequest}/reject",
               "host": [
                 "{{baseURL}}"
               ],
@@ -986,8 +1213,18 @@
                 "projects",
                 "{project}",
                 "join-requests",
-                "{joinRequest}"
+                "{joinRequest}",
+                "reject"
               ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"rejected\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           },
           "response": []
@@ -1179,54 +1416,6 @@
             }
           },
           "response": []
-        },
-        {
-          "name": "get-all-project-reports",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseURL}}/project-reports",
-              "host": [
-                "{{baseURL}}"
-              ],
-              "path": [
-                "project-reports"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "get-project-reports",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseURL}}/project-reports/project/{projectId}",
-              "host": [
-                "{{baseURL}}"
-              ],
-              "path": [
-                "project-reports",
-                "project",
-                "{projectId}"
-              ]
-            }
-          },
-          "response": []
         }
       ]
     },
@@ -1334,6 +1523,29 @@
               ],
               "path": [
                 "my-projects"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "my-active-projects",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/my-active-projects",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "my-active-projects"
               ]
             }
           },
@@ -2222,6 +2434,118 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "get-completed-tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/completed",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "completed"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get-assigned-tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/assigned",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "assigned"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get-unassigned-tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/tasks/unassigned",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "tasks",
+                "unassigned"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create-group-task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/projects/{project}/group-tasks",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "projects",
+                "{project}",
+                "group-tasks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Group Task\",\n    \"description\": \"Task assigned to a group\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -3010,60 +3334,6 @@
               ],
               "path": [
                 "reports"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "get-all-reports",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseURL}}/reports",
-              "host": [
-                "{{baseURL}}"
-              ],
-              "path": [
-                "reports"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "get-user-reports",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseURL}}/reports/user/:id",
-              "host": [
-                "{{baseURL}}"
-              ],
-              "path": [
-                "reports",
-                "user",
-                ":id"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "2"
-                }
               ]
             }
           },
