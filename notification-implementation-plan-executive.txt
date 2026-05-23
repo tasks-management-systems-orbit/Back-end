@@ -1,0 +1,31 @@
+Notification System — Executive Summary
+---
+
+  What Users Will Experience :
+
+Task Notifications
+
+1. A task is assigned to you → you get notified
+2. A task you created is completed → you and the project owner get notified
+3. Someone comments on your task → you and all assignees get notified
+4. A task blocking your task is done → you get notified
+
+Project Notifications
+
+5. You're removed from a project → you get notified
+6. Your project role changes → you get notified
+7. Project ownership is transferred → both old and new owner get notified
+8. A project you're in changes status (paused/completed) → all members get notified
+9. Someone leaves your project → the project owner gets notified
+10. Someone comments on your project → the project owner gets notified
+
+Invitation & Request Notifications
+
+11. You're invited to a project → you get notified
+12. Someone requests to join your project → the project owner gets notified
+13. Your invitation is accepted/rejected → the person who sent it gets notified
+14. Your join request is approved/rejected → you get notified
+
+Proactive Notifications
+
+15. A task you're assigned to is due within 24 hours → you get an automatic reminder
