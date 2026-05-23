@@ -9,10 +9,24 @@ class ProfileResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $currentUser = $request->user();
-        $isOwner = $currentUser && $currentUser->id === $this->user_id;
-        $viewingOwn = $request->attributes->get('profile_viewing_own', false);
-        $isPublic = $this->is_public;
+        $currentUser = $request->user();                                         // Get the currently authenticated user (or null if guest)
+        $isOwner = $currentUser && $currentUser->id === $this->user_id;          // Check if the current user is the owner of this profile
+        $viewingOwn = $request->attributes->get('profile_viewing_own', false);   // Determine if the current user is viewing their own profile
+        $isPublic = $this->is_public;                                            // Determine if the profile is marked as public (visible to all) or private
+
+        if ($currentUser && !$isOwner && $this->user && $this->user->isBlocking($currentUser)) {
+            return [
+                'id' => $this->id,
+                'user' => [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                    'username' => $this->user->username,
+                ],
+                'blocked' => true,
+                'message' => 'You have been blocked by this user.',
+            ];
+        }
+
 
         if (!$isPublic && !$viewingOwn) {
             return [
@@ -68,8 +82,8 @@ class ProfileResource extends JsonResource
             'theme' => $this->when($viewingOwn || $isOwner || $isPublic, $this->theme),
 
             'is_public' => $this->is_public,
-            'allow_messages' => $this->when($viewingOwn || $isOwner, $this->allow_messages),
-            'allow_invitation_requests' => $this->when($viewingOwn || $isOwner, $this->allow_invitation_requests),
+            'allow_messages' => $this->when($viewingOwn || $isOwner || $isPublic, $this->allow_messages),
+            'allow_invitation_requests' => $this->when($viewingOwn || $isOwner  || $isPublic, $this->allow_invitation_requests),
 
             'projects' => $this->when($viewingOwn || $isOwner || $isPublic, function () {
                 $ownedProjects = $this->user->ownedProjects ?? collect();
