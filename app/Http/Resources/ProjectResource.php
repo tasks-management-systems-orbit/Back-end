@@ -64,19 +64,6 @@ class ProjectResource extends JsonResource
             'updated_at' => $this->updated_at?->toISOString(),
             'reaction_counts' => $this->reaction_counts,
             'user_reaction' => $this->when(request()->user(), fn() => $this->user_reaction),
-            'comments' => ProjectCommentResource::collection($this->whenLoaded('projectComments')),
-            'members' => $this->when($this->showFullDetails, function () {
-                return $this->users->map(fn($user) => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'username' => $user->username,
-                    'avatar' => $user->profile?->avatar,
-                    'role' => $user->pivot?->role,
-                ]);
-            }),
-            'task_statuses' => $this->when($this->showFullDetails, function () {
-                return TaskStatusResource::collection($this->whenLoaded('taskStatuses'));
-            }),
         ];
     }
 }
