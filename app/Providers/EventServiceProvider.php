@@ -7,17 +7,29 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
-        \app\Events\TaskCompleted::class => [
-            \app\Listeners\UpdateUserStats::class,
+        \App\Events\TaskCompleted::class => [
+            \App\Listeners\UpdateUserStats::class,
         ],
-        \app\Events\ProjectCreated::class => [
-            \app\Listeners\UpdateUserProjectsCount::class,
+        \App\Events\ProjectCreated::class => [
+            \App\Listeners\UpdateUserProjectsCount::class,
         ],
-        \app\Events\UserJoinedProject::class => [
-            \app\Listeners\UpdateUserProjectsCountOnJoin::class,
+        \App\Events\UserJoinedProject::class => [
+            \App\Listeners\UpdateUserProjectsCountOnJoin::class,
         ],
-        \app\Events\ManagerTaskCompleted::class => [
-            \app\Listeners\UpdateManagerTaskStatus::class,
+        \App\Events\ManagerTaskCompleted::class => [
+            \App\Listeners\UpdateManagerTaskStatus::class,
+        ],
+        \App\Events\TaskNotificationEvent::class => [
+            \App\Listeners\NotifyTaskParticipants::class,
+        ],
+        \App\Events\ProjectNotificationEvent::class => [
+            \App\Listeners\NotifyProjectMembers::class,
+        ],
+        \App\Events\InvitationNotificationEvent::class => [
+            \App\Listeners\NotifyInvitationParticipants::class,
+        ],
+        \App\Events\NotificationSent::class => [
+            \App\Listeners\SendEmailNotification::class,
         ],
     ];
 

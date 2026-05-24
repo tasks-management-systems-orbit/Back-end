@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\NotificationResource;
 use App\Models\Notification;
 use App\Services\NotificationService;
 use App\Http\Traits\ApiResponseTrait;
@@ -36,7 +37,7 @@ class NotificationController extends Controller
             ->count();
 
         return $this->successResponse([
-            'notifications' => $notifications,
+            'notifications' => NotificationResource::collection($notifications),
             'unread_count' => $unreadCount,
             'total' => Notification::where('user_id', Auth::id())->count(),
         ]);
