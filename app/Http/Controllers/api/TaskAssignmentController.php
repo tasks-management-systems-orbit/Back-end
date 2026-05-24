@@ -3,6 +3,7 @@
 
 namespace app\Http\Controllers\api;
 
+use App\Events\TaskNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Task\AssignUsersRequest;
 use App\Http\Resources\TaskResource;
@@ -75,6 +76,13 @@ class TaskAssignmentController extends Controller
             $task->assignments()->syncWithoutDetaching($request->user_ids);
 
             DB::commit();
+
+            TaskNotificationEvent::dispatch(
+                userIds: $request->user_ids,
+                scenario: 'assigned',
+                task: $task,
+                actor: $request->user(),
+            );
 
             return response()->json([
                 'success' => true,

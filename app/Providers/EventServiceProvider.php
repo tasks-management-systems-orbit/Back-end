@@ -9,6 +9,7 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         \App\Events\TaskCompleted::class => [
             \App\Listeners\UpdateUserStats::class,
+            \App\Listeners\NotifyTaskCompleted::class,
         ],
         \App\Events\ProjectCreated::class => [
             \App\Listeners\UpdateUserProjectsCount::class,
@@ -18,6 +19,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         \App\Events\ManagerTaskCompleted::class => [
             \App\Listeners\UpdateManagerTaskStatus::class,
+            \App\Listeners\NotifyManagerTaskCompleted::class,
         ],
         \App\Events\TaskNotificationEvent::class => [
             \App\Listeners\NotifyTaskParticipants::class,

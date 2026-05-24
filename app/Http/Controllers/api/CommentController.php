@@ -2,6 +2,7 @@
 
 namespace app\Http\Controllers\api;
 
+use App\Events\TaskNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Comment\StoreCommentRequest;
 use App\Http\Requests\Comment\UpdateCommentRequest;
@@ -46,6 +47,33 @@ class CommentController extends Controller
             $comment->load(['user', 'user.profile']);
 
             DB::commit();
+
+            $userId = $request->user()->id;
+
+            $userIds = [];
+            if ($task->created_by && $task->created_by !== $userId) {
+                $userIds[] = $task->created_by;
+            }
+            if ($task->assigned_to && $task->assigned_to !== $userId) {
+                $userIds[] = $task->assigned_to;
+            }
+
+            $additionalIds = $task->assignees()
+                ->where('user_id', '!=', $userId)
+                ->pluck('users.id')
+                ->toArray();
+
+            $userIds = array_unique(array_merge($userIds, $additionalIds));
+
+            if (!empty($userIds)) {
+                TaskNotificationEvent::dispatch(
+                    userIds: $userIds,
+                    scenario: 'commented',
+                    task: $task,
+                    actor: $request->user(),
+                    extra: $comment,
+                );
+            }
 
             return response()->json([
                 'success' => true,
