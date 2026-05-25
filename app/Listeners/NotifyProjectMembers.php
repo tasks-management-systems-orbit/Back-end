@@ -13,6 +13,12 @@ class NotifyProjectMembers implements ShouldQueue
         $svc = app(NotificationService::class);
 
         [$title, $message, $icon, $url] = match ($event->scenario) {
+            'user_added' => [
+                'Added to Project',
+                "You have been added to project: {$event->project->name}",
+                '👋',
+                "/projects/{$event->project->id}",
+            ],
             'user_removed' => [
                 'Removed from Project',
                 "You have been removed from project: {$event->project->name}",
