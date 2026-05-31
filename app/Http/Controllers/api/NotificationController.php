@@ -77,8 +77,12 @@ class NotificationController extends Controller
         return $this->errorResponse('Notification not found', 404);
     }
 
-    public function test(Request $request)       //TODO  DELETE IN PRODCTION
+    public function test(Request $request)
     {
+        if (app()->environment('production')) {
+            return $this->errorResponse('Not available in production', 403);
+        }
+
         $request->validate([
             'message' => 'required|string',
             'type' => 'nullable|string|in:info,success,warning,error,urgent',
