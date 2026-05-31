@@ -2,6 +2,7 @@
 
 namespace app\Http\Controllers\api;
 
+use App\Events\ProjectNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProjectComment\StoreProjectCommentRequest;
 use App\Http\Requests\ProjectComment\UpdateProjectCommentRequest;
@@ -56,14 +57,6 @@ class ProjectCommentController extends Controller
             ]);
 
             DB::commit();
-
-            $comment->load(['user', 'user.profile']);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Comment added successfully',
-                'data' => new ProjectCommentResource($comment)
-            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -73,6 +66,24 @@ class ProjectCommentController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+
+        $comment->load(['user', 'user.profile']);
+
+        $userId = $request->user()->id;
+        if ($project->created_by !== $userId) {
+            ProjectNotificationEvent::dispatch(
+                userIds: [$project->created_by],
+                scenario: 'project_commented',
+                project: $project,
+                actor: $request->user(),
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Comment added successfully',
+            'data' => new ProjectCommentResource($comment)
+        ], 201);
     }
 
     public function show(Request $request, Project $project, ProjectComment $comment): JsonResponse

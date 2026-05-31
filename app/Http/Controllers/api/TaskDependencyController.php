@@ -2,6 +2,7 @@
 
 namespace app\Http\Controllers\api;
 
+use App\Events\TaskNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TaskDependency\AddDependencyRequest;
 use App\Http\Resources\TaskResource;
@@ -106,18 +107,6 @@ class TaskDependencyController extends Controller
             $task->dependencies()->attach($dependsOnTaskId, ['type' => $type]);
 
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Dependency added successfully',
-                'data' => [
-                    'task_id' => $task->id,
-                    'depends_on_task_id' => $dependsOnTaskId,
-                    'type' => $type,
-                    'type_label' => $task->getTypeLabel($type),
-                    'type_description' => $task->getTypeDescription($type),
-                ],
-            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -127,6 +116,34 @@ class TaskDependencyController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+
+        $userIds = [];
+        if ($task->assigned_to) {
+            $userIds[] = $task->assigned_to;
+        }
+        $userIds = array_merge($userIds, $task->assignees()->pluck('users.id')->toArray());
+        $userIds = array_unique($userIds);
+
+        if (!empty($userIds)) {
+            TaskNotificationEvent::dispatch(
+                userIds: $userIds,
+                scenario: 'dependency_added',
+                task: $task,
+                actor: $request->user(),
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dependency added successfully',
+            'data' => [
+                'task_id' => $task->id,
+                'depends_on_task_id' => $dependsOnTaskId,
+                'type' => $type,
+                'type_label' => $task->getTypeLabel($type),
+                'type_description' => $task->getTypeDescription($type),
+            ],
+        ], 201);
     }
 
     public function removeDependency(Project $project, Task $task, int $dependsOnTaskId): JsonResponse

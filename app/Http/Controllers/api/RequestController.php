@@ -2,6 +2,7 @@
 
 namespace app\Http\Controllers\api;
 
+use App\Events\InvitationNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Invitation\ProcessInvitationRequest;
 use App\Http\Requests\Invitation\SendInvitationRequest;
@@ -67,20 +68,20 @@ class RequestController extends Controller
 
     public function sendJoinRequest(SendJoinRequest $request, Project $project): JsonResponse
     {
+        $existing = Request::where('project_id', $project->id)
+            ->where('sender_id', $request->user()->id)
+            ->where('type', 'join_request')
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($existing) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You already have a pending request for this project.'
+            ], 409);
+        }
+
         try {
-            $existing = Request::where('project_id', $project->id)
-                ->where('sender_id', $request->user()->id)
-                ->where('type', 'join_request')
-                ->where('status', 'pending')
-                ->exists();
-
-            if ($existing) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You already have a pending request for this project.'
-                ], 409);
-            }
-
             DB::beginTransaction();
 
             $joinRequest = JoinRequestModel::create([
@@ -92,13 +93,6 @@ class RequestController extends Controller
                 'message' => $request->input('message'),
             ]);
             DB::commit();
-
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Join request sent successfully.',
-                'data' => $joinRequest
-            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Send join request failed: ' . $e->getMessage(), [
@@ -111,6 +105,20 @@ class RequestController extends Controller
                 'message' => 'Failed to send join request. Please try again later.'
             ], 500);
         }
+
+        InvitationNotificationEvent::dispatch(
+            userIds: [$project->created_by],
+            scenario: 'join_request_received',
+            request: $joinRequest,
+            project: $project,
+            actor: $request->user(),
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Join request sent successfully.',
+            'data' => $joinRequest
+        ], 201);
     }
 
     public function approveJoinRequest(ProcessJoinRequest $request, Project $project, Request $joinRequest): JsonResponse
@@ -127,8 +135,9 @@ class RequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Project is not active, cannot accept new members.'], 422);
         }
 
-        DB::beginTransaction();
         try {
+            DB::beginTransaction();
+
             $role = $request->input('role', 'user');
             $project->addUser($joinRequest->sender_id, $role);
 
@@ -139,9 +148,6 @@ class RequestController extends Controller
             ]);
 
             DB::commit();
-
-
-            return response()->json(['success' => true, 'message' => 'Join request approved. User added to project.']);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Approve join request failed: ' . $e->getMessage(), [
@@ -150,6 +156,16 @@ class RequestController extends Controller
             ]);
             return response()->json(['success' => false, 'message' => 'Failed to approve request. Please try again later.'], 500);
         }
+
+        InvitationNotificationEvent::dispatch(
+            userIds: [$joinRequest->sender_id],
+            scenario: 'join_request_approved',
+            request: $joinRequest,
+            project: $project,
+            actor: $request->user(),
+        );
+
+        return response()->json(['success' => true, 'message' => 'Join request approved. User added to project.']);
     }
 
     public function rejectJoinRequest(Request $request, Project $project, Request $joinRequest): JsonResponse
@@ -162,8 +178,9 @@ class RequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Request already processed.'], 400);
         }
 
-        DB::beginTransaction();
         try {
+            DB::beginTransaction();
+
             $joinRequest->update([
                 'status' => 'rejected',
                 'responded_at' => now(),
@@ -171,9 +188,6 @@ class RequestController extends Controller
             ]);
 
             DB::commit();
-
-
-            return response()->json(['success' => true, 'message' => 'Join request rejected.']);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Reject join request failed: ' . $e->getMessage(), [
@@ -182,6 +196,16 @@ class RequestController extends Controller
             ]);
             return response()->json(['success' => false, 'message' => 'Failed to reject request. Please try again later.'], 500);
         }
+
+        InvitationNotificationEvent::dispatch(
+            userIds: [$joinRequest->sender_id],
+            scenario: 'join_request_rejected',
+            request: $joinRequest,
+            project: $project,
+            actor: $request->user(),
+        );
+
+        return response()->json(['success' => true, 'message' => 'Join request rejected.']);
     }
 
 
@@ -190,35 +214,35 @@ class RequestController extends Controller
 /*Send an invitation from a user's profile page */
     public function inviteUser(InviteUserRequest $request, Profile $profile): JsonResponse
     {
+        // Get the project and check its status
+        $project = Project::find($request->project_id);
+        if (!$project) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The selected project does not exist.'
+            ], 422);
+        }
+
+        if ($project->status !== 'active') {
+            $statusMessage = match ($project->status) {
+                'completed' => 'This project is already completed.',
+                'paused' => 'This project is currently paused.',
+                default => 'This project is not active.',
+            };
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot send invitation. {$statusMessage} Only active projects can accept new members."
+            ], 422);
+        }
+
+        // Restrict role to only 'user' or 'observer' (default 'user')
+        $allowedRoles = ['user', 'observer'];
+        $role = $request->input('role', 'user');
+        if (!in_array($role, $allowedRoles)) {
+            $role = 'user';
+        }
+
         try {
-            // Get the project and check its status
-            $project = Project::find($request->project_id);
-            if (!$project) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'The selected project does not exist.'
-                ], 422);
-            }
-
-            if ($project->status !== 'active') {
-                $statusMessage = match ($project->status) {
-                    'completed' => 'This project is already completed.',
-                    'paused' => 'This project is currently paused.',
-                    default => 'This project is not active.',
-                };
-                return response()->json([
-                    'success' => false,
-                    'message' => "Cannot send invitation. {$statusMessage} Only active projects can accept new members."
-                ], 422);
-            }
-
-            // Restrict role to only 'user' or 'observer' (default 'user')
-            $allowedRoles = ['user', 'observer'];
-            $role = $request->input('role', 'user');
-            if (!in_array($role, $allowedRoles)) {
-                $role = 'user'; // fallback to default if invalid role provided
-            }
-
             DB::beginTransaction();
 
             $invitation = JoinRequestModel::create([
@@ -232,12 +256,6 @@ class RequestController extends Controller
             ]);
 
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Invitation sent successfully.',
-                'data' => $invitation
-            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Invite user failed: ' . $e->getMessage(), [
@@ -251,6 +269,20 @@ class RequestController extends Controller
                 'message' => 'Failed to send invitation. Please try again later.'
             ], 500);
         }
+
+        InvitationNotificationEvent::dispatch(
+            userIds: [$invitation->receiver_id],
+            scenario: 'invitation_sent',
+            request: $invitation,
+            project: $project,
+            actor: $request->user(),
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Invitation sent successfully.',
+            'data' => $invitation
+        ], 201);
     }
 
     public function myInvitations(Request $request): JsonResponse
@@ -283,45 +315,44 @@ class RequestController extends Controller
     /*Send an invitation from inside a project */
     public function sendInvitation(SendInvitationRequest $request, Project $project): JsonResponse
     {
+        // Check project status before proceeding
+        if ($project->status !== 'active') {
+            $statusMessage = match ($project->status) {
+                'completed' => 'This project is already completed.',
+                'paused' => 'This project is currently paused.',
+                default => 'This project is not active.',
+            };
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot send invitation. {$statusMessage} Only active projects can accept new members."
+            ], 422);
+        }
+
+        $inviteeId = $request->invitee_id;
+
+        // Check for pending invitation
+        $existing = JoinRequestModel::where('project_id', $project->id)
+            ->where('receiver_id', $inviteeId)
+            ->where('type', 'invitation')
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($existing) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invitation already sent to this user.'
+            ], 409);
+        }
+
+        // Restrict role to 'user' or 'observer' only (default 'user')
+        $allowedRoles = ['user', 'observer'];
+        $role = $request->input('role', 'user');
+        if (!in_array($role, $allowedRoles)) {
+            $role = 'user';
+        }
+
         try {
-            // Check project status before proceeding
-            if ($project->status !== 'active') {
-                $statusMessage = match ($project->status) {
-                    'completed' => 'This project is already completed.',
-                    'paused' => 'This project is currently paused.',
-                    default => 'This project is not active.',
-                };
-                return response()->json([
-                    'success' => false,
-                    'message' => "Cannot send invitation. {$statusMessage} Only active projects can accept new members."
-                ], 422);
-            }
-
             DB::beginTransaction();
-
-            $inviteeId = $request->invitee_id;
-
-            // Check for pending invitation
-            $existing = JoinRequestModel::where('project_id', $project->id)
-                ->where('receiver_id', $inviteeId)
-                ->where('type', 'invitation')
-                ->where('status', 'pending')
-                ->exists();
-
-            if ($existing) {
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invitation already sent to this user.'
-                ], 409);
-            }
-
-            // Restrict role to 'user' or 'observer' only (default 'user')
-            $allowedRoles = ['user', 'observer'];
-            $role = $request->input('role', 'user');
-            if (!in_array($role, $allowedRoles)) {
-                $role = 'user'; // fallback to default if invalid role provided
-            }
 
             $invitation = JoinRequestModel::create([
                 'sender_id' => $request->user()->id,
@@ -334,12 +365,6 @@ class RequestController extends Controller
             ]);
 
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Invitation sent.',
-                'data' => $invitation
-            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Send invitation failed: ' . $e->getMessage(), [
@@ -353,29 +378,40 @@ class RequestController extends Controller
                 'message' => 'Failed to send invitation. Please try again later.'
             ], 500);
         }
+
+        InvitationNotificationEvent::dispatch(
+            userIds: [$invitation->receiver_id],
+            scenario: 'invitation_sent',
+            request: $invitation,
+            project: $project,
+            actor: $request->user(),
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Invitation sent.',
+            'data' => $invitation
+        ], 201);
     }
     public function acceptInvitation(ProcessInvitationRequest $request, JoinRequestModel $invitation): JsonResponse
     {
+        if ($invitation->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invitation already processed.'
+            ], 400);
+        }
+
+        $project = $invitation->project;
+
+        if ($project->status !== 'active') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot join this project because it is not active.'
+            ], 403);
+        }
+
         try {
-            // Authorization already checked in ProcessInvitationRequest
-
-            if ($invitation->status !== 'pending') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invitation already processed.'
-                ], 400);
-            }
-
-            $project = $invitation->project;
-
-            // Check project status (active only)
-            if ($project->status !== 'active') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot join this project because it is not active.'
-                ], 403);
-            }
-
             DB::beginTransaction();
 
             $role = $invitation->role ?? 'user';
@@ -388,11 +424,6 @@ class RequestController extends Controller
             ]);
 
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Invitation accepted. You are now a member of the project.'
-            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Accept invitation failed: ' . $e->getMessage(), [
@@ -405,18 +436,33 @@ class RequestController extends Controller
                 'message' => 'Failed to accept invitation. Please try again later.'
             ], 500);
         }
+
+        InvitationNotificationEvent::dispatch(
+            userIds: [$invitation->sender_id],
+            scenario: 'invitation_accepted',
+            request: $invitation,
+            project: $project,
+            actor: $request->user(),
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Invitation accepted. You are now a member of the project.'
+        ]);
     }
 
     public function rejectInvitation(ProcessInvitationRequest $request, JoinRequestModel $invitation): JsonResponse
     {
-        try {
-            if ($invitation->status !== 'pending') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invitation already processed.'
-                ], 400);
-            }
+        if ($invitation->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invitation already processed.'
+            ], 400);
+        }
 
+        $project = $invitation->project;
+
+        try {
             DB::beginTransaction();
 
             $invitation->update([
@@ -426,11 +472,6 @@ class RequestController extends Controller
             ]);
 
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Invitation rejected.'
-            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Reject invitation failed: ' . $e->getMessage(), [
@@ -443,5 +484,18 @@ class RequestController extends Controller
                 'message' => 'Failed to reject invitation. Please try again later.'
             ], 500);
         }
+
+        InvitationNotificationEvent::dispatch(
+            userIds: [$invitation->sender_id],
+            scenario: 'invitation_rejected',
+            request: $invitation,
+            project: $project,
+            actor: $request->user(),
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Invitation rejected.'
+        ]);
     }
 }

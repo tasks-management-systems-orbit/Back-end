@@ -32,21 +32,21 @@ class NotificationService
         }
     }
 
-    public function sendToMany($userIds, $title, $message, $type = 'info', $data = null)
+    public function sendToMany($userIds, $title, $message, $type = 'info', $data = null, $actionUrl = null, $icon = null)
     {
         $notifications = [];
         foreach ($userIds as $userId) {
-            $notifications[] = $this->send($userId, $title, $message, $type, $data);
+            $notifications[] = $this->send($userId, $title, $message, $type, $data, $actionUrl, $icon);
         }
         return $notifications;
     }
 
-    public function sendToProjectMembers($projectId, $title, $message, $type = 'info', $data = null)
+    public function sendToProjectMembers($projectId, $title, $message, $type = 'info', $data = null, $actionUrl = null, $icon = null)
     {
-        $project = \app\Models\Project::findOrFail($projectId);
-        $userIds = $project->users()->pluck('user.id')->toArray();
+        $project = \App\Models\Project::findOrFail($projectId);
+        $userIds = $project->users()->pluck('users.id')->toArray();
 
-        return $this->sendToMany($userIds, $title, $message, $type, $data);
+        return $this->sendToMany($userIds, $title, $message, $type, $data, $actionUrl, $icon);
     }
 
     public function getUserNotifications($userId, $limit = 20, $onlyUnread = false)

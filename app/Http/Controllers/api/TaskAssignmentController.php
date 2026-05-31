@@ -3,6 +3,7 @@
 
 namespace app\Http\Controllers\api;
 
+use App\Events\TaskNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Task\AssignUsersRequest;
 use App\Http\Resources\TaskResource;
@@ -75,17 +76,6 @@ class TaskAssignmentController extends Controller
             $task->assignments()->syncWithoutDetaching($request->user_ids);
 
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Users assigned to task successfully',
-                'data' => [
-                    'assigned_users' => $task->assignments()->get()->map(fn($user) => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                    ]),
-                ],
-            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -95,6 +85,24 @@ class TaskAssignmentController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+
+        TaskNotificationEvent::dispatch(
+            userIds: $request->user_ids,
+            scenario: 'assigned',
+            task: $task,
+            actor: $request->user(),
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Users assigned to task successfully',
+            'data' => [
+                'assigned_users' => $task->assignments()->get()->map(fn($user) => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                ]),
+            ],
+        ], 201);
     }
 
     public function unassign(Project $project, Task $task, int $userId): JsonResponse

@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\api;
 
 use App\Events\ProjectCreated;
+use App\Events\ProjectNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
@@ -536,16 +537,6 @@ class ProjectController extends Controller
             DB::beginTransaction();
             $project->update($data);
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => "Project status updated to {$newStatus}",
-                'data' => [
-                    'status' => $project->status,
-                    'status_label' => $project->status_label,
-                    'end_date' => $project->end_date?->toISOString()
-                ]
-            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Project status update failed: ' . $e->getMessage(), [
@@ -559,6 +550,26 @@ class ProjectController extends Controller
                 'message' => 'Failed to update project status. Please try again later.'
             ], 500);
         }
+
+        $memberIds = $project->users()->pluck('users.id')->toArray();
+
+        ProjectNotificationEvent::dispatch(
+            userIds: $memberIds,
+            scenario: 'status_changed',
+            project: $project,
+            actor: $request->user(),
+            extra: ['status' => $newStatus],
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Project status updated to {$newStatus}",
+            'data' => [
+                'status' => $project->status,
+                'status_label' => $project->status_label,
+                'end_date' => $project->end_date?->toISOString()
+            ]
+        ]);
     }
 
     //  Update project visibility (private/public).
