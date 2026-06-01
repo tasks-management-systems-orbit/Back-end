@@ -2,6 +2,7 @@
 
 namespace app\Http\Controllers\api;
 
+use App\Events\TaskNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Comment\StoreCommentRequest;
 use App\Http\Requests\Comment\UpdateCommentRequest;
@@ -43,15 +44,7 @@ class CommentController extends Controller
                 'content' => $request->validated()['content'],
             ]);
 
-            $comment->load(['user', 'user.profile']);
-
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Comment added successfully',
-                'data' => new CommentResource($comment),
-            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -61,6 +54,40 @@ class CommentController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+
+        $comment->load(['user', 'user.profile']);
+
+        $userId = $request->user()->id;
+
+        $userIds = [];
+        if ($task->created_by && $task->created_by !== $userId) {
+            $userIds[] = $task->created_by;
+        }
+        if ($task->assigned_to && $task->assigned_to !== $userId) {
+            $userIds[] = $task->assigned_to;
+        }
+
+        $additionalIds = $task->assignees()
+            ->where('user_id', '!=', $userId)
+            ->pluck('users.id')
+            ->toArray();
+
+        $userIds = array_unique(array_merge($userIds, $additionalIds));
+
+        if (!empty($userIds)) {
+            TaskNotificationEvent::dispatch(
+                userIds: $userIds,
+                scenario: 'commented',
+                task: $task,
+                actor: $request->user(),
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Comment added successfully',
+            'data' => new CommentResource($comment),
+        ], 201);
     }
 
     public function show(Request $request, Task $task, int $commentId): JsonResponse

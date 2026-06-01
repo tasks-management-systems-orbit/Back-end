@@ -2,6 +2,8 @@
 
 namespace app\Http\Controllers\api;
 
+use App\Events\ProjectNotificationEvent;
+use App\Events\UserJoinedProject;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProjectUser\AddUserRequest;
 use App\Http\Requests\ProjectUser\UpdateUserRoleRequest;
@@ -11,7 +13,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use App\Events\UserJoinedProject;
 
 class ProjectUserController extends Controller
 {
@@ -83,17 +84,6 @@ class ProjectUserController extends Controller
             $project->addUser($newUserId, $request->role);
 
             DB::commit();
-
-            $newUser = User::with('profile')->find($newUserId);
-            $newUser->role = $request->role;
-
-            event(new UserJoinedProject($newUser, $project));
-
-            return response()->json([
-                'success' => true,
-                'message' => 'User added successfully',
-                'data' => new ProjectUserResource($newUser)
-            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -103,6 +93,24 @@ class ProjectUserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+
+        $newUser = User::with('profile')->find($newUserId);
+        $newUser->role = $request->role;
+
+        event(new UserJoinedProject($newUser, $project));
+
+        ProjectNotificationEvent::dispatch(
+            userIds: [$newUserId],
+            scenario: 'user_added',
+            project: $project,
+            actor: $request->user(),
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User added successfully',
+            'data' => new ProjectUserResource($newUser)
+        ], 201);
     }
 
     public function updateRole(UpdateUserRoleRequest $request, Project $project, int $userId): JsonResponse
@@ -146,15 +154,6 @@ class ProjectUserController extends Controller
             $project->updateUserRole($userId, $request->role);
 
             DB::commit();
-
-            $updatedUser = User::with('profile')->find($userId);
-            $updatedUser->role = $request->role;
-
-            return response()->json([
-                'success' => true,
-                'message' => 'User role updated successfully',
-                'data' => new ProjectUserResource($updatedUser)
-            ]);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -164,6 +163,22 @@ class ProjectUserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+
+        $updatedUser = User::with('profile')->find($userId);
+        $updatedUser->role = $request->role;
+
+        ProjectNotificationEvent::dispatch(
+            userIds: [$userId],
+            scenario: 'role_changed',
+            project: $project,
+            extra: ['role' => $request->role],
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User role updated successfully',
+            'data' => new ProjectUserResource($updatedUser)
+        ]);
     }
 
     public function removeUser(Request $request, Project $project, int $userId): JsonResponse
@@ -214,11 +229,6 @@ class ProjectUserController extends Controller
             $project->removeUser($userId);
 
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'User removed successfully'
-            ]);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -228,6 +238,18 @@ class ProjectUserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+
+        ProjectNotificationEvent::dispatch(
+            userIds: [$userId],
+            scenario: 'user_removed',
+            project: $project,
+            actor: $request->user(),
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User removed successfully'
+        ]);
     }
 
     public function leaveProject(Request $request, Project $project): JsonResponse
@@ -254,11 +276,6 @@ class ProjectUserController extends Controller
             $project->removeUser($userId);
 
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'You have left the project successfully'
-            ]);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -268,6 +285,18 @@ class ProjectUserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+
+        ProjectNotificationEvent::dispatch(
+            userIds: [$project->created_by],
+            scenario: 'user_left',
+            project: $project,
+            actor: $request->user(),
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'You have left the project successfully'
+        ]);
     }
 
     public function transferOwnership(Request $request, Project $project, int $userId): JsonResponse
@@ -303,15 +332,6 @@ class ProjectUserController extends Controller
             $project->update(['created_by' => $userId]);
 
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Project ownership transferred successfully',
-                'data' => [
-                    'new_owner_id' => $userId,
-                    'previous_owner_id' => $currentUserId,
-                ]
-            ]);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -321,5 +341,21 @@ class ProjectUserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+
+        ProjectNotificationEvent::dispatch(
+            userIds: [$currentUserId, $userId],
+            scenario: 'ownership_transferred',
+            project: $project,
+            actor: $request->user(),
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Project ownership transferred successfully',
+            'data' => [
+                'new_owner_id' => $userId,
+                'previous_owner_id' => $currentUserId,
+            ]
+        ]);
     }
 }

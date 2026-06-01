@@ -2,6 +2,7 @@
 
 namespace app\Http\Controllers\api;
 
+use App\Events\TaskNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Task\ReorderTasksRequest;
 use app\Http\Requests\Task\StoreGroupTaskRequest;
@@ -58,7 +59,7 @@ class TaskController extends Controller
             }
 
             $tasksQuery = $project->tasks()
-                ->with(['status', 'creator', 'assignee', 'assignments.user', 'subTasks'])
+                ->with(['status', 'creator', 'assignee', 'taskAssignments.user', 'subTasks'])
                 ->when($priority, fn($q) => $q->where('priority', $priority))
                 ->when($assigneeId, fn($q) => $q->byAssignee($assigneeId))
                 ->when($search, fn($q) => $q->where(function ($q) use ($search) {
@@ -142,17 +143,10 @@ class TaskController extends Controller
             ]);
 
             if ($canBeAssigned && $request->has('assignees')) {
-                $task->assignments()->sync($request->assignees);
+                $task->assignees()->sync($request->assignees);
             }
 
             DB::commit();
-            $task->load(['status', 'creator', 'assignee', 'assignments']);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Task created successfully',
-                'data' => new TaskResource($task),
-            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Task creation failed: ' . $e->getMessage(), [
@@ -164,6 +158,29 @@ class TaskController extends Controller
                 'message' => 'Failed to create task. Please try again later.',
             ], 500);
         }
+
+        $task->load(['status', 'creator', 'assignee', 'assignees']);
+
+        if ($task->assigned_to || $task->assignees->isNotEmpty()) {
+            $userIds = [];
+            if ($task->assigned_to) {
+                $userIds[] = $task->assigned_to;
+            }
+            $userIds = array_merge($userIds, $task->assignees->pluck('id')->toArray());
+
+            TaskNotificationEvent::dispatch(
+                userIds: array_unique($userIds),
+                scenario: 'assigned',
+                task: $task,
+                actor: $request->user(),
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Task created successfully',
+            'data' => new TaskResource($task),
+        ], 201);
     }
 
     /**
@@ -214,13 +231,6 @@ class TaskController extends Controller
             ]);
 
             DB::commit();
-            $task->load(['status', 'creator', 'assignedGroup']);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Group task created successfully',
-                'data' => new TaskResource($task),
-            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Group task creation failed: ' . $e->getMessage(), [
@@ -232,6 +242,27 @@ class TaskController extends Controller
                 'message' => 'Failed to create group task. Please try again later.',
             ], 500);
         }
+
+        $task->load(['status', 'creator', 'assignedGroup']);
+
+        if ($task->assignedGroup) {
+            $groupMemberIds = $task->assignedGroup->members()->pluck('users.id')->toArray();
+
+            if (!empty($groupMemberIds)) {
+                TaskNotificationEvent::dispatch(
+                    userIds: $groupMemberIds,
+                    scenario: 'assigned',
+                    task: $task,
+                    actor: $request->user(),
+                );
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Group task created successfully',
+            'data' => new TaskResource($task),
+        ], 201);
     }
 
     /**
@@ -280,27 +311,16 @@ class TaskController extends Controller
                 'created_by' => $userId,
                 'position' => $maxPosition + 1,
                 'allow_subtasks' => $allowSubtasks,
-                'auto_status' => $allowSubtasks, // only auto-complete if has subtasks
+                'auto_status' => $allowSubtasks,
                 'can_be_assigned' => $canBeAssigned,
                 'assigned_to' => ($canBeAssigned && $request->has('assigned_to')) ? $request->assigned_to : null,
             ]);
 
             if ($canBeAssigned && $request->has('assignees')) {
-                $task->assignments()->sync($request->assignees);
+                $task->assignees()->sync($request->assignees);
             }
 
             DB::commit();
-            $task->load(['status', 'creator', 'group']);
-
-            $message = $allowSubtasks
-                ? 'Manager parent task created successfully (will auto-complete when all subtasks are done)'
-                : 'Manager task created and assigned successfully';
-
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'data' => new TaskResource($task),
-            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Manager task creation failed: ' . $e->getMessage(), [
@@ -313,6 +333,33 @@ class TaskController extends Controller
                 'message' => 'Failed to create manager task. Please try again later.',
             ], 500);
         }
+
+        $task->load(['status', 'creator', 'group', 'assignee', 'assignees']);
+
+        if (!$allowSubtasks && ($task->assigned_to || $task->assignees->isNotEmpty())) {
+            $userIds = [];
+            if ($task->assigned_to) {
+                $userIds[] = $task->assigned_to;
+            }
+            $userIds = array_merge($userIds, $task->assignees->pluck('id')->toArray());
+
+            TaskNotificationEvent::dispatch(
+                userIds: array_unique($userIds),
+                scenario: 'assigned',
+                task: $task,
+                actor: $request->user(),
+            );
+        }
+
+        $message = $allowSubtasks
+            ? 'Manager parent task created successfully (will auto-complete when all subtasks are done)'
+            : 'Manager task created and assigned successfully';
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => new TaskResource($task),
+        ], 201);
     }
 
     /**
@@ -372,7 +419,6 @@ class TaskController extends Controller
                 'can_be_assigned' => true,
             ]);
 
-            // Assign the subtask to the specified users
             foreach ($request->assigned_to as $assignedUserId) {
                 TaskAssignment::create([
                     'task_id' => $subTask->id,
@@ -382,17 +428,6 @@ class TaskController extends Controller
             }
 
             DB::commit();
-            $subTask->load(['status', 'creator', 'taskAssignments.user']);
-
-            if ($parentTask->auto_status) {
-                $parentTask->syncStatusFromSubtasks();
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Subtask created and assigned successfully',
-                'data' => new TaskResource($subTask),
-            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Subtask creation failed: ' . $e->getMessage(), [
@@ -405,6 +440,28 @@ class TaskController extends Controller
                 'message' => 'Failed to create subtask. Please try again later.',
             ], 500);
         }
+
+        $subTask->load(['status', 'creator', 'taskAssignments.user']);
+
+        $subTaskAssigneeIds = $subTask->taskAssignments->pluck('user_id')->toArray();
+        if (!empty($subTaskAssigneeIds)) {
+            TaskNotificationEvent::dispatch(
+                userIds: $subTaskAssigneeIds,
+                scenario: 'assigned',
+                task: $subTask,
+                actor: $request->user(),
+            );
+        }
+
+        if ($parentTask->auto_status) {
+            $parentTask->syncStatusFromSubtasks();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subtask created and assigned successfully',
+            'data' => new TaskResource($subTask),
+        ], 201);
     }
     public function show(Request $request, Project $project, Task $task): JsonResponse
     {
@@ -430,8 +487,8 @@ class TaskController extends Controller
                 'status',
                 'creator',
                 'assignee',
-                'assignments.user',
-                'assignments.status',
+                'taskAssignments.user',
+                'taskAssignments.status',
                 'dependencies',
                 'comments.user',
                 'subTasks.status',
@@ -529,12 +586,12 @@ class TaskController extends Controller
             $task->update($updateData);
 
             if ($isOwner && $request->has('assignees') && $task->canBeAssigned()) {
-                $task->assignments()->sync($request->assignees);
+                $task->assignees()->sync($request->assignees);
             }
 
             DB::commit();
 
-            $task->load(['status', 'creator', 'assignee', 'assignments']);
+            $task->load(['status', 'creator', 'assignee', 'assignees']);
 
             return response()->json([
                 'success' => true,
@@ -574,7 +631,7 @@ class TaskController extends Controller
         $isOwner = $project->isOwner($userId);
         $isManager = $userRole === 'manager';
         $isUser = $userRole === 'user';
-        $isTaskAssignee = ($task->assigned_to === $userId) || $task->assignments()->where('user_id', $userId)->exists();
+        $isTaskAssignee = ($task->assigned_to === $userId) || $task->taskAssignments()->where('user_id', $userId)->exists();
 
         if (!($isOwner || $isManager || ($isUser && $isTaskAssignee))) {
             return response()->json([
@@ -645,7 +702,7 @@ class TaskController extends Controller
                 }
             }
 
-            $task->load(['status', 'creator', 'assignee', 'assignments']);
+            $task->load(['status', 'creator', 'assignee', 'assignees']);
 
             return response()->json([
                 'success' => true,
@@ -831,7 +888,7 @@ class TaskController extends Controller
 
             $tasks = $project->tasks()
                 ->whereNotNull('completed_at')
-                ->with(['status', 'creator', 'assignee', 'assignments.user'])
+                ->with(['status', 'creator', 'assignee', 'taskAssignments.user'])
                 ->orderBy('completed_at', 'desc')
                 ->get();
 
@@ -866,7 +923,7 @@ class TaskController extends Controller
                         ->orWhereNotNull('assigned_group_id')
                         ->orWhereHas('assignees');
                 })
-                ->with(['status', 'creator', 'assignee', 'assignments.user', 'assignedGroup'])
+                ->with(['status', 'creator', 'assignee', 'taskAssignments.user', 'assignedGroup'])
                 ->orderBy('due_date')
                 ->get();
 
