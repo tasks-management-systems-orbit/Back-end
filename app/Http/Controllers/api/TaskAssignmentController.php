@@ -27,7 +27,7 @@ class TaskAssignmentController extends Controller
             ], 404);
         }
 
-        $assignments = $task->assignments()->get();
+        $assignments = $task->assignees()->get();
 
         return response()->json([
             'success' => true,
@@ -73,7 +73,7 @@ class TaskAssignmentController extends Controller
         try {
             DB::beginTransaction();
 
-            $task->assignments()->syncWithoutDetaching($request->user_ids);
+            $task->assignees()->syncWithoutDetaching($request->user_ids);
 
             DB::commit();
         } catch (\Exception $e) {
@@ -97,7 +97,7 @@ class TaskAssignmentController extends Controller
             'success' => true,
             'message' => 'Users assigned to task successfully',
             'data' => [
-                'assigned_users' => $task->assignments()->get()->map(fn($user) => [
+                'assigned_users' => $task->assignees()->get()->map(fn($user) => [
                     'id' => $user->id,
                     'name' => $user->name,
                 ]),
@@ -123,7 +123,7 @@ class TaskAssignmentController extends Controller
             ], 422);
         }
 
-        if (!$task->assignments()->where('user_id', $userId)->exists()) {
+        if (!$task->assignees()->where('user_id', $userId)->exists()) {
             return response()->json([
                 'success' => false,
                 'message' => 'User is not assigned to this task',
@@ -133,7 +133,7 @@ class TaskAssignmentController extends Controller
         try {
             DB::beginTransaction();
 
-            $task->assignments()->detach($userId);
+            $task->assignees()->detach($userId);
 
             DB::commit();
 

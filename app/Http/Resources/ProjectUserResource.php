@@ -11,12 +11,12 @@ class ProjectUserResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
+            'user_id' => $this->id,
             'user' => [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
-                'email' => $this->user->email,
-                'avatar' => $this->user->profile?->avatar,
+                'id' => $this->id,
+                'name' => $this->name,
+                'email' => $this->email,
+                'avatar' => $this->profile?->avatar,
             ],
             'role' => $this->pivot?->role ?? $this->role,
             'joined_at' => $this->pivot?->created_at?->toISOString() ?? $this->created_at?->toISOString(),
