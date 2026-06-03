@@ -109,9 +109,9 @@ class Project extends Model
             'id'
         );
     }
-    public function projectReports()
+    public function projectReports(): HasMany
     {
-        return $this->hasMany(ProjectReport::class);
+        return $this->hasMany(ProjectReport::class, 'reported_project_id');
     }
 
     public function groups()

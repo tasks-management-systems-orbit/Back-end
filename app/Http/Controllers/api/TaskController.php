@@ -273,6 +273,7 @@ class TaskController extends Controller
     public function storeManagerTask(StoreManagerTaskRequest $request, Project $project, Group $group): JsonResponse
     {
         $userId = $request->user()->id;
+        $this->checkProjectManager($project);
 
         $statusId = $request->status_id ?? $project->taskStatuses()->first()?->id;
         if (!$statusId) {
@@ -369,6 +370,7 @@ class TaskController extends Controller
     public function storeSubTask(StoreSubTaskRequest $request, Project $project, Group $group, Task $parentTask): JsonResponse
     {
         $userId = $request->user()->id;
+        $this->checkProjectManager($project);
 
         // Validation: parent task must belong to the same project and group
         if ($parentTask->project_id !== $project->id) {
