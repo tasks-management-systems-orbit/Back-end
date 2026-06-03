@@ -19,7 +19,9 @@ class UpdateProjectRequest extends FormRequest
         'image' => 'nullable|string|max:255|url',
         'visibility' => 'nullable|in:private,public',
         'allow_join_requests' => 'sometimes|boolean',
-        'status' => 'nullable|in:active,paused,completed', // still allowed
+        'status' => 'nullable|in:active,paused,completed', 
+        'allow_commit' => 'nullable|boolean',
+        'allow_reactions' => 'nullable|boolean',
     ];
     }
 }

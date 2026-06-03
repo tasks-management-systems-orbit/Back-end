@@ -12,6 +12,12 @@ class ProjectReactionController extends Controller
 {
     public function toggleReaction(StoreProjectReactionRequest $request, Project $project): JsonResponse
     {
+        if (!$project->allow_reactions) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Reactions are disabled for this project.'
+            ], 403);
+        }
         $userId = $request->user()->id;
         $newReaction = $request->reaction_type;
 

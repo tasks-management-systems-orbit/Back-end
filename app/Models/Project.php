@@ -31,6 +31,9 @@ class Project extends Model
         'end_date',
         'created_by',
         'allow_join_requests',
+        'allow_commit',
+        'allow_reactions',
+
     ];
 
     protected $casts = [
@@ -40,6 +43,8 @@ class Project extends Model
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
         'allow_join_requests' => 'boolean',
+        'allow_commit' => 'boolean',
+        'allow_reactions' => 'boolean',
     ];
 
     protected $appends = [

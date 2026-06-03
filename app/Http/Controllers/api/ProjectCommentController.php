@@ -17,12 +17,13 @@ class ProjectCommentController extends Controller
 {
     public function index(Request $request, Project $project): JsonResponse
     {
-        if ($project->visibility !== 'public') {
-            return response()->json([
+        if (!$project->allow_commit) {
+        return response()->json([
                 'success' => false,
-                'message' => 'Comments are only available for public projects'
+                'message' => 'Comments are disabled for this project.'
             ], 403);
         }
+
 
         $comments = $project->projectComments()
             ->with(['user', 'user.profile', 'replies.user', 'replies.user.profile'])
@@ -38,11 +39,10 @@ class ProjectCommentController extends Controller
     }
     public function store(StoreProjectCommentRequest $request, Project $project): JsonResponse
     {
-        // Only public projects allow comments
-        if ($project->visibility !== 'public') {
-            return response()->json([
+        if (!$project->allow_commit) {
+        return response()->json([
                 'success' => false,
-                'message' => 'Comments are only allowed on public projects'
+                'message' => 'Comments are disabled for this project.'
             ], 403);
         }
 

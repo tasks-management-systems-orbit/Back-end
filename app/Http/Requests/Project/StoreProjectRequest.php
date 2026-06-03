@@ -21,6 +21,8 @@ class StoreProjectRequest extends FormRequest
             'visibility' => 'nullable|in:private,public',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
+            'allow_commit' => 'nullable|boolean',
+            'allow_reactions' => 'nullable|boolean',
         ];
     }
 

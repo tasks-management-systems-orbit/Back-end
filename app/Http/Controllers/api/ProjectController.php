@@ -153,7 +153,6 @@ class ProjectController extends Controller
         try {
             DB::beginTransaction();
 
-            // Prepare data - user does NOT provide start_date or end_date
             $data = [
                 'name' => $request->name,
                 'description' => $request->description,
@@ -164,6 +163,8 @@ class ProjectController extends Controller
                 'end_date' => null,
                 'created_by' => $request->user()->id,
                 'allow_join_requests' => $request->allow_join_requests ?? false,
+                'allow_commit' => $request->input('allow_commit', true),
+                'allow_reactions' => $request->input('allow_reactions', true),
             ];
 
             $project = Project::create($data);
@@ -213,7 +214,9 @@ class ProjectController extends Controller
             'description',
             'image',
             'visibility',
-            'allow_join_requests'
+            'allow_join_requests',
+            'allow_commit',    
+            'allow_reactions',
         ]);
 
         // 3. Handle status change separately
