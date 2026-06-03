@@ -10,9 +10,10 @@ use App\Http\Requests\ProjectUser\UpdateUserRoleRequest;
 use App\Http\Resources\ProjectUserResource;
 use App\Models\Project;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProjectUserController extends Controller
 {
@@ -128,7 +129,7 @@ class ProjectUserController extends Controller
         if (!$project->hasUser($userId)) {
             return response()->json([
                 'success' => false,
-                'message' => 'User is not a user of this project'
+                'message' => 'User is not a member of this project'
             ], 404);
         }
 
@@ -156,23 +157,20 @@ class ProjectUserController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-
+            Log::error('Failed to update user role: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $userId,
+                'new_role' => $request->role
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update user role',
-                'error' => $e->getMessage()
+                'message' => 'Failed to update user role. Please try again later.'
             ], 500);
         }
 
+        $project->load('users');
         $updatedUser = User::with('profile')->find($userId);
         $updatedUser->role = $request->role;
-
-        ProjectNotificationEvent::dispatch(
-            userIds: [$userId],
-            scenario: 'role_changed',
-            project: $project,
-            extra: ['role' => $request->role],
-        );
 
         return response()->json([
             'success' => true,
@@ -180,7 +178,6 @@ class ProjectUserController extends Controller
             'data' => new ProjectUserResource($updatedUser)
         ]);
     }
-
     public function removeUser(Request $request, Project $project, int $userId): JsonResponse
     {
         $currentUserId = $request->user()->id;
