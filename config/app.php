@@ -123,10 +123,10 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
-    // 'providers' => [
-    app\Providers\AppServiceProvider::class,
-    // Laravel\Reverb\ReverbServiceProvider::class,
-    // ],
+    'providers' => [
+        App\Providers\AppServiceProvider::class,
+        App\Providers\BroadcastServiceProvider::class,
+    ],
 
 
 ];

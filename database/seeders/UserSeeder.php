@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Note;
+use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -94,9 +96,30 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $userData) {
-            User::firstOrCreate(
+            $user = User::firstOrCreate(
                 ['email' => $userData['email']],
                 $userData
+            );
+
+            Profile::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'user_id' => $user->id,
+                    'language' => 'en',
+                    'theme' => 'dark',
+                    'is_public' => true,
+                    'allow_messages' => true,
+                    'allow_invitation_requests' => true,
+                ]
+            );
+
+            Note::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'user_id' => $user->id,
+                    'title' => 'My Note',
+                    'color' => '#1b1919',
+                ]
             );
         }
     }
