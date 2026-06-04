@@ -175,6 +175,8 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
     Route::get('/projects/{project}', [ProjectController::class, 'show']);
     Route::patch('/projects/{project}/status', [ProjectController::class, 'updateStatus']);
     Route::patch('/projects/{project}/visibility', [ProjectController::class, 'updateVisibility']);
+    Route::get('/projects/{project}/stats', [TaskController::class, 'getProjectStats']);
+
 
     // Trash routes
     Route::get('/my-projects/trash', [ProjectController::class, 'trashed']);

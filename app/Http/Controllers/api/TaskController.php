@@ -22,6 +22,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Resources\ProjectStatsResource;
+
 
 class TaskController extends Controller
 {
@@ -1337,5 +1339,43 @@ class TaskController extends Controller
             'data' => TaskResource::collection($tasks),
             'total' => $tasks->count(),
         ]);
+    }
+
+
+    // Get project statistics for dashboard.
+
+    public function getProjectStats(Request $request, Project $project): JsonResponse
+    {
+        try {
+            $userId = $request->user()->id;
+
+            if (!$project->isOwner($userId) && !$project->hasUser($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have access to this project statistics.'
+                ], 403);
+            }
+
+            $project->load([
+                'users',
+                'tasks.taskAssignments',
+                'taskStatuses',
+                'groups',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => new ProjectStatsResource($project)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch project statistics: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load project statistics. Please try again later.'
+            ], 500);
+        }
     }
 }
