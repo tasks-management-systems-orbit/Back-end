@@ -3,48 +3,67 @@
 namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\TaskStatus\ReorderTaskStatusRequest;
 use App\Http\Requests\TaskStatus\StoreTaskStatusRequest;
 use App\Http\Requests\TaskStatus\UpdateTaskStatusRequest;
-use App\Http\Requests\TaskStatus\ReorderTaskStatusRequest;
 use App\Http\Resources\TaskStatusResource;
 use App\Models\Project;
 use App\Models\TaskStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
+
 
 class TaskStatusController extends Controller
 {
     public function index(Project $project): JsonResponse
     {
-        $this->checkProjectAccess($project);
+        try {
+            $this->checkProjectAccess($project);
 
-        $statuses = $project->taskStatuses()
-            ->withCount('tasks')
-            ->orderBy('position')
-            ->get();
+            $statuses = $project->taskStatuses()
+                ->withCount('tasks')
+                ->orderBy('position')
+                ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => TaskStatusResource::collection($statuses),
-        ]);
-    }
-
-    public function store(StoreTaskStatusRequest $request, Project $project): JsonResponse
-    {
-        $this->checkProjectManager($project);
-
-        $existingStatus = $project->taskStatuses()
-            ->where('name', $request->name)
-            ->first();
-
-        if ($existingStatus) {
+            return response()->json([
+                'success' => true,
+                'data' => TaskStatusResource::collection($statuses),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch task statuses: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'A status with this name already exists in this project',
-            ], 409);
+                'message' => 'Failed to load task statuses. Please try again later.'
+            ], 500);
         }
-
+    }
+    public function store(StoreTaskStatusRequest $request, Project $project): JsonResponse
+    {
         try {
+            $userId = $request->user()->id;
+            if (!$project->isOwner($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only the project owner can create task statuses.'
+                ], 403);
+            }
+
+            $existingStatus = $project->taskStatuses()
+                ->where('name', $request->name)
+                ->first();
+
+            if ($existingStatus) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'A status with this name already exists in this project',
+                ], 409);
+            }
+
             DB::beginTransaction();
 
             $existingCount = $project->taskStatuses()->count();
@@ -61,60 +80,51 @@ class TaskStatusController extends Controller
                 'message' => 'Task status created successfully',
                 'data' => new TaskStatusResource($status),
             ], 201);
+
         } catch (\Exception $e) {
             DB::rollBack();
-
+            Log::error('Failed to create task status: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+                'status_name' => $request->name,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create task status',
-                'error' => $e->getMessage(),
+                'message' => 'Failed to create task status. Please try again later.'
             ], 500);
         }
     }
-
-    public function show(Project $project, TaskStatus $taskStatus): JsonResponse
-    {
-        $this->checkProjectAccess($project);
-
-        if ($taskStatus->project_id !== $project->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Task status does not belong to this project',
-            ], 404);
-        }
-
-        $taskStatus->loadCount('tasks');
-
-        return response()->json([
-            'success' => true,
-            'data' => new TaskStatusResource($taskStatus),
-        ]);
-    }
-
     public function update(UpdateTaskStatusRequest $request, Project $project, TaskStatus $taskStatus): JsonResponse
     {
-        $this->checkProjectManager($project);
-
-        if ($taskStatus->project_id !== $project->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Task status does not belong to this project',
-            ], 404);
-        }
-
-        $existingStatus = $project->taskStatuses()
-            ->where('name', $request->name)
-            ->where('id', '!=', $taskStatus->id)
-            ->first();
-
-        if ($existingStatus) {
-            return response()->json([
-                'success' => false,
-                'message' => 'A status with this name already exists in this project',
-            ], 409);
-        }
-
         try {
+            $userId = $request->user()->id;
+            if (!$project->isOwner($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only the project owner can update task statuses.'
+                ], 403);
+            }
+
+            if ($taskStatus->project_id !== $project->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Task status does not belong to this project',
+                ], 404);
+            }
+
+            $existingStatus = $project->taskStatuses()
+                ->where('name', $request->name)
+                ->where('id', '!=', $taskStatus->id)
+                ->first();
+
+            if ($existingStatus) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'A status with this name already exists in this project',
+                ], 409);
+            }
+
             DB::beginTransaction();
 
             $taskStatus->update([
@@ -128,36 +138,40 @@ class TaskStatusController extends Controller
                 'message' => 'Task status updated successfully',
                 'data' => new TaskStatusResource($taskStatus),
             ]);
+
         } catch (\Exception $e) {
             DB::rollBack();
-
+            Log::error('Failed to update task status: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'status_id' => $taskStatus->id,
+                'user_id' => $request->user()->id,
+                'new_name' => $request->name,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update task status',
-                'error' => $e->getMessage(),
+                'message' => 'Failed to update task status. Please try again later.'
             ], 500);
         }
     }
-
-    public function destroy(Project $project, TaskStatus $taskStatus): JsonResponse
+    public function destroy(UpdateTaskStatusRequest $request, Project $project, TaskStatus $taskStatus): JsonResponse
     {
-        $this->checkProjectManager($project);
-
-        if ($taskStatus->project_id !== $project->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Task status does not belong to this project',
-            ], 404);
-        }
-
-        if ($taskStatus->tasks()->count() > 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot delete status with existing tasks. Move or delete tasks first.',
-            ], 409);
-        }
-
         try {
+            $userId = $request->user()->id;
+            if (!$project->isOwner($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only the project owner can delete task statuses.'
+                ], 403);
+            }
+
+            if ($taskStatus->tasks()->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete status with existing tasks. Move or delete tasks first.',
+                ], 409);
+            }
+
             DB::beginTransaction();
 
             $deletedPosition = $taskStatus->position;
@@ -173,78 +187,97 @@ class TaskStatusController extends Controller
                 'success' => true,
                 'message' => 'Task status deleted successfully',
             ]);
+
         } catch (\Exception $e) {
             DB::rollBack();
-
+            Log::error('Failed to delete task status: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'status_id' => $taskStatus->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete task status',
-                'error' => $e->getMessage(),
+                'message' => 'Failed to delete task status. Please try again later.'
+            ], 500);
+        }
+    }
+    public function reorder(ReorderTaskStatusRequest $request, Project $project): JsonResponse
+    {
+        try {
+            $userId = $request->user()->id;
+            if (!$project->isOwner($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only the project owner can reorder task statuses.'
+                ], 403);
+            }
+
+            DB::beginTransaction();
+
+            foreach ($request->statuses as $statusData) {
+                $status = TaskStatus::where('id', $statusData['id'])
+                    ->where('project_id', $project->id)
+                    ->first();
+
+                if (!$status) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid status ID: ' . $statusData['id']
+                    ], 422);
+                }
+
+                $status->update(['position' => $statusData['position']]);
+            }
+
+            DB::commit();
+
+            $updatedStatuses = $project->taskStatuses()
+                ->orderBy('position')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task statuses reordered successfully',
+                'data' => TaskStatusResource::collection($updatedStatuses),
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to reorder task statuses: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reorder task statuses. Please try again later.'
             ], 500);
         }
     }
 
-public function reorder(ReorderTaskStatusRequest $request, Project $project): JsonResponse
-{
-    $this->checkProjectManager($project);
-
-    try {
-        DB::beginTransaction();
-
-        foreach ($request->statuses as $statusData) {
-            $status = TaskStatus::where('id', $statusData['id'])
-                ->where('project_id', $project->id)
-                ->first();
-
-            if (!$status) {
-                DB::rollBack();
+    public function defaultStatuses(Request $request, Project $project): JsonResponse
+    {
+        try {
+            $userId = $request->user()->id;
+            if (!$project->isOwner($userId)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid status ID: ' . $statusData['id']
-                ], 422);
+                    'message' => 'Only the project owner can create default statuses.'
+                ], 403);
             }
 
-            $status->update(['position' => $statusData['position']]);
-        }
+            $defaultStatuses = ['To Do', 'In Progress', 'Done'];
+            $existingCount = $project->taskStatuses()->count();
 
-        DB::commit();
+            if ($existingCount > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Project already has statuses',
+                ], 409);
+            }
 
-        $updatedStatuses = $project->taskStatuses()
-            ->orderBy('position')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Task statuses reordered successfully',
-            'data' => TaskStatusResource::collection($updatedStatuses),
-        ]);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to reorder task statuses',
-            'error' => $e->getMessage(),
-        ], 500);
-    }
-}
-
-    public function defaultStatuses(Project $project): JsonResponse
-    {
-        $this->checkProjectManager($project);
-
-        $defaultStatuses = ['To Do', 'In Progress', 'Done'];
-        $existingCount = $project->taskStatuses()->count();
-
-        if ($existingCount > 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Project already has statuses',
-            ], 409);
-        }
-
-        try {
             DB::beginTransaction();
 
             foreach ($defaultStatuses as $index => $statusName) {
@@ -263,13 +296,17 @@ public function reorder(ReorderTaskStatusRequest $request, Project $project): Js
                 'message' => 'Default statuses created successfully',
                 'data' => TaskStatusResource::collection($statuses),
             ], 201);
+
         } catch (\Exception $e) {
             DB::rollBack();
-
+            Log::error('Failed to create default statuses: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create default statuses',
-                'error' => $e->getMessage(),
+                'message' => 'Failed to create default statuses. Please try again later.'
             ], 500);
         }
     }
@@ -283,12 +320,4 @@ public function reorder(ReorderTaskStatusRequest $request, Project $project): Js
         }
     }
 
-    private function checkProjectManager(Project $project): void
-    {
-        $userId = request()->user()->id;
-
-        if (!$project->isOwner($userId) && !$project->isManager($userId)) {
-            abort(403, 'You do not have permission to manage task statuses');
-        }
-    }
 }
