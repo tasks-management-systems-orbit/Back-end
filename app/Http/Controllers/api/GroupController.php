@@ -4,46 +4,62 @@ namespace app\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Group\StoreGroupRequest;
-// use App\Http\Requests\Group\TransferManagerRequest;
 use App\Http\Resources\GroupResource;
 use App\Models\Group;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class GroupController extends Controller
 {
-    public function index(Project $project, Request $request): JsonResponse
+    public function index(Request $request, Project $project): JsonResponse
     {
-        $userId = $request->user()->id;
+        try {
+            $userId = $request->user()->id;
+            $search = $request->input('search');
 
-        $groups = Group::with(['manager', 'creator', 'members'])
-            ->where('project_id', $project->id)
-            ->when(!$project->isOwner($userId), function ($query) use ($userId) {
-                $query->where(function ($q) use ($userId) {
-                    $q->where('manager_id', $userId)
-                        ->orWhereHas('members', function ($sub) use ($userId) {
-                            $sub->where('user_id', $userId);
-                        });
-                });
-            })
-            ->active()
-            ->orderBy('created_at', 'desc')
-            ->get();
+            // Only project owner can view groups
+            if (!$project->isOwner($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only the project owner can view groups.'
+                ], 403);
+            }
 
-        return response()->json([
-            'success' => true,
-            'data' => GroupResource::collection($groups),
-            'total' => $groups->count()
-        ]);
+            $groups = Group::with(['manager', 'creator', 'members'])
+                ->where('project_id', $project->id)
+                ->when($search, function ($query) use ($search) {
+                    $query->where('name', 'LIKE', '%' . $search . '%')
+                        ->orWhere('description', 'LIKE', '%' . $search . '%');
+                })
+                ->active()
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => GroupResource::collection($groups),
+                'total' => $groups->count(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch groups: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $userId ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load groups. Please try again later.'
+            ], 500);
+        }
     }
-
     public function show(Project $project, Group $group, Request $request): JsonResponse
     {
         $userId = $request->user()->id;
 
-        $canAccess = $project->isOwner($userId) || $group->isMember($userId) || $group->isManager($userId);
+        $canAccess = $project->isOwner($userId) || $group->isManager($userId);
 
         if (!$canAccess) {
             return response()->json([
@@ -52,9 +68,14 @@ class GroupController extends Controller
             ], 403);
         }
 
-        $group->load(['manager', 'creator', 'members', 'groupTasks' => function ($query) {
-            $query->whereNull('parent_task_id');
-        }]);
+        $group->load([
+            'manager',
+            'creator',
+            'members',
+            'groupTasks' => function ($query) {
+                $query->whereNull('parent_task_id');
+            }
+        ]);
 
         return response()->json([
             'success' => true,
@@ -64,9 +85,31 @@ class GroupController extends Controller
 
     public function store(StoreGroupRequest $request, Project $project): JsonResponse
     {
-        $userId = $request->user()->id;
-
         try {
+            $userId = $request->user()->id;
+
+            // Verify manager is a member of the project
+            if (!$project->hasUser($request->manager_id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The selected manager must be a member of this project first.'
+                ], 422);
+            }
+
+            $invalidMembers = [];
+            foreach ($request->member_ids as $memberId) {
+                if (!$project->hasUser($memberId)) {
+                    $invalidMembers[] = $memberId;
+                }
+            }
+
+            if (!empty($invalidMembers)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Some users are not members of this project: ' . implode(', ', $invalidMembers)
+                ], 422);
+            }
+
             DB::beginTransaction();
 
             $group = Group::create([
@@ -94,58 +137,120 @@ class GroupController extends Controller
                 'message' => 'Group created successfully',
                 'data' => new GroupResource($group)
             ], 201);
+
         } catch (\Exception $e) {
             DB::rollBack();
-
+            Log::error('Failed to create group: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create group',
-                'error' => $e->getMessage()
+                'message' => 'Failed to create group. Please try again later.'
             ], 500);
         }
     }
 
     public function update(Request $request, Project $project, Group $group): JsonResponse
     {
-        $userId = $request->user()->id;
+        try {
+            $userId = $request->user()->id;
 
-        if (!$project->isOwner($userId) && !$group->isManager($userId)) {
+            if ($group->project_id !== $project->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Group does not belong to this project.'
+                ], 404);
+            }
+
+            if (!$project->isOwner($userId) && !$group->isManager($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to update this group.'
+                ], 403);
+            }
+
+            $validated = $request->validate([
+                'name' => 'sometimes|string|max:255|min:2',
+                'description' => 'nullable|string|max:1000',
+                'avatar' => 'nullable|string|max:255|url',
+                'is_active' => 'sometimes|boolean',
+            ]);
+
+            DB::beginTransaction();
+
+            $group->update($validated);
+
+            DB::commit();
+
+            $group->load(['manager', 'creator', 'members']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Group updated successfully.',
+                'data' => new GroupResource($group)
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update group: ' . $e->getMessage(), [
+                'group_id' => $group->id,
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'You do not have permission to update this group'
-            ], 403);
+                'message' => 'Failed to update group. Please try again later.'
+            ], 500);
         }
-
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255|min:2',
-            'description' => 'nullable|string|max:1000',
-            'avatar' => 'nullable|string|max:255|url',
-            'is_active' => 'sometimes|boolean',
-        ]);
-
-        $group->update($validated);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Group updated successfully',
-            'data' => new GroupResource($group->load(['manager', 'creator', 'members']))
-        ]);
     }
 
-    public function destroy(Project $project, Group $group, Request $request): JsonResponse
+    public function destroy(Request $request, Project $project, Group $group): JsonResponse
     {
-        if (!$project->isOwner($request->user()->id)) {
+        try {
+            $userId = $request->user()->id;
+
+            if ($group->project_id !== $project->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Group does not belong to this project.'
+                ], 404);
+            }
+
+            if (!$project->isOwner($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only the project owner can delete groups.'
+                ], 403);
+            }
+
+            DB::beginTransaction();
+
+            $group->members()->detach();
+
+            $group->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Group deleted successfully.'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete group: ' . $e->getMessage(), [
+                'group_id' => $group->id,
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Only project owner can delete groups'
-            ], 403);
+                'message' => 'Failed to delete group. Please try again later.'
+            ], 500);
         }
-
-        $group->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Group deleted successfully'
-        ]);
     }
 }
