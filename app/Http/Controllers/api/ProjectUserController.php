@@ -17,107 +17,142 @@ use Illuminate\Support\Facades\Log;
 
 class ProjectUserController extends Controller
 {
-    public function index(Project $project): JsonResponse
+    public function index(Request $request, Project $project): JsonResponse
     {
-        $users = $project->users()
-            ->with('profile')
-            ->get()
-            ->map(function ($user) use ($project) {
-                $user->role = $user->pivot->role;
-                return $user;
-            });
+        try {
+            $userId = $request->user()->id;
 
-        $owner = null;
-        $managers = [];
-        $usersList = [];
-        $observers = [];
-
-        foreach ($users as $user) {
-            $role = $user->pivot->role;
-
-            if ($role === 'owner') {
-                $owner = $user;
-            } elseif ($role === 'manager') {
-                $managers[] = $user;
-            } elseif ($role === 'user') {
-                $usersList[] = $user;
-            } elseif ($role === 'observer') {
-                $observers[] = $user;
+            if (!$project->isOwner($userId) && !$project->hasUser($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have access to this project.'
+                ], 403);
             }
-        }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'owner' => $owner ? new ProjectUserResource($owner) : null,
-                'managers' => ProjectUserResource::collection($managers),
-                'users' => ProjectUserResource::collection($usersList),
-                'observers' => ProjectUserResource::collection($observers),
-                'total' => $users->count(),
-            ]
-        ]);
+            $users = $project->users()
+                ->with('profile')
+                ->get()
+                ->map(function ($user) use ($project) {
+                    $user->role = $user->pivot->role;
+                    return $user;
+                });
+
+            $owner = null;
+            $managers = [];
+            $usersList = [];
+            $observers = [];
+
+            foreach ($users as $user) {
+                $role = $user->pivot->role;
+
+                if ($role === 'owner') {
+                    $owner = $user;
+                } elseif ($role === 'manager') {
+                    $managers[] = $user;
+                } elseif ($role === 'user') {
+                    $usersList[] = $user;
+                } elseif ($role === 'observer') {
+                    $observers[] = $user;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'owner' => $owner ? new ProjectUserResource($owner) : null,
+                    'managers' => ProjectUserResource::collection($managers),
+                    'users' => ProjectUserResource::collection($usersList),
+                    'observers' => ProjectUserResource::collection($observers),
+                    'total' => $users->count(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch project users: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load users. Please try again later.'
+            ], 500);
+        }
     }
 
     public function addUser(AddUserRequest $request, Project $project): JsonResponse
     {
-        $userId = $request->user()->id;
-        $currentUserRole = $project->getUserRole($userId);
-
-        if ($project->created_by !== $userId && !in_array($currentUserRole, ['owner', 'manager'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You do not have permission to add users to this project'
-            ], 403);
-        }
-
-        $newUserId = $request->user_id;
-
-        if ($project->hasUser($newUserId)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User is already a member of this project'
-            ], 409);
-        }
-
         try {
+            $userId = $request->user()->id;
+            $currentUserRole = $project->getUserRole($userId);
+
+            // Check permission
+            if ($project->created_by !== $userId && !in_array($currentUserRole, ['owner', 'manager'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to add users to this project'
+                ], 403);
+            }
+
+            $newUserId = $request->user_id;
+
+            if ($project->hasUser($newUserId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User is already a member of this project'
+                ], 409);
+            }
+
+            $newUser = User::find($newUserId);
+            if (!$newUser || !$newUser->profile || !$newUser->profile->allow_invitation_requests) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This user does not accept invitations.'
+                ], 422);
+            }
+
             DB::beginTransaction();
 
             $project->addUser($newUserId, $request->role);
 
             DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
+
+            $newUser = User::with('profile')->find($newUserId);
+            $newUser->role = $request->role;
+
+            event(new UserJoinedProject($newUser, $project));
+
+            ProjectNotificationEvent::dispatch(
+                userIds: [$newUserId],
+                scenario: 'user_added',
+                project: $project,
+                actor: $request->user(),
+            );
 
             return response()->json([
+                'success' => true,
+                'message' => 'User added successfully',
+                'data' => new ProjectUserResource($newUser)
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to add user: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+                'new_user_id' => $request->user_id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
                 'success' => false,
-                'message' => 'Failed to add user',
-                'error' => $e->getMessage()
+                'message' => 'Failed to add user. Please try again later.'
             ], 500);
         }
-
-        $newUser = User::with('profile')->find($newUserId);
-        $newUser->role = $request->role;
-
-        event(new UserJoinedProject($newUser, $project));
-
-        ProjectNotificationEvent::dispatch(
-            userIds: [$newUserId],
-            scenario: 'user_added',
-            project: $project,
-            actor: $request->user(),
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User added successfully',
-            'data' => new ProjectUserResource($newUser)
-        ], 201);
     }
-
     public function updateRole(UpdateUserRoleRequest $request, Project $project, int $userId): JsonResponse
     {
         $currentUserId = $request->user()->id;
         $currentUserRole = $project->getUserRole($currentUserId);
+        $targetUserRole = $project->getUserRole($userId);
 
         if ($project->created_by !== $currentUserId && !in_array($currentUserRole, ['owner', 'manager'])) {
             return response()->json([
@@ -132,8 +167,13 @@ class ProjectUserController extends Controller
                 'message' => 'User is not a member of this project'
             ], 404);
         }
+        if ($targetUserRole === $request->role) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User already has this role.'
+            ], 422);
+        }
 
-        $targetUserRole = $project->getUserRole($userId);
 
         if ($targetUserRole === 'owner') {
             return response()->json([
@@ -180,122 +220,123 @@ class ProjectUserController extends Controller
     }
     public function removeUser(Request $request, Project $project, int $userId): JsonResponse
     {
-        $currentUserId = $request->user()->id;
-        $currentUserRole = $project->getUserRole($currentUserId);
-
-        if ($project->created_by !== $currentUserId && !in_array($currentUserRole, ['owner', 'manager'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You do not have permission to remove users'
-            ], 403);
-        }
-
-        if (!$project->hasUser($userId)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User is not a user of this project'
-            ], 404);
-        }
-
-        $targetUserRole = $project->getUserRole($userId);
-
-        if ($targetUserRole === 'owner') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot remove the project owner'
-            ], 403);
-        }
-
-        if ($currentUserRole === 'manager' && $targetUserRole === 'manager') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Managers cannot remove other managers'
-            ], 403);
-        }
-
-        if ($currentUserId === $userId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You cannot remove yourself from the project'
-            ], 403);
-        }
-
         try {
+            $currentUserId = $request->user()->id;
+            $currentUserRole = $project->getUserRole($currentUserId);
+
+            if ($project->created_by !== $currentUserId && !in_array($currentUserRole, ['owner', 'manager'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to remove users'
+                ], 403);
+            }
+
+            if (!$project->hasUser($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User is not a member of this project'
+                ], 404);
+            }
+
+            $targetUserRole = $project->getUserRole($userId);
+
+            if ($targetUserRole === 'owner') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot remove the project owner'
+                ], 403);
+            }
+
+            if ($currentUserRole === 'manager' && $targetUserRole === 'manager') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Managers cannot remove other managers'
+                ], 403);
+            }
+
+            if ($currentUserId === $userId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You cannot remove yourself from the project'
+                ], 403);
+            }
+
             DB::beginTransaction();
 
             $project->removeUser($userId);
 
             DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
+
+            ProjectNotificationEvent::dispatch(
+                userIds: [$userId],
+                scenario: 'user_removed',
+                project: $project,
+                actor: $request->user(),
+            );
 
             return response()->json([
+                'success' => true,
+                'message' => 'User removed successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to remove user: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $currentUserId ?? null,
+                'removed_user_id' => $userId,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
                 'success' => false,
-                'message' => 'Failed to remove user',
-                'error' => $e->getMessage()
+                'message' => 'Failed to remove user. Please try again later.'
             ], 500);
         }
-
-        ProjectNotificationEvent::dispatch(
-            userIds: [$userId],
-            scenario: 'user_removed',
-            project: $project,
-            actor: $request->user(),
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User removed successfully'
-        ]);
     }
-
     public function leaveProject(Request $request, Project $project): JsonResponse
     {
-        $userId = $request->user()->id;
-
-        if ($project->created_by === $userId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Project owner cannot leave the project. Transfer ownership first.'
-            ], 403);
-        }
-
-        if (!$project->hasUser($userId)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not a user of this project'
-            ], 404);
-        }
-
         try {
+            $userId = $request->user()->id;
+
+            // Owner cannot leave
+            if ($project->created_by === $userId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Project owner cannot leave the project. Transfer ownership first.'
+                ], 403);
+            }
+
             DB::beginTransaction();
 
             $project->removeUser($userId);
 
             DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
+
+            ProjectNotificationEvent::dispatch(
+                userIds: [$project->created_by],
+                scenario: 'user_left',
+                project: $project,
+                actor: $request->user(),
+            );
 
             return response()->json([
+                'success' => true,
+                'message' => 'You have left the project successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to leave project: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $userId ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
                 'success' => false,
-                'message' => 'Failed to leave project',
-                'error' => $e->getMessage()
+                'message' => 'Failed to leave project. Please try again later.'
             ], 500);
         }
-
-        ProjectNotificationEvent::dispatch(
-            userIds: [$project->created_by],
-            scenario: 'user_left',
-            project: $project,
-            actor: $request->user(),
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'You have left the project successfully'
-        ]);
     }
-
     public function transferOwnership(Request $request, Project $project, int $userId): JsonResponse
     {
         $currentUserId = $request->user()->id;
