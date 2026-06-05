@@ -78,7 +78,8 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
         Route::delete('/{reminder}', [ReminderController::class, 'destroy']);
         Route::post('/{reminder}/snooze', [ReminderController::class, 'snooze']);
         Route::post('/{reminder}/dismiss', [ReminderController::class, 'dismiss']);
-    });
+        });
+        Route::get('/projects/{project}/reminders', [ReminderController::class, 'getProjectReminders']);
 });
 
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
