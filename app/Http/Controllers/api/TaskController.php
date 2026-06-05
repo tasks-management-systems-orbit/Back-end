@@ -1378,4 +1378,66 @@ class TaskController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get all group tasks for a specific project.
+     */
+    public function getGroupTasks(Project $project, Request $request): JsonResponse
+    {
+        try {
+            $this->checkProjectAccess($project);
+
+            $search = $request->input('search');
+            $statusId = $request->input('status_id');
+            $priority = $request->input('priority');
+            $sortBy = $request->input('sort_by', 'position');
+            $sortDirection = $request->input('sort_direction', 'asc');
+
+            // Allowed sort columns
+            $allowedSorts = ['id', 'title', 'priority', 'due_date', 'position', 'created_at', 'updated_at'];
+            if (!in_array($sortBy, $allowedSorts)) {
+                $sortBy = 'position';
+            }
+            if (!in_array($sortDirection, ['asc', 'desc'])) {
+                $sortDirection = 'asc';
+            }
+
+            $tasks = Task::where('project_id', $project->id)
+                ->whereNotNull('assigned_group_id') 
+                ->with(['status', 'creator', 'assignedGroup', 'group'])
+                ->when($search, function ($query) use ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('title', 'LIKE', "%{$search}%")
+                            ->orWhere('description', 'LIKE', "%{$search}%");
+                    });
+                })
+                ->when($statusId, fn($q) => $q->where('status_id', $statusId))
+                ->when($priority, fn($q) => $q->where('priority', $priority))
+                ->orderBy($sortBy, $sortDirection)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => TaskResource::collection($tasks),
+                'total' => $tasks->count(),
+                'filters' => [
+                    'search' => $search,
+                    'status_id' => $statusId,
+                    'priority' => $priority,
+                    'sort_by' => $sortBy,
+                    'sort_direction' => $sortDirection,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch group tasks: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load group tasks. Please try again later.'
+            ], 500);
+        }
+    }
 }
