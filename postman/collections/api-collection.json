@@ -612,6 +612,25 @@
                         }
                     },
                     "response": []
+                },
+                {
+                    "name": "invite-user",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseURL}}/profiles/{profile}/invite",
+                            "host": ["{{baseURL}}"],
+                            "path": ["profiles", "{profile}", "invite"]
+                        }
+                    },
+                    "response": []
                 }
             ]
         },
@@ -770,6 +789,25 @@
                             "raw": "{{baseURL}}/reminders/{reminder}/dismiss",
                             "host": ["{{baseURL}}"],
                             "path": ["reminders", "{reminder}", "dismiss"]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "get-project-reminders",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseURL}}/projects/{project}/reminders",
+                            "host": ["{{baseURL}}"],
+                            "path": ["projects", "{project}", "reminders"]
                         }
                     },
                     "response": []
@@ -1537,6 +1575,25 @@
                         }
                     },
                     "response": []
+                },
+                {
+                    "name": "get-project-stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseURL}}/projects/{project}/stats",
+                            "host": ["{{baseURL}}"],
+                            "path": ["projects", "{project}", "stats"]
+                        }
+                    },
+                    "response": []
                 }
             ]
         },
@@ -2165,6 +2222,25 @@
                                     "language": "json"
                                 }
                             }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "get-group-tasks",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseURL}}/projects/{project}/tasks/group-tasks",
+                            "host": ["{{baseURL}}"],
+                            "path": ["projects", "{project}", "tasks", "group-tasks"]
                         }
                     },
                     "response": []
