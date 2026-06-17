@@ -68,7 +68,7 @@ class RequestController extends Controller
 
     public function sendJoinRequest(SendJoinRequest $request, Project $project): JsonResponse
     {
-        $existing = Request::where('project_id', $project->id)
+        $existing = JoinRequestModel::where('project_id', $project->id)
             ->where('sender_id', $request->user()->id)
             ->where('type', 'join_request')
             ->where('status', 'pending')
@@ -121,7 +121,7 @@ class RequestController extends Controller
         ], 201);
     }
 
-    public function approveJoinRequest(ProcessJoinRequest $request, Project $project, Request $joinRequest): JsonResponse
+    public function approveJoinRequest(ProcessJoinRequest $request, Project $project, JoinRequestModel $joinRequest): JsonResponse
     {
         if ($joinRequest->project_id !== $project->id || $joinRequest->type !== 'join_request') {
             return response()->json(['success' => false, 'message' => 'Invalid request.'], 404);
@@ -168,7 +168,7 @@ class RequestController extends Controller
         return response()->json(['success' => true, 'message' => 'Join request approved. User added to project.']);
     }
 
-    public function rejectJoinRequest(Request $request, Project $project, Request $joinRequest): JsonResponse
+    public function rejectJoinRequest(Request $request, Project $project, JoinRequestModel $joinRequest): JsonResponse
     {
         if ($joinRequest->project_id !== $project->id || $joinRequest->type !== 'join_request') {
             return response()->json(['success' => false, 'message' => 'Invalid request.'], 404);
