@@ -3,17 +3,17 @@
 namespace app\Models;
 
 use App\Models\ProjectComment;
+use App\Models\ProjectReaction;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\Builder;
-use App\Models\ProjectReaction;
-
-
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class Project extends Model
 {
@@ -102,7 +102,6 @@ class Project extends Model
         return $this->hasMany(TaskStatus::class);
     }
 
-
     public function comments(): HasManyThrough
     {
         return $this->hasManyThrough(
@@ -114,6 +113,7 @@ class Project extends Model
             'id'
         );
     }
+
     public function projectReports(): HasMany
     {
         return $this->hasMany(ProjectReport::class, 'reported_project_id');
@@ -123,7 +123,6 @@ class Project extends Model
     {
         return $this->hasMany(Group::class);
     }
-
 
     // ============== Helper Methods ==============
 
@@ -140,12 +139,14 @@ class Project extends Model
     public function getUserRole(int $userId): ?string
     {
         $user = $this->users()->where('user_id', $userId)->first();
+
         return $user?->pivot->role;
     }
 
     public function isManager(int $userId): bool
     {
         $role = $this->getUserRole($userId);
+
         return $role === 'owner' || $role === 'manager';
     }
 
@@ -168,30 +169,33 @@ class Project extends Model
         }
 
         $this->users()->attach($userId, ['role' => $role]);
+
         return true;
     }
 
     public function removeUser(int $userId): bool
     {
-        if (!$this->hasUser($userId)) {
+        if (! $this->hasUser($userId)) {
             return false;
         }
 
         $this->users()->detach($userId);
+
         return true;
     }
 
     public function updateUserRole(int $userId, string $role): bool
     {
-        if (!$this->hasUser($userId)) {
+        if (! $this->hasUser($userId)) {
             return false;
         }
 
         $this->users()->updateExistingPivot($userId, ['role' => $role]);
+
         return true;
     }
 
-    public function getManagers(): \Illuminate\Support\Collection
+    public function getManagers(): Collection
     {
         return $this->users()
             ->wherePivotIn('role', ['owner', 'manager'])
@@ -211,9 +215,10 @@ class Project extends Model
     public function getUserReactionAttribute(): ?string
     {
         $user = request()->user();
-        if (!$user) {
+        if (! $user) {
             return null;
         }
+
         return $this->reactions->where('user_id', $user->id)->first()?->reaction_type;
     }
 
@@ -232,7 +237,6 @@ class Project extends Model
         ];
     }
 
-
     // ============== Query Scopes ==============
 
     public function scopeActive(Builder $query)
@@ -246,5 +250,24 @@ class Project extends Model
             ->orWhereHas('users', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             });
+    }
+
+    /**
+     * Scope to projects created within an optional date range (half-open: includes
+     * all timestamps on `date_to`). Empty / null bounds are ignored. Note: when
+     * combined with `onlyTrashed()`, this still filters on `created_at`, not
+     * `deleted_at` — see plan §3.2.
+     */
+    public function scopeCreatedBetween(Builder $query, ?string $from, ?string $to): Builder
+    {
+        if ($from) {
+            $query->where('created_at', '>=', Carbon::parse($from)->startOfDay());
+        }
+
+        if ($to) {
+            $query->where('created_at', '<=', Carbon::parse($to)->endOfDay());
+        }
+
+        return $query;
     }
 }

@@ -136,7 +136,7 @@
 
     <div class="row">
         <div class="col-12">
-            <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">
+            <a href="{{ url()->previous() ?: route('admin.users.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Users
             </a>
         </div>

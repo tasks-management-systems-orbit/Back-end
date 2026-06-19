@@ -107,7 +107,7 @@
 
     <div class="row">
         <div class="col-12">
-            <a href="{{ route('admin.projects.index') }}" class="btn btn-secondary">
+            <a href="{{ url()->previous() ?: route('admin.projects.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Projects
             </a>
         </div>

@@ -16,25 +16,51 @@
 
     <div class="card">
         <div class="card-header">
-            <form method="GET" class="form-inline">
-                <div class="input-group input-group-sm mr-2">
+            @php
+                // Build sortable header URLs by toggling the current sort key.
+                $sortLink = function (string $column, string $ascValue, string $descValue) use ($sort) {
+                    $next = ($sort === $ascValue) ? $descValue : $ascValue;
+                    return request()->fullUrlWithQuery(['sort' => $next, 'page' => 1]);
+                };
+                $sortCaret = function (string $column, string $ascValue, string $descValue) use ($sort) {
+                    if ($sort === $ascValue) { return '▲'; }
+                    if ($sort === $descValue) { return '▼'; }
+                    return '';
+                };
+            @endphp
+            @push('extra_filters')
+                <div class="input-group input-group-sm mr-2 mb-2" style="max-width: 260px;">
                     <input type="text" name="search" class="form-control" placeholder="Search name, email, username..."
                         value="{{ request('search') }}">
-                    <div class="input-group-append">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
                 </div>
 
-                <select name="status" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+                <select name="status" class="form-control form-control-sm mr-2 mb-2" data-auto-submit>
                     <option value="">All statuses</option>
                     <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
                 </select>
 
-                <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-secondary">Reset</a>
-            </form>
+                <select name="email_verified" class="form-control form-control-sm mr-2 mb-2" data-auto-submit>
+                    <option value="all" {{ ($verified ?? 'all') === 'all' ? 'selected' : '' }}>All verified</option>
+                    <option value="yes" {{ ($verified ?? '') === 'yes' ? 'selected' : '' }}>Verified</option>
+                    <option value="no"  {{ ($verified ?? '') === 'no'  ? 'selected' : '' }}>Not verified</option>
+                </select>
+
+                <select name="sort" class="form-control form-control-sm mr-2 mb-2" data-auto-submit>
+                    <option value="newest"    {{ $sort === 'newest'    ? 'selected' : '' }}>Newest first</option>
+                    <option value="oldest"    {{ $sort === 'oldest'    ? 'selected' : '' }}>Oldest first</option>
+                    <option value="name_asc"  {{ $sort === 'name_asc'  ? 'selected' : '' }}>Name A→Z</option>
+                    <option value="name_desc" {{ $sort === 'name_desc' ? 'selected' : '' }}>Name Z→A</option>
+                </select>
+
+                <select name="per_page" class="form-control form-control-sm mr-2 mb-2" data-auto-submit title="Per page">
+                    @foreach ([15, 30, 50] as $n)
+                        <option value="{{ $n }}" {{ (int) $perPage === $n ? 'selected' : '' }}>{{ $n }} / page</option>
+                    @endforeach
+                </select>
+            @endpush
+
+            @include('admin.partials._filter-bar', ['resetRoute' => route('admin.users.index')])
         </div>
 
         <div class="card-body table-responsive p-0">
@@ -42,11 +68,20 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Name</th>
+                        <th>
+                            <a href="{{ $sortLink('name', 'name_asc', 'name_desc') }}" class="text-dark">
+                                Name {{ $sortCaret('name', 'name_asc', 'name_desc') }}
+                            </a>
+                        </th>
                         <th>Email</th>
                         <th>Username</th>
                         <th>Status</th>
-                        <th>Registered</th>
+                        <th>Verified</th>
+                        <th>
+                            <a href="{{ $sortLink('registered', 'oldest', 'newest') }}" class="text-dark">
+                                Registered {{ $sortCaret('registered', 'oldest', 'newest') }}
+                            </a>
+                        </th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -62,6 +97,13 @@
                                     <span class="badge badge-success">Active</span>
                                 @else
                                     <span class="badge badge-danger">Inactive</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($user->email_verified_at)
+                                    <span class="badge badge-success">Yes</span>
+                                @else
+                                    <span class="badge badge-warning">Not verified</span>
                                 @endif
                             </td>
                             <td>{{ $user->created_at->format('Y-m-d') }}</td>
@@ -91,7 +133,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center">No users found.</td>
+                            <td colspan="8" class="text-center">No users found.</td>
                         </tr>
                     @endforelse
                 </tbody>

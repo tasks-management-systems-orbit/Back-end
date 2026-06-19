@@ -14,26 +14,73 @@
         </div>
     @endif
 
+    @php
+        $trashedOnly = request('trashed') === 'only';
+        $sortLink = function (string $column, string $ascValue, string $descValue) use ($sort) {
+            $next = ($sort === $ascValue) ? $descValue : $ascValue;
+            return request()->fullUrlWithQuery(['sort' => $next, 'page' => 1]);
+        };
+        $sortCaret = function (string $column, string $ascValue, string $descValue) use ($sort) {
+            if ($sort === $ascValue) { return '▲'; }
+            if ($sort === $descValue) { return '▼'; }
+            return '';
+        };
+    @endphp
+
     <div class="card">
         <div class="card-header">
-            <form method="GET" class="form-inline">
-                <div class="input-group input-group-sm mr-2">
+            @push('extra_filters')
+                <div class="input-group input-group-sm mr-2 mb-2" style="max-width: 260px;">
                     <input type="text" name="search" class="form-control" placeholder="Search projects..."
                         value="{{ request('search') }}">
-                    <div class="input-group-append">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
                 </div>
 
-                <select name="trashed" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+                <select name="trashed" class="form-control form-control-sm mr-2 mb-2" data-auto-submit
+                    title="Trashed projects are filtered by created_at, not deleted_at">
                     <option value="">All projects</option>
-                    <option value="only" {{ request('trashed') === 'only' ? 'selected' : '' }}>Trashed only</option>
+                    <option value="only" {{ $trashedOnly ? 'selected' : '' }}>Trashed only</option>
                 </select>
 
-                <a href="{{ route('admin.projects.index') }}" class="btn btn-sm btn-secondary">Reset</a>
-            </form>
+                @if (! $trashedOnly)
+                    <select name="status" class="form-control form-control-sm mr-2 mb-2" data-auto-submit>
+                        <option value="">All statuses</option>
+                        @foreach (['active', 'paused', 'completed'] as $s)
+                            <option value="{{ $s }}" {{ ($status ?? '') === $s ? 'selected' : '' }}>
+                                {{ ucfirst($s) }}
+                            </option>
+                        @endforeach
+                    </select>
+                @endif
+
+                <select name="visibility" class="form-control form-control-sm mr-2 mb-2" data-auto-submit>
+                    <option value="">All visibilities</option>
+                    @foreach (['public', 'private'] as $v)
+                        <option value="{{ $v }}" {{ ($visibility ?? '') === $v ? 'selected' : '' }}>
+                            {{ ucfirst($v) }}
+                        </option>
+                    @endforeach
+                </select>
+
+                <div class="input-group input-group-sm mr-2 mb-2" style="max-width: 220px;">
+                    <input type="text" name="owner" class="form-control" placeholder="Filter by owner name…"
+                        value="{{ $owner ?? '' }}" title="Match owner name (partial match)">
+                </div>
+
+                <select name="sort" class="form-control form-control-sm mr-2 mb-2" data-auto-submit>
+                    <option value="newest"    {{ $sort === 'newest'    ? 'selected' : '' }}>Newest first</option>
+                    <option value="oldest"    {{ $sort === 'oldest'    ? 'selected' : '' }}>Oldest first</option>
+                    <option value="name_asc"  {{ $sort === 'name_asc'  ? 'selected' : '' }}>Name A→Z</option>
+                    <option value="name_desc" {{ $sort === 'name_desc' ? 'selected' : '' }}>Name Z→A</option>
+                </select>
+
+                <select name="per_page" class="form-control form-control-sm mr-2 mb-2" data-auto-submit title="Per page">
+                    @foreach ([15, 30, 50] as $n)
+                        <option value="{{ $n }}" {{ (int) $perPage === $n ? 'selected' : '' }}>{{ $n }} / page</option>
+                    @endforeach
+                </select>
+            @endpush
+
+            @include('admin.partials._filter-bar', ['resetRoute' => route('admin.projects.index')])
         </div>
 
         <div class="card-body table-responsive p-0">
@@ -41,11 +88,19 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Name</th>
+                        <th>
+                            <a href="{{ $sortLink('name', 'name_asc', 'name_desc') }}" class="text-dark">
+                                Name {{ $sortCaret('name', 'name_asc', 'name_desc') }}
+                            </a>
+                        </th>
                         <th>Owner</th>
                         <th>Status</th>
                         <th>Visibility</th>
-                        <th>Created</th>
+                        <th>
+                            <a href="{{ $sortLink('created', 'oldest', 'newest') }}" class="text-dark">
+                                Created {{ $sortCaret('created', 'oldest', 'newest') }}
+                            </a>
+                        </th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -85,7 +140,13 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center">No projects found.</td>
+                            <td colspan="7" class="text-center">
+                                @if ($trashedOnly)
+                                    No trashed projects match the current filters.
+                                @else
+                                    No projects found.
+                                @endif
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>

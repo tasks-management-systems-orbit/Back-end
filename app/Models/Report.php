@@ -2,9 +2,11 @@
 
 namespace app\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 class Report extends Model
 {
@@ -48,5 +50,22 @@ class Report extends Model
     public function scopeDismissed($query)
     {
         return $query->where('status', 'dismissed');
+    }
+
+    /**
+     * Scope to reports created within an optional date range (half-open: includes
+     * all timestamps on `date_to`). Empty / null bounds are ignored.
+     */
+    public function scopeCreatedBetween(Builder $query, ?string $from, ?string $to): Builder
+    {
+        if ($from) {
+            $query->where('created_at', '>=', Carbon::parse($from)->startOfDay());
+        }
+
+        if ($to) {
+            $query->where('created_at', '<=', Carbon::parse($to)->endOfDay());
+        }
+
+        return $query;
     }
 }
