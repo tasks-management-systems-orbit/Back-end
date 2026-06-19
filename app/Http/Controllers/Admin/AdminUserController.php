@@ -4,13 +4,19 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\DateRange;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class AdminUserController extends Controller
 {
+    private const PER_PAGE_OPTIONS = [15, 30, 50];
+
+    private const SORT_OPTIONS = ['newest', 'oldest', 'name_asc', 'name_desc'];
+
     public function index(Request $request)
     {
+        $dateRange = DateRange::fromRequest($request);
+
         $query = User::query();
 
         if ($search = $request->get('search')) {
@@ -29,23 +35,56 @@ class AdminUserController extends Controller
             }
         }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate(15);
+        $verified = $request->get('email_verified', 'all');
+        if ($verified === 'yes') {
+            $query->whereNotNull('email_verified_at');
+        } elseif ($verified === 'no') {
+            $query->whereNull('email_verified_at');
+        }
 
-        return view('admin.users.index', compact('users'));
+        $query->createdBetween($dateRange->from, $dateRange->to);
+
+        $sort = in_array($request->get('sort'), self::SORT_OPTIONS, true)
+            ? $request->get('sort')
+            : 'newest';
+
+        match ($sort) {
+            'oldest' => $query->orderBy('created_at', 'asc'),
+            'name_asc' => $query->orderBy('name', 'asc')->orderBy('id', 'asc'),
+            'name_desc' => $query->orderBy('name', 'desc')->orderBy('id', 'desc'),
+            default => $query->orderBy('created_at', 'desc'),
+        };
+
+        $perPage = (int) $request->get('per_page', 15);
+        if (! in_array($perPage, self::PER_PAGE_OPTIONS, true)) {
+            $perPage = 15;
+        }
+
+        $users = $query->paginate($perPage)->appends(request()->query());
+
+        return view('admin.users.index', compact(
+            'users',
+            'dateRange',
+            'verified',
+            'sort',
+            'perPage',
+        ));
     }
 
     public function show($id)
     {
         $user = User::with(['profile', 'projects', 'ownedProjects'])->findOrFail($id);
+
         return view('admin.users.show', compact('user'));
     }
 
     public function toggleStatus($id)
     {
         $user = User::findOrFail($id);
-        $user->update(['is_active' => !$user->is_active]);
+        $user->update(['is_active' => ! $user->is_active]);
 
         $status = $user->is_active ? 'activated' : 'deactivated';
+
         return redirect()->route('admin.users.index')
             ->with('success', "User {$user->name} has been {$status}.");
     }

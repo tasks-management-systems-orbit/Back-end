@@ -14,24 +14,53 @@
         </div>
     @endif
 
+    @php
+        $sortLink = function (string $column, string $ascValue, string $descValue) use ($sort) {
+            $next = ($sort === $ascValue) ? $descValue : $ascValue;
+            return request()->fullUrlWithQuery(['sort' => $next, 'page' => 1]);
+        };
+        $sortCaret = function (string $column, string $ascValue, string $descValue) use ($sort) {
+            if ($sort === $ascValue) { return '▲'; }
+            if ($sort === $descValue) { return '▼'; }
+            return '';
+        };
+    @endphp
+
     <div class="card">
         <div class="card-header">
-            <form method="GET" class="form-inline">
-                <select name="type" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+            @push('extra_filters')
+                <select name="type" class="form-control form-control-sm mr-2 mb-2" data-auto-submit>
                     <option value="all" {{ $type === 'all' ? 'selected' : '' }}>All types</option>
                     <option value="user" {{ $type === 'user' ? 'selected' : '' }}>User reports</option>
                     <option value="project" {{ $type === 'project' ? 'selected' : '' }}>Project reports</option>
                 </select>
 
-                <select name="status" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+                <select name="status" class="form-control form-control-sm mr-2 mb-2" data-auto-submit>
                     <option value="">All statuses</option>
                     <option value="open" {{ $status === 'open' ? 'selected' : '' }}>Open</option>
                     <option value="reviewed" {{ $status === 'reviewed' ? 'selected' : '' }}>Reviewed</option>
                     <option value="dismissed" {{ $status === 'dismissed' ? 'selected' : '' }}>Dismissed</option>
                 </select>
 
-                <a href="{{ route('admin.reports.index') }}" class="btn btn-sm btn-secondary">Reset</a>
-            </form>
+                <div class="input-group input-group-sm mr-2 mb-2" style="max-width: 260px;">
+                    <input type="text" name="search" class="form-control" placeholder="Search reason, details, reporter..."
+                        value="{{ $search }}">
+                </div>
+
+                <select name="sort" class="form-control form-control-sm mr-2 mb-2" data-auto-submit>
+                    <option value="newest"     {{ $sort === 'newest'     ? 'selected' : '' }}>Newest first</option>
+                    <option value="oldest"     {{ $sort === 'oldest'     ? 'selected' : '' }}>Oldest first</option>
+                    <option value="reason_asc" {{ $sort === 'reason_asc' ? 'selected' : '' }}>Reason A→Z</option>
+                </select>
+
+                <select name="per_page" class="form-control form-control-sm mr-2 mb-2" data-auto-submit title="Per page">
+                    @foreach ([15, 30, 50] as $n)
+                        <option value="{{ $n }}" {{ (int) $perPage === $n ? 'selected' : '' }}>{{ $n }} / page</option>
+                    @endforeach
+                </select>
+            @endpush
+
+            @include('admin.partials._filter-bar', ['resetRoute' => route('admin.reports.index')])
         </div>
 
         <div class="card-body table-responsive p-0">
@@ -44,12 +73,16 @@
                         <th>Target</th>
                         <th>Reason</th>
                         <th>Status</th>
-                        <th>Date</th>
+                        <th>
+                            <a href="{{ $sortLink('date', 'oldest', 'newest') }}" class="text-dark">
+                                Date {{ $sortCaret('date', 'oldest', 'newest') }}
+                            </a>
+                        </th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($reports as $report)
+                    @forelse ($paginator as $report)
                         <tr>
                             <td>{{ $report['id'] }}</td>
                             <td>
@@ -87,5 +120,11 @@
                 </tbody>
             </table>
         </div>
+
+        @if ($paginator->hasPages())
+            <div class="card-footer clearfix">
+                {{ $paginator->links() }}
+            </div>
+        @endif
     </div>
 @stop

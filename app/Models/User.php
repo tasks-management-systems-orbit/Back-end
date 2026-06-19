@@ -3,9 +3,11 @@
 namespace app\Models;
 
 use App\Models\ProjectReaction;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -18,7 +20,7 @@ class User extends Authenticatable
         'email',
         'password',
         'is_active',
-        'email_verified_at'
+        'email_verified_at',
     ];
 
     protected $hidden = [
@@ -53,7 +55,6 @@ class User extends Authenticatable
         });
     }
 
-
     public function ownedProjects()
     {
         return $this->hasMany(Project::class, 'created_by');
@@ -66,7 +67,7 @@ class User extends Authenticatable
 
     public function hasVerifiedEmail(): bool
     {
-        return !is_null($this->email_verified_at);
+        return ! is_null($this->email_verified_at);
     }
 
     public function markEmailAsVerified(): void
@@ -206,6 +207,7 @@ class User extends Authenticatable
         }
 
         $this->favoriteUsers()->attach($user->id);
+
         return true;
     }
 
@@ -232,6 +234,7 @@ class User extends Authenticatable
         }
 
         $this->favoriteProjects()->attach($project->id);
+
         return true;
     }
 
@@ -243,5 +246,22 @@ class User extends Authenticatable
     public function isProjectFavorite(Project $project): bool
     {
         return $this->favoriteProjects()->where('project_id', $project->id)->exists();
+    }
+
+    /**
+     * Scope to users created within an optional date range (half-open: includes
+     * all timestamps on `date_to`). Empty / null bounds are ignored.
+     */
+    public function scopeCreatedBetween(Builder $query, ?string $from, ?string $to): Builder
+    {
+        if ($from) {
+            $query->where('created_at', '>=', Carbon::parse($from)->startOfDay());
+        }
+
+        if ($to) {
+            $query->where('created_at', '<=', Carbon::parse($to)->endOfDay());
+        }
+
+        return $query;
     }
 }

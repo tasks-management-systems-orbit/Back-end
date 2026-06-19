@@ -7,18 +7,24 @@ use App\Models\Project;
 use App\Models\ProjectReport;
 use App\Models\Report;
 use App\Models\User;
+use App\Support\DateRange;
+use Illuminate\Http\Request;
 
 class AdminDashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $totalUsers = User::count();
-        $activeUsers = User::where('is_active', true)->count();
-        $inactiveUsers = User::where('is_active', false)->count();
-        $totalProjects = Project::withTrashed()->count();
-        $openReports = Report::count() + ProjectReport::count();
+        $dateRange = DateRange::fromRequest($request);
+
+        $totalUsers = $dateRange->apply(User::query())->count();
+        $activeUsers = $dateRange->apply(User::query())->where('is_active', true)->count();
+        $inactiveUsers = $dateRange->apply(User::query())->where('is_active', false)->count();
+        $totalProjects = $dateRange->apply(Project::withTrashed())->count();
+        $openReports = $dateRange->apply(Report::open())->count()
+            + $dateRange->apply(ProjectReport::open())->count();
 
         return view('admin.dashboard', compact(
+            'dateRange',
             'totalUsers',
             'activeUsers',
             'inactiveUsers',
