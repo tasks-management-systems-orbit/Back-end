@@ -3,6 +3,7 @@
 .env
 .env.backup
 .env.production
+/.env.testing
 .phpactor.json
 .phpunit.result.cache
 /.fleet
@@ -21,5 +22,8 @@
 /vendor
 /docs
 Homestead.json
+
+# Firebase service account credentials — must NOT be committed
+/storage/app/firebase/service-account.json
 Homestead.yaml
 Thumbs.db
