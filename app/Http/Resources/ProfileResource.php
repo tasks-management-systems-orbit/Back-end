@@ -13,6 +13,24 @@ class ProfileResource extends JsonResource
         $isOwner = $currentUser && $currentUser->id === $this->user_id;          // Check if the current user is the owner of this profile
         $viewingOwn = $request->attributes->get('profile_viewing_own', false);   // Determine if the current user is viewing their own profile
         $isPublic = $this->is_public;                                            // Determine if the profile is marked as public (visible to all) or private
+        $isAccountDeactivated = !$this->user->is_active;                        // Check if the associated user account is deactivated (is_active = false)
+
+
+        if ($isAccountDeactivated && !$isOwner && !$viewingOwn) {
+            return [
+                'id' => $this->id,
+                'user' => [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                ],
+                'is_active' => false,
+                'account_status' => 'deactivated',
+                'message' => __('messages.account_deactivated_other'), // أو النص الثابت
+            ];
+        }
+
+
+
 
         if ($currentUser && !$isOwner && $this->user && $this->user->isBlocking($currentUser)) {
             return [
@@ -104,6 +122,10 @@ class ProfileResource extends JsonResource
             'projects_count' => $this->when($viewingOwn || $isOwner || $isPublic, $this->projects_count),
             'tasks_completed' => $this->when($viewingOwn || $isOwner || $isPublic, $this->tasks_completed),
             'report_count' => $this->when($viewingOwn || $isOwner, $this->report_count),
+
+            'is_active' => $this->user->is_active,
+            'account_status' => $this->user->is_active ? 'active' : 'deactivated',
+
 
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

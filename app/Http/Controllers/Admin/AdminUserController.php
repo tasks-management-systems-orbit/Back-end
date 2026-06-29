@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use app\Models\Reminder;
 use App\Models\User;
 use App\Support\DateRange;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AdminUserController extends Controller
 {
@@ -56,7 +59,7 @@ class AdminUserController extends Controller
         };
 
         $perPage = (int) $request->get('per_page', 15);
-        if (! in_array($perPage, self::PER_PAGE_OPTIONS, true)) {
+        if (!in_array($perPage, self::PER_PAGE_OPTIONS, true)) {
             $perPage = 15;
         }
 
@@ -78,17 +81,35 @@ class AdminUserController extends Controller
         return view('admin.users.show', compact('user'));
     }
 
-    public function toggleStatus($id)
+    public function toggleStatus(Request $request, int $userId)
     {
-        $user = User::findOrFail($id);
-        $user->update(['is_active' => ! $user->is_active]);
+        $user = User::findOrFail($userId);
+        $newStatus = !$user->is_active;
 
-        $status = $user->is_active ? 'activated' : 'deactivated';
+        DB::beginTransaction();
+        try {
+            $user->update(['is_active' => $newStatus]);
 
-        return redirect()->route('admin.users.index')
-            ->with('success', "User {$user->name} has been {$status}.");
+            if (!$newStatus) {
+                $deletedCount = Reminder::where('user_id', $user->id)->delete();
+                Log::info("Deleted {$deletedCount} reminders for deactivated user ID: {$user->id}");
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => $newStatus ? 'User activated successfully.' : 'User deactivated. All reminders deleted.',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to toggle user status: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred.',
+            ], 500);
+        }
     }
-
     public function destroy($id)
     {
         $user = User::findOrFail($id);
