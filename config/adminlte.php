@@ -63,7 +63,7 @@ return [
     |
     */
 
-    'logo' => '<b>Admin</b>LTE',
+    'logo' => '<b>Orbit</b>',
     'logo_img' => 'vendor/adminlte/dist/img/logo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
@@ -88,9 +88,9 @@ return [
         'img' => [
             'path' => 'vendor/adminlte/dist/img/logo.png',
             'alt' => 'Auth Logo',
-            'class' => '',
-            'width' => 50,
-            'height' => 50,
+            'class' => 'img-circle',
+            'width' => 60,
+            'height' => 60,
         ],
     ],
 
@@ -116,8 +116,8 @@ return [
             'path' => 'vendor/adminlte/dist/img/logo.png',
             'alt' => 'AdminLTE Preloader Image',
             'effect' => 'animation__shake',
-            'width' => 60,
-            'height' => 60,
+            'width' => 300,
+            'height' => 300,
         ],
     ],
 
