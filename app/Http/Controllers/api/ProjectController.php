@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
+use App\Models\Chain;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -171,6 +172,24 @@ class ProjectController extends Controller
 
             $project->users()->attach($request->user()->id, ['role' => 'owner']);
 
+            // Handle chain assignment
+            if ($request->has('chain_id')) {
+                $chain = Chain::findOrFail($request->chain_id);
+                // Ensure user is the creator of the chain or owner of the project
+                if ($chain->created_by !== $request->user()->id) {
+                    throw new \Exception('You do not own this chain.');
+                }
+                $chain->addProject($project->id);
+                $project->update(['chain_id' => $chain->id]);
+            } else {
+                $chain = Chain::create([
+                    'name' => $project->name . ' Chain',
+                    'created_by' => $request->user()->id,
+                ]);
+                $chain->addProject($project->id);
+                $project->update(['chain_id' => $chain->id]);
+            }
+
             event(new ProjectCreated($project));
 
             DB::commit();
@@ -215,7 +234,7 @@ class ProjectController extends Controller
             'image',
             'visibility',
             'allow_join_requests',
-            'allow_commit',    
+            'allow_commit',
             'allow_reactions',
         ]);
 
@@ -356,7 +375,6 @@ class ProjectController extends Controller
                 ], 404);
             }
 
-            // Security: only the owner can restore
             if ($project->created_by !== $userId) {
                 return response()->json([
                     'success' => false,
@@ -365,12 +383,35 @@ class ProjectController extends Controller
             }
 
             DB::beginTransaction();
+
             $project->restore();
+
+            if ($project->chain_id) {
+                $chain = Chain::find($project->chain_id);
+                if ($chain && !$chain->projects()->where('project_id', $project->id)->exists()) {
+                    $chain->addProject($project->id);
+                } elseif (!$chain) {
+                    $newChain = Chain::create([
+                        'name' => $project->name . ' Chain',
+                        'created_by' => $userId,
+                    ]);
+                    $newChain->addProject($project->id);
+                    $project->update(['chain_id' => $newChain->id]);
+                }
+            } else {
+                $newChain = Chain::create([
+                    'name' => $project->name . ' Chain',
+                    'created_by' => $userId,
+                ]);
+                $newChain->addProject($project->id);
+                $project->update(['chain_id' => $newChain->id]);
+            }
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Project restored successfully',
+                'message' => 'Project restored successfully.',
                 'data' => new ProjectResource($project->load('creator'))
             ]);
         } catch (\Exception $e) {

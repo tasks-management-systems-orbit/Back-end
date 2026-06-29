@@ -23,6 +23,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Resources\ProjectStatsResource;
+use App\Services\TaskTransferService;
+use Illuminate\Validation\ValidationException;
+
 
 
 class TaskController extends Controller
@@ -61,6 +64,7 @@ class TaskController extends Controller
             }
 
             $tasksQuery = $project->tasks()
+                ->where('is_archived', false)
                 ->with(['status', 'creator', 'assignee', 'taskAssignments.user', 'subTasks'])
                 ->when($priority, fn($q) => $q->where('priority', $priority))
                 ->when($assigneeId, fn($q) => $q->byAssignee($assigneeId))
@@ -527,6 +531,14 @@ class TaskController extends Controller
      */
     public function update(UpdateTaskRequest $request, Project $project, Task $task): JsonResponse
     {
+
+        if ($task->is_archived) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot update an archived task.',
+            ], 403);
+        }
+
         // 1. Verify the task belongs to the project
         if ($task->project_id !== $project->id) {
             return response()->json([
@@ -1038,6 +1050,13 @@ class TaskController extends Controller
      */
     public function destroy(Project $project, Task $task): JsonResponse
     {
+
+        if ($task->is_archived) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete an archived task.',
+            ], 403);
+        }
         // Verify task belongs to the project
         if ($task->project_id !== $project->id) {
             return response()->json([
@@ -1403,7 +1422,7 @@ class TaskController extends Controller
             }
 
             $tasks = Task::where('project_id', $project->id)
-                ->whereNotNull('assigned_group_id') 
+                ->whereNotNull('assigned_group_id')
                 ->with(['status', 'creator', 'assignedGroup', 'group'])
                 ->when($search, function ($query) use ($search) {
                     $query->where(function ($q) use ($search) {
@@ -1437,6 +1456,145 @@ class TaskController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load group tasks. Please try again later.'
+            ], 500);
+        }
+    }
+
+
+    protected TaskTransferService $taskTransferService;
+
+    public function __construct(TaskTransferService $taskTransferService)
+    {
+        $this->taskTransferService = $taskTransferService;
+    }
+
+    public function transfer(Request $request, Task $task)
+    {
+        try {
+            $request->validate([
+                'target_project_id' => 'required|exists:projects,id',
+                'note' => 'nullable|string|max:500',
+            ]);
+
+            // Check if user is owner of the source project
+            if ($task->project->created_by !== $request->user()->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only the project owner can transfer tasks.',
+                ], 403);
+            }
+
+            $newTask = $this->taskTransferService->transfer(
+                $task->id,
+                $request->target_project_id,
+                $request->user()->id,
+                $request->note
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task transferred successfully.',
+                'data' => new TaskResource($newTask),
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Failed to transfer task: ' . $e->getMessage(), [
+                'task_id' => $task->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to transfer task. Please try again later.',
+            ], 500);
+        }
+    }
+
+    public function transferHistory(Task $task, Request $request)
+    {
+        try {
+            $history = $this->taskTransferService->getTransferHistory($task->id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $history,
+                'task_id' => $task->id,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch transfer history: ' . $e->getMessage(), [
+                'task_id' => $task->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch transfer history. Please try again later.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all archived tasks for a specific project.
+     * Archived tasks are read-only and hidden from the main Kanban board.
+     */
+    public function archivedTasks(Project $project, Request $request): JsonResponse
+    {
+        try {
+            $this->checkProjectAccess($project);
+
+            $search = $request->input('search');
+            $sortBy = $request->input('sort_by', 'archived_at');
+            $sortDirection = $request->input('sort_direction', 'desc');
+
+            $allowedSorts = ['id', 'title', 'due_date', 'created_at', 'updated_at', 'transferred_from_task_id'];
+            if (!in_array($sortBy, $allowedSorts)) {
+                $sortBy = 'updated_at';
+            }
+            if (!in_array($sortDirection, ['asc', 'desc'])) {
+                $sortDirection = 'desc';
+            }
+
+            $tasks = $project->tasks()
+                ->where('is_archived', true) // 🔥 فقط المؤرشفة
+                ->with([
+                    'status',
+                    'creator',
+                    'assignee',
+                    'taskAssignments.user',
+                    'transferredFrom', 
+                    'transferredTo',   
+                ])
+                ->when($search, function ($query) use ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('title', 'LIKE', "%{$search}%")
+                            ->orWhere('description', 'LIKE', "%{$search}%");
+                    });
+                })
+                ->orderBy($sortBy, $sortDirection)
+                ->limit(100) 
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => TaskResource::collection($tasks),
+                'total' => $tasks->count(),
+                'message' => 'Archived tasks are read-only and cannot be modified.',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Fetching archived tasks failed: ' . $e->getMessage(), [
+                'project_id' => $project->id,
+                'user_id' => $request->user()->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load archived tasks. Please try again later.'
             ], 500);
         }
     }

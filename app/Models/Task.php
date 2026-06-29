@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -39,6 +40,9 @@ class Task extends Model
         'auto_status',
         'can_be_assigned',
         'assigned_group_id',
+        'is_archived',
+        'transferred_from_task_id',
+        'transferred_to_task_id',
     ];
 
     protected $casts = [
@@ -78,8 +82,118 @@ class Task extends Model
             $task->comments()->withTrashed()->restore();
             $task->subTasks()->withTrashed()->restore();
         });
+
+        static::updating(function ($task) {
+            if ($task->is_archived && !$task->isForceDeleting()) {
+                throw new \Exception('Cannot update an archived task.');
+            }
+        });
+
+        static::deleting(function ($task) {
+            if ($task->is_archived) {
+                throw new \Exception('Cannot delete an archived task.');
+            }
+        });
+
     }
 
+    // Relationships for transfer tracking
+    public function transferredFrom(): BelongsTo
+    {
+        return $this->belongsTo(Task::class, 'transferred_from_task_id');
+    }
+
+    public function transferredTo(): BelongsTo
+    {
+        return $this->belongsTo(Task::class, 'transferred_to_task_id');
+    }
+
+    // Check if the task can be transferred (all subtasks must be completed)
+    public function canBeTransferred(): bool
+    {
+        if ($this->subTasks()->whereNull('completed_at')->exists()) {
+            return false;
+        }
+        return true;
+    }
+
+    // Archive the task (make it read-only)
+    public function archive(): bool
+    {
+        return $this->update(['is_archived' => true]);
+    }
+
+    // Clone the task for transfer to a new project
+    /**
+     * Clone the task for transfer to a new project, including all subtasks.
+     */
+    public function cloneForTransfer(int $targetProjectId, ?int $newStatusId = null, ?int $userId = null): Task
+    {
+        DB::beginTransaction();
+
+        try {
+            // 1. Clone the parent task
+            $clone = $this->replicate();
+            $clone->project_id = $targetProjectId;
+            $clone->assigned_to = null;
+            $clone->assigned_group_id = null;
+            $clone->is_archived = false;
+            $clone->parent_task_id = null;
+            $clone->transferred_from_task_id = $this->id;
+            $clone->transferred_to_task_id = null;
+
+            if ($newStatusId) {
+                $clone->status_id = $newStatusId;
+            }
+
+            $clone->save();
+
+            // Clean parent task relationships
+            $clone->assignments()->detach();
+            $clone->dependencies()->detach();
+            $clone->dependents()->detach();
+
+            // 2. Clone all subtasks
+            $subtaskMapping = [];
+
+            foreach ($this->subTasks as $subTask) {
+                $newSubTask = $subTask->replicate();
+                $newSubTask->project_id = $targetProjectId;
+                $newSubTask->parent_task_id = $clone->id;
+                $newSubTask->assigned_to = null;
+                $newSubTask->assigned_group_id = null;
+                $newSubTask->is_archived = false;
+                $newSubTask->transferred_from_task_id = $subTask->id;
+                $newSubTask->transferred_to_task_id = null;
+
+                if ($newStatusId) {
+                    $newSubTask->status_id = $newStatusId;
+                }
+
+                $newSubTask->save();
+
+                // Clean subtask relationships
+                $newSubTask->assignments()->detach();
+                $newSubTask->dependencies()->detach();
+                $newSubTask->dependents()->detach();
+
+                $subtaskMapping[$subTask->id] = $newSubTask->id;
+            }
+
+            // 3. Update original task to point to the clone
+            $this->update(['transferred_to_task_id' => $clone->id]);
+
+            DB::commit();
+
+            // 4. Load subtasks for the cloned task before returning
+            $clone->load('subTasks');
+
+            return $clone;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);

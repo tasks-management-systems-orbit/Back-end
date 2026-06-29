@@ -5,7 +5,6 @@ namespace app\Http\Controllers\api;
 use App\Events\TaskNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TaskDependency\AddDependencyRequest;
-use App\Http\Resources\TaskResource;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
@@ -64,6 +63,12 @@ class TaskDependencyController extends Controller
 
     public function addDependency(AddDependencyRequest $request, Project $project, Task $task): JsonResponse
     {
+        if ($task->is_archived) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot manage dependencies on an archived task.',
+            ], 403);
+        }
         $this->checkProjectManager($project);
 
         if ($task->project_id !== $project->id) {
@@ -148,6 +153,12 @@ class TaskDependencyController extends Controller
 
     public function removeDependency(Project $project, Task $task, int $dependsOnTaskId): JsonResponse
     {
+        if ($task->is_archived) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot manage dependencies on an archived task.',
+            ], 403);
+        }
         $this->checkProjectManager($project);
 
         if ($task->project_id !== $project->id) {

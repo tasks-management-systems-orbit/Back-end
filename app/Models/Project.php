@@ -2,6 +2,7 @@
 
 namespace app\Models;
 
+use App\Models\Chain;
 use App\Models\ProjectComment;
 use App\Models\ProjectReaction;
 use Illuminate\Database\Eloquent\Builder;
@@ -53,6 +54,18 @@ class Project extends Model
     ];
 
     // ============== Relationships ==============
+
+    public function chains(): BelongsToMany
+    {
+        return $this->belongsToMany(Chain::class, 'chain_projects')
+            ->withPivot('order')
+            ->withTimestamps();
+    }
+
+    public function activeChain(): ?Chain
+    {
+        return $this->chains()->first();
+    }
 
     public function joinRequests()
     {
@@ -175,7 +188,7 @@ class Project extends Model
 
     public function removeUser(int $userId): bool
     {
-        if (! $this->hasUser($userId)) {
+        if (!$this->hasUser($userId)) {
             return false;
         }
 
@@ -186,7 +199,7 @@ class Project extends Model
 
     public function updateUserRole(int $userId, string $role): bool
     {
-        if (! $this->hasUser($userId)) {
+        if (!$this->hasUser($userId)) {
             return false;
         }
 
@@ -215,7 +228,7 @@ class Project extends Model
     public function getUserReactionAttribute(): ?string
     {
         $user = request()->user();
-        if (! $user) {
+        if (!$user) {
             return null;
         }
 

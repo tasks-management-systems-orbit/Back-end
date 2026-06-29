@@ -5,6 +5,7 @@ use App\Http\Controllers\api\Auth\LoginController;
 use App\Http\Controllers\api\Auth\LogoutController;
 use App\Http\Controllers\api\Auth\PasswordResetController;
 use App\Http\Controllers\api\Auth\RegisterController;
+use App\Http\Controllers\api\ChainController;
 use App\Http\Controllers\api\CommentController;
 use App\Http\Controllers\api\FavoriteController;
 use App\Http\Controllers\api\FavoriteProjectController;
@@ -68,6 +69,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/profiles/{profile}/invite', [RequestController::class, 'inviteUser']);
 });
 // ============= ROUTES OUTSIDE project.not.locked (Always work) =============
+
+Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
+    Route::prefix('chains')->group(function () {
+        Route::post('/{chain}/projects', [ChainController::class, 'addProject']);
+        Route::delete('/{chain}/projects/{project}', [ChainController::class, 'removeProject']);
+        Route::post('/{chain}/reorder', [ChainController::class, 'reorder']);
+        });
+        Route::put('/chains/{chain}', [ChainController::class, 'updateChainName']);
+});
 
 // ============= REMINDERS ROUTES =============
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
@@ -216,6 +226,7 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/tasks')->group(function () {
         Route::get('/', [TaskController::class, 'index']);
+        Route::get('/archived', [TaskController::class, 'archivedTasks']);  
         Route::get('/{task}', [TaskController::class, 'show']);
         Route::get('/trashed', [TaskController::class, 'trashed']);
         Route::get('/completed', [TaskController::class, 'getCompletedTasks']);

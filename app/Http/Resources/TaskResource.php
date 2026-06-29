@@ -136,6 +136,8 @@ class TaskResource extends JsonResource
             'dependencies_count' => $this->dependencies_count,
             'dependents_count' => $this->dependents_count,
             'comments_count' => $this->whenCounted('comments', $this->comments_count ?? 0),
+            'is_archived' => $this->is_archived,
+
         ];
     }
 

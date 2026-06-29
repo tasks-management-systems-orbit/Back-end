@@ -23,6 +23,8 @@ class StoreProjectRequest extends FormRequest
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'allow_commit' => 'nullable|boolean',
             'allow_reactions' => 'nullable|boolean',
+            'chain_id' => 'nullable|exists:chains,id', 
+
         ];
     }
 
