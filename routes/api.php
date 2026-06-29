@@ -75,8 +75,8 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
         Route::post('/{chain}/projects', [ChainController::class, 'addProject']);
         Route::delete('/{chain}/projects/{project}', [ChainController::class, 'removeProject']);
         Route::post('/{chain}/reorder', [ChainController::class, 'reorder']);
-        });
-        Route::put('/chains/{chain}', [ChainController::class, 'updateChainName']);
+    });
+    Route::put('/chains/{chain}', [ChainController::class, 'updateChainName']);
 });
 
 // ============= REMINDERS ROUTES =============
@@ -88,8 +88,8 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
         Route::delete('/{reminder}', [ReminderController::class, 'destroy']);
         Route::post('/{reminder}/snooze', [ReminderController::class, 'snooze']);
         Route::post('/{reminder}/dismiss', [ReminderController::class, 'dismiss']);
-        });
-        Route::get('/projects/{project}/reminders', [ReminderController::class, 'getProjectReminders']);
+    });
+    Route::get('/projects/{project}/reminders', [ReminderController::class, 'getProjectReminders']);
 });
 
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
@@ -226,7 +226,7 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'
 Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () {
     Route::prefix('projects/{project}/tasks')->group(function () {
         Route::get('/', [TaskController::class, 'index']);
-        Route::get('/archived', [TaskController::class, 'archivedTasks']);  
+        Route::get('/archived', [TaskController::class, 'archivedTasks']);
         Route::get('/{task}', [TaskController::class, 'show']);
         Route::get('/trashed', [TaskController::class, 'trashed']);
         Route::get('/completed', [TaskController::class, 'getCompletedTasks']);
@@ -310,6 +310,8 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified', 'project.not.locked'
         Route::delete('/{userId}', [ProjectUserController::class, 'removeUser']);
         Route::post('/transfer-ownership/{userId}', [ProjectUserController::class, 'transferOwnership']);
     });
+
+    Route::post('/chains/{chain}/transfer-ownership/{userId}', [ProjectUserController::class, 'transferChainOwnership']);
 });
 
 // TASK STATUSES ROUTES (all operations - write)

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ProjectUser\AddUserRequest;
 use App\Http\Requests\ProjectUser\UpdateUserRoleRequest;
 use App\Http\Resources\ProjectUserResource;
+use App\Models\Chain;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -341,6 +342,21 @@ class ProjectUserController extends Controller
     {
         $currentUserId = $request->user()->id;
 
+        if ($project->chains()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This project belongs to a chain. You cannot transfer ownership of a single project. Please transfer the entire chain instead.',
+            ], 422);
+        }
+
+        if ($project->created_by !== $currentUserId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only the project owner can transfer ownership'
+            ], 403);
+        }
+
+
         if ($project->created_by !== $currentUserId) {
             return response()->json([
                 'success' => false,
@@ -396,4 +412,70 @@ class ProjectUserController extends Controller
             ]
         ]);
     }
+
+
+public function transferChainOwnership(Request $request, Chain $chain, int $userId): JsonResponse
+{
+    $currentUserId = $request->user()->id;
+
+    if ($chain->created_by !== $currentUserId) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Only the chain owner can transfer the entire chain.'
+        ], 403);
+    }
+
+    $projects = $chain->projects;
+    if ($projects->isEmpty()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'This chain has no projects to transfer.'
+        ], 422);
+    }
+
+    $targetUser = User::findOrFail($userId);
+
+    foreach ($projects as $project) {
+        if (!$project->hasUser($userId)) {
+            $project->addUser($userId, 'user');
+        }
+    }
+
+    DB::beginTransaction();
+    try {
+        foreach ($projects as $project) {
+            $project->update(['created_by' => $userId]);
+
+            if ($project->hasUser($userId)) {
+                $project->updateUserRole($userId, 'owner');
+            }
+
+            if ($project->hasUser($currentUserId)) {
+                $project->updateUserRole($currentUserId, 'user');
+            }
+        }
+
+        $chain->update(['created_by' => $userId]);
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Entire chain transferred successfully.',
+            'data' => $chain->load('projects'),
+        ]);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Chain transfer failed: ' . $e->getMessage(), [
+            'chain_id' => $chain->id,
+            'from_user' => $currentUserId,
+            'to_user' => $userId,
+            'trace' => $e->getTraceAsString(),
+        ]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to transfer chain ownership. Please try again later.'
+        ], 500);
+    }
+}
 }
