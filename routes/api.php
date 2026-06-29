@@ -9,6 +9,7 @@ use App\Http\Controllers\api\ChainController;
 use App\Http\Controllers\api\CommentController;
 use App\Http\Controllers\api\FavoriteController;
 use App\Http\Controllers\api\FavoriteProjectController;
+use App\Http\Controllers\api\FcmController;
 use App\Http\Controllers\api\GroupController;
 use App\Http\Controllers\api\GroupMemberController;
 use App\Http\Controllers\api\NoteController;
@@ -260,6 +261,13 @@ Route::middleware(['auth:sanctum', 'is.active', 'verified'])->group(function () 
         Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
         Route::put('/read-all', [NotificationController::class, 'markAllAsRead']);
         Route::delete('/{id}', [NotificationController::class, 'destroy']);
+    });
+
+    // FCM device token routes
+    Route::prefix('fcm')->group(function () {
+        Route::post('/register',   [FcmController::class, 'register'])->middleware('throttle:30,1');
+        Route::post('/unregister', [FcmController::class, 'unregister'])->middleware('throttle:30,1');
+        Route::get('/tokens',      [FcmController::class, 'index'])->middleware('throttle:60,1');
     });
 });
 
