@@ -1,11 +1,11 @@
 <?php
 
 use App\Providers\AppServiceProvider;
-use App\Providers\BroadcastServiceProvider;
+use App\Providers\FirebaseServiceProvider;
 use JeroenNoten\LaravelAdminLte\AdminLteServiceProvider;
 
 return [
     AppServiceProvider::class,
     AdminLteServiceProvider::class,
-    BroadcastServiceProvider::class,
+    FirebaseServiceProvider::class,
 ];

@@ -32,6 +32,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         \App\Events\NotificationSent::class => [
             \App\Listeners\SendEmailNotification::class,
+            \App\Listeners\SendFcmPushNotification::class,
         ],
     ];
 

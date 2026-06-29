@@ -23,9 +23,14 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
-        <env name="DB_URL" value=""/>
+        <!--
+            Database config: lives in .env.testing (gitignored), NOT here.
+            phpunit.xml env vars are loaded into the OS environment before
+            Laravel boots, and Dotenv is immutable — so any <env> we set
+            here would override .env.testing. The right place for the local
+            Postgres password is .env.testing. See .env.testing.example for
+            the template.
+        -->
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
