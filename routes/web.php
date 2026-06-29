@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminProjectController;
 use App\Http\Controllers\Admin\AdminReportController;
+use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminWarningController;
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
@@ -31,6 +32,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // User management
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
+            // Bulk notification (must come before /{id} so "notify" is not treated as an id)
+            Route::get('/notify', [AdminNotificationController::class, 'create'])->name('notify.create');
+            Route::post('/notify', [AdminNotificationController::class, 'store'])->name('notify.store');
             Route::get('/{id}', [AdminUserController::class, 'show'])->name('show');
             Route::patch('/{id}/toggle', [AdminUserController::class, 'toggleStatus'])->name('toggle');
             Route::delete('/{id}', [AdminUserController::class, 'destroy'])->name('destroy');
