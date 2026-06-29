@@ -2244,6 +2244,30 @@
                         }
                     },
                     "response": []
+                },
+                {
+                    "name": "get-archived-tasks",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseURL}}/projects/{project}/tasks/archived",
+                            "host": ["{{baseURL}}"],
+                            "path": [
+                                "projects",
+                                "{project}",
+                                "tasks",
+                                "archived"
+                            ]
+                        }
+                    },
+                    "response": []
                 }
             ]
         },
@@ -2911,6 +2935,95 @@
             ]
         },
         {
+            "name": "fcm",
+            "item": [
+                {
+                    "name": "register-device",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"token\": \"device-fcm-token\",\n    \"device_name\": \"iPhone 15 Pro\",\n    \"platform\": \"ios\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseURL}}/fcm/register",
+                            "host": ["{{baseURL}}"],
+                            "path": [
+                                "fcm",
+                                "register"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "unregister-device",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"token\": \"device-fcm-token\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseURL}}/fcm/unregister",
+                            "host": ["{{baseURL}}"],
+                            "path": [
+                                "fcm",
+                                "unregister"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "get-fcm-tokens",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseURL}}/fcm/tokens",
+                            "host": ["{{baseURL}}"],
+                            "path": [
+                                "fcm",
+                                "tokens"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
             "name": "reports",
             "item": [
                 {
@@ -3497,6 +3610,163 @@
                                 "groups",
                                 "{group}",
                                 "transfer-manager"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "chains",
+            "item": [
+                {
+                    "name": "add-project-to-chain",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"project_id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseURL}}/chains/{chain}/projects",
+                            "host": ["{{baseURL}}"],
+                            "path": [
+                                "chains",
+                                "{chain}",
+                                "projects"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "remove-project-from-chain",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseURL}}/chains/{chain}/projects/{project}",
+                            "host": ["{{baseURL}}"],
+                            "path": [
+                                "chains",
+                                "{chain}",
+                                "projects",
+                                "{project}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "reorder-chain-projects",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"project_ids\": [1, 2, 3]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseURL}}/chains/{chain}/reorder",
+                            "host": ["{{baseURL}}"],
+                            "path": [
+                                "chains",
+                                "{chain}",
+                                "reorder"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "update-chain-name",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Updated chain name\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseURL}}/chains/{chain}",
+                            "host": ["{{baseURL}}"],
+                            "path": [
+                                "chains",
+                                "{chain}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "transfer-chain-ownership",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"new_owner_id\": 2\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseURL}}/chains/{chain}/transfer-ownership/{userId}",
+                            "host": ["{{baseURL}}"],
+                            "path": [
+                                "chains",
+                                "{chain}",
+                                "transfer-ownership",
+                                "{userId}"
                             ]
                         }
                     },
