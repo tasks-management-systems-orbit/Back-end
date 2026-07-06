@@ -9,21 +9,26 @@ class SendJoinRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $project = Project::find($this->route('project'));
-        if (!$project) return false;
+        $project = $this->route('project');
+
+        if (!$project instanceof Project) {
+            return false;
+        }
 
         if (in_array($project->status, ['completed', 'paused'])) {
             return false;
         }
 
-
         $user = $this->user();
+        if (!$user) {
+            return false;
+        }
 
         if ($project->isOwner($user->id) || $project->hasUser($user->id)) {
             return false;
         }
 
-        return $project->allow_join_requests;
+        return (bool) $project->allow_join_requests;
     }
 
     public function rules(): array
