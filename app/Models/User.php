@@ -75,6 +75,43 @@ class User extends Authenticatable
         $this->update(['email_verified_at' => now()]);
     }
 
+    /**
+     * A user is "activated" when they are both active AND have a verified
+     * email. Used by the search endpoint as the "not activated" exclusion
+     * rule — users with `is_active = false` AND `email_verified_at IS NULL`
+     * are the only users excluded from search results.
+     */
+    public function isActivated(): bool
+    {
+        return $this->is_active && $this->hasVerifiedEmail();
+    }
+
+    /**
+     * Scope to users that are NOT activated: `is_active = false` AND
+     * `email_verified_at IS NULL`. Both conditions must hold.
+     */
+    public function scopeNotActivated(Builder $query): Builder
+    {
+        return $query->where(function ($q) {
+            $q->where('is_active', false)
+                ->whereNull('email_verified_at');
+        });
+    }
+
+    /**
+     * Scope to users that ARE activated: NOT (`is_active = false` AND
+     * `email_verified_at IS NULL`). In other words, exclude users that
+     * satisfy both "not activated" conditions. This is the positive
+     * filter used by the search endpoint.
+     */
+    public function scopeActivated(Builder $query): Builder
+    {
+        return $query->whereNot(function ($q) {
+            $q->where('is_active', false)
+                ->whereNull('email_verified_at');
+        });
+    }
+
     public function profile()
     {
         return $this->hasOne(Profile::class);
