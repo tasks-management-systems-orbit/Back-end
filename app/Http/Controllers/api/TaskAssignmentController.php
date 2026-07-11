@@ -50,6 +50,14 @@ class TaskAssignmentController extends Controller
     public function assign(AssignUsersRequest $request, Project $project, Task $task): JsonResponse
     {
         $this->checkProjectManager($project);
+        $userId = $request->user()->id;
+
+        if ($task->is_archived) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot assign users to an archived task.',
+            ], 403);
+        }
 
         if ($task->project_id !== $project->id) {
             return response()->json([
@@ -74,6 +82,15 @@ class TaskAssignmentController extends Controller
             DB::beginTransaction();
 
             $task->assignees()->syncWithoutDetaching($request->user_ids);
+            foreach ($request->user_ids as $assignedUserId) {
+                DB::table('task_assignment_histories')->insert([
+                    'task_id' => $task->id,
+                    'user_id' => $assignedUserId,
+                    'assigned_by' => $userId,
+                    'action' => 'assigned',
+                    'assigned_at' => now(),
+                ]);
+            }
 
             DB::commit();
         } catch (\Exception $e) {
@@ -105,7 +122,7 @@ class TaskAssignmentController extends Controller
         ], 201);
     }
 
-    public function unassign(Project $project, Task $task, int $userId): JsonResponse
+    public function unassign(Project $project, Task $task, int $userId, Request $request): JsonResponse
     {
         $this->checkProjectManager($project);
 
@@ -129,11 +146,20 @@ class TaskAssignmentController extends Controller
                 'message' => 'User is not assigned to this task',
             ], 404);
         }
+        $currentUserId = $request->user()->id;
 
         try {
             DB::beginTransaction();
 
             $task->assignees()->detach($userId);
+
+            DB::table('task_assignment_histories')->insert([
+                'task_id' => $task->id,
+                'user_id' => $userId,
+                'assigned_by' => $currentUserId,
+                'action' => 'unassigned',
+                'assigned_at' => now(),
+            ]);
 
             DB::commit();
 
@@ -166,7 +192,7 @@ class TaskAssignmentController extends Controller
         return response()->json([
             'success' => true,
             'data' => TaskResource::collection($tasks),
-            'total' => $tasks->count(),  
+            'total' => $tasks->count(),
         ]);
     }
 

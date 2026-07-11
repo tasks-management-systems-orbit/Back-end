@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TaskDependencyController extends Controller
 {
@@ -114,11 +115,13 @@ class TaskDependencyController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-
+            Log::error('Failed to add dependency: ' . $e->getMessage(), [
+                'task_id' => $task->id,
+                'depends_on_task_id' => $dependsOnTaskId,
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to add dependency',
-                'error' => $e->getMessage(),
+                'message' => 'Failed to add dependency. Please try again later.',
             ], 500);
         }
 

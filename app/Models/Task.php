@@ -4,8 +4,11 @@ namespace app\Models;
 
 use app\Events\ManagerTaskCompleted;
 use app\Events\TaskCompleted;
+use App\Models\Project;
 use App\Models\Reminder;
 use app\Models\TaskAssignment;
+use App\Models\TaskAssignmentHistory;
+use App\Models\TaskStatusHistory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -97,7 +100,15 @@ class Task extends Model
 
     }
 
-    // Relationships for transfer tracking
+    public function statusHistories()
+    {
+        return $this->hasMany(TaskStatusHistory::class)->orderBy('changed_at', 'desc');
+    }
+
+    public function assignmentHistories()
+    {
+        return $this->hasMany(TaskAssignmentHistory::class)->orderBy('assigned_at', 'desc');
+    }
     public function transferredFrom(): BelongsTo
     {
         return $this->belongsTo(Task::class, 'transferred_from_task_id');
@@ -198,6 +209,8 @@ class Task extends Model
     {
         return $this->belongsTo(Project::class);
     }
+
+    
 
     public function status(): BelongsTo
     {

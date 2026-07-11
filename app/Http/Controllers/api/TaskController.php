@@ -16,7 +16,6 @@ use App\Models\Group;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskAssignment;
-use App\Models\TaskStatus;
 use app\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -702,13 +701,13 @@ class TaskController extends Controller
                 'position' => $newPosition,
             ]);
 
-            // Auto-complete if the new status is "Done" (case-insensitive)
-            $status = TaskStatus::find($newStatusId);
-            if ($status && strtolower($status->name) === 'done') {
-                $task->complete();
-            }
-
-            DB::commit();
+            DB::table('task_status_histories')->insert([
+                'task_id' => $task->id,
+                'from_status_id' => $oldStatusId,
+                'to_status_id' => $newStatusId,
+                'changed_by' => $userId,
+                'changed_at' => now(),
+            ]);
 
             // If this task is a subtask, sync parent task status after status change
             if ($task->parent_task_id) {
@@ -717,6 +716,7 @@ class TaskController extends Controller
                     $parent->syncStatusFromSubtasks();
                 }
             }
+            DB::commit();
 
             $task->load(['status', 'creator', 'assignee', 'assignees']);
 
@@ -882,7 +882,60 @@ class TaskController extends Controller
         }
     }
 
+    /**
+     * Get full history (status changes + assignment changes) for a task.
+     */
+    public function getTaskHistory(Request $request, Project $project, Task $task): JsonResponse
+    {
+        try {
+            $this->checkProjectAccess($project);
 
+            if ($task->project_id !== $project->id) {
+                return response()->json(['message' => 'Task does not belong to this project'], 404);
+            }
+
+            $statusHistory = $task->statusHistories()
+                ->with(['fromStatus', 'toStatus', 'changedBy'])
+                ->get();
+
+            $assignmentHistory = $task->assignmentHistories()
+                ->with(['user', 'assignedBy'])
+                ->get();
+
+            $history = collect()
+                ->merge($statusHistory->map(fn($item) => [
+                    'type' => 'status_change',
+                    'from' => $item->fromStatus?->name,
+                    'to' => $item->toStatus?->name,
+                    'changed_by' => $item->changedBy?->name,
+                    'changed_at' => $item->changed_at,
+                ]))
+                ->merge($assignmentHistory->map(fn($item) => [
+                    'type' => 'assignment_change',
+                    'action' => $item->action,
+                    'user' => $item->user?->name,
+                    'assigned_by' => $item->assignedBy?->name,
+                    'changed_at' => $item->assigned_at, 
+                ]))
+                ->sortByDesc('changed_at')
+                ->values();
+
+            return response()->json([
+                'success' => true,
+                'data' => $history,
+                'task_id' => $task->id,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch task history: ' . $e->getMessage(), [
+                'task_id' => $task->id,
+                'user_id' => $request->user()->id,
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load task history.'
+            ], 500);
+        }
+    }
 
 
 
@@ -1549,7 +1602,7 @@ class TaskController extends Controller
             $this->checkProjectAccess($project);
 
             $search = $request->input('search');
-            $sortBy = $request->input('sort_by', 'archived_at');
+            $sortBy = $request->input('sort_by', 'updated_at');
             $sortDirection = $request->input('sort_direction', 'desc');
 
             $allowedSorts = ['id', 'title', 'due_date', 'created_at', 'updated_at', 'transferred_from_task_id'];
@@ -1561,14 +1614,14 @@ class TaskController extends Controller
             }
 
             $tasks = $project->tasks()
-                ->where('is_archived', true) // 🔥 فقط المؤرشفة
+                ->where('is_archived', true)
                 ->with([
                     'status',
                     'creator',
                     'assignee',
                     'taskAssignments.user',
-                    'transferredFrom', 
-                    'transferredTo',   
+                    'transferredFrom',
+                    'transferredTo',
                 ])
                 ->when($search, function ($query) use ($search) {
                     $query->where(function ($q) use ($search) {
@@ -1577,7 +1630,7 @@ class TaskController extends Controller
                     });
                 })
                 ->orderBy($sortBy, $sortDirection)
-                ->limit(100) 
+                ->limit(100)
                 ->get();
 
             return response()->json([
