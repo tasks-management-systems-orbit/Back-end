@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->timestamp('started_at')->nullable();
             $table->timestamp('completed_at')->nullable();
 
+            $table->softDeletes();
             $table->timestamps();
             $table->unique(['task_id', 'user_id']);
 

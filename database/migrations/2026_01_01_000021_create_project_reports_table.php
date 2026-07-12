@@ -11,9 +11,10 @@ return new class extends Migration
         Schema::create('project_reports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('reporter_id')->constrained('users');
-            $table->foreignId('reported_project_id')->constrained('projects')->cascadeOnDelete();
+            $table->foreignId('reported_project_id')->constrained('projects')->restrictOnDelete();
             $table->string('reason', 255);
             $table->text('details')->nullable();
+            $table->string('status', 20)->default('open');
             $table->timestamps();
 
             $table->unique(['reporter_id', 'reported_project_id']);

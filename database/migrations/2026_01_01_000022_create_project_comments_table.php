@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('project_comments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('project_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('project_id')->constrained()->restrictOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->text('content');
             $table->foreignId('parent_id')->nullable()->constrained('project_comments')->cascadeOnDelete();

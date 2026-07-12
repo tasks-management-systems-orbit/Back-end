@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('favorite_projects', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('project_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('project_id')->constrained()->restrictOnDelete();
             $table->timestamps();
 
             $table->unique(['user_id', 'project_id']);
