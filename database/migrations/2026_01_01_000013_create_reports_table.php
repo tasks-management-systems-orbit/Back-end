@@ -14,6 +14,7 @@ return new class extends Migration
             $table->foreignId('reported_user_id')->constrained('users')->cascadeOnDelete();
             $table->string('reason', 255);
             $table->text('details')->nullable();
+            $table->string('status', 20)->default('open');
             $table->timestamps();
 
             // Prevent duplicate reports from same user for same target
